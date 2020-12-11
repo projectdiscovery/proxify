@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img src="static/proxify-logo.png" alt="proxify" width="180px"></a>
+  <img src="static/proxify-logo.png" alt="proxify" width="200px"></a>
   <br>
 </h1>
 
@@ -23,10 +23,11 @@ Additionally a replay utility allows to import the dumped traffic (request/respo
 - [Usage](#usage-)
   - [Upstream proxy](#use-upstream-proxy)
   - [Dump HTTP/HTTPS traffic](#dump-all-the-httphttps-traffic)
-  - [Hostname mapping](#hostname-mapping-with-Local-dns-resolver)
+  - [Hostname mapping](#hostname-mapping-with-local-dns-resolver)
   - [Match/Filter HTTP traffic](#matchfilter-traffic-with-with-dsl-language)
   - [Match and Replace on the fly](#match-and-replace-on-the-fly)
   - [Replay all traffic into burp](#replay-all-traffic-into-burp)
+- [Applications of proxify](applications-of-proxify)
 
 # Features
 
@@ -159,5 +160,66 @@ Replay all the dumped requests/responses into the destination URL (http://127.0.
 ▶ replay -output "logs/"
 ```
 
+
+### Applications of Proxify
+
+Proxify can be used for multiple places, here are some common example where Proxify comes handy:-
+
+<details>
+<summary> Storing all the burp proxy history logs locally. </summary>
+
+Start a proxify on port `8081` with HTTP Proxy pointing to burp suite port `8080`
+
+```
+proxify -addr "127.0.0.1:8081" -http-proxy "http://127.0.0.1:8080"
+```
+
+From burp, set the Upstream Proxy to forward all the traffic back to `proxify`
+
+```
+User Options > Upstream Proxy > Proxy & Port > 127.0.0.1 & 8081
+```
+Now all the request/response history will be stored in `logs` folder that can be used later for post processing.
+
+</details>
+
+
+<details>
+<summary> Store all your browse histroy locally. </summary>
+
+
+While you browse the application, you can point the browser to `proxify` to store all the HTTP request / response to file.
+
+Start proxify on default or any port you wish,
+
+```
+proxify -output chrome-logs -addr ":9999"
+```
+
+Start Chrome browser in Mac OS,
+```
+/Applications/Chromium.app/Contents/MacOS/Chromium --ignore-certificate-errors --proxy-server=http://127.0.0.1:9999 &
+```
+
+</details>
+
+
+<details>
+<summary> Store all the response of while you fuzz as per you config at run time. </summary>
+
+
+Start proxify on default or any port you wish,
+
+```
+proxify -output ffuf-logs -addr ":9999"
+```
+
+Run `FFuF` with proxy pointing to `proxify`
+
+```
+ffuf -x http://127.0.0.1:9999 FFUF_CMD_HERE
+```
+
+</details>
 
 Proxify is made with 🖤 by the [projectdiscovery](https://projectdiscovery.io) team. Community contributions have made the project what it is. See the **[Thanks.md](https://github.com/projectdiscovery/proxify/blob/master/THANKS.md)** file for more details.
