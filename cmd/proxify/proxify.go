@@ -14,7 +14,7 @@ func main() {
 
 	options := runner.ParseOptions()
 
-	profixyRunner, err := runner.NewRunner(options)
+	proxifyRunner, err := runner.NewRunner(options)
 	if err != nil {
 		gologger.Fatalf("Could not create runner: %s\n", err)
 	}
@@ -26,14 +26,14 @@ func main() {
 		go func() {
 			<-c
 			fmt.Println("\r- Ctrl+C pressed in Terminal")
-			profixyRunner.Close()
+			proxifyRunner.Close()
 			os.Exit(0)
 		}()
 	}()
 
-	err = profixyRunner.Run()
+	err = proxifyRunner.Run()
 	if err != nil {
-		gologger.Fatalf("Could not run profixy: %s\n", err)
+		gologger.Fatalf("Could not run proxify: %s\n", err)
 	}
 
 }
