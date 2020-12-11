@@ -73,7 +73,7 @@ retryRead:
 func (m *Manager) GetCA() (tls.Certificate, []byte) {
 	buffer := &bytes.Buffer{}
 
-	pem.Encode(buffer, &pem.Block{Type: "CERTIFICATE", Bytes: m.cert.Certificate[0]})
+	_ = pem.Encode(buffer, &pem.Block{Type: "CERTIFICATE", Bytes: m.cert.Certificate[0]})
 	return *m.cert, buffer.Bytes()
 }
 

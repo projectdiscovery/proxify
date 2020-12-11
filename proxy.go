@@ -84,7 +84,7 @@ func (p *Proxy) OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Reque
 		req = p.MatchReplaceRequest(req)
 	}
 
-	p.logger.LogRequest(req, userdata)
+	_ = p.logger.LogRequest(req, userdata)
 	ctx.UserData = userdata
 
 	return req, nil
@@ -104,8 +104,7 @@ func (p *Proxy) OnResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Res
 		p.MatchReplaceResponse(resp)
 	}
 
-	p.logger.LogResponse(resp, userdata)
-
+	_ = p.logger.LogResponse(resp, userdata)
 	ctx.UserData = userdata
 	return resp
 }
@@ -217,6 +216,8 @@ func (p *Proxy) Run() error {
 	p.httpproxy.OnRequest().HandleConnectFunc(onConnect)
 	p.httpproxy.OnRequest().DoFunc(onRequest)
 	p.httpproxy.OnResponse().DoFunc(onResponse)
+
+	// Serve the certificate when the user makes requests to /proxify
 	p.httpproxy.OnRequest(goproxy.DstHostIs("proxify")).DoFunc(
 		func(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
 			if r.URL.Path != "/cacert.crt" {
@@ -240,9 +241,6 @@ func (p *Proxy) Run() error {
 			return r, resp
 		},
 	)
-	// Serve the certificate when the user makes requests to /proxify
-	http.HandleFunc("/proxify", func(w http.ResponseWriter, r *http.Request) {
-	})
 	return http.ListenAndServe(p.options.ListenAddr, p.httpproxy)
 }
 

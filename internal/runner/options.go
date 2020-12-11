@@ -57,7 +57,7 @@ func ParseOptions() *Options {
 	flag.StringVar(&options.UpstreamSocks5Proxy, "socks5-proxy", "", "Upstream SOCKS5 Proxy (eg socks5://proxyip:proxyport")
 
 	flag.Parse()
-	os.MkdirAll(options.Directory, os.ModePerm)
+	_ = os.MkdirAll(options.Directory, os.ModePerm)
 
 	// Read the inputs and configure the logging
 	options.configureOutput()
