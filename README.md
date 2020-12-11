@@ -4,8 +4,8 @@
 </h1>
 
 [![License](https://img.shields.io/badge/license-MIT-_red.svg)](https://opensource.org/licenses/MIT)
-[![Go Report Card](https://goreportcard.com/badge/github.com/projectdiscovery/profixy)](https://goreportcard.com/report/github.com/projectdiscovery/profixy)
-[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/projectdiscovery/profixy/issues)
+[![Go Report Card](https://goreportcard.com/badge/github.com/projectdiscovery/proxify)](https://goreportcard.com/report/github.com/projectdiscovery/proxify)
+[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/projectdiscovery/proxify/issues)
 [![Follow on Twitter](https://img.shields.io/twitter/follow/pdiscoveryio.svg?logo=twitter)](https://twitter.com/pdiscoveryio)
 [![Chat on Discord](https://img.shields.io/discord/695645237418131507.svg?logo=discord)](https://discord.gg/KECAGdH)
 
@@ -20,19 +20,19 @@ Additionally a replay utility allows to import the dumped traffic (request/respo
     - [From Binary](#from-binary)
     - [From Source](#from-source)
     - [From Github](#from-github)
-- [Usage](#usage-)
-  - [Upstream proxy](#use-upstream-proxy)
-  - [Dump HTTP/HTTPS traffic](#dump-all-the-httphttps-traffic)
-  - [Hostname mapping](#hostname-mapping-with-local-dns-resolver)
-  - [Match/Filter HTTP traffic](#matchfilter-traffic-with-with-dsl-language)
-  - [Match and Replace on the fly](#match-and-replace-on-the-fly)
-  - [Replay all traffic into burp](#replay-all-traffic-into-burp)
-- [Applications of proxify](applications-of-proxify)
+- [Usage](#usage)
+    - [Use Upstream proxy](#use-upstream-proxy)
+    - [Dump all the HTTP/HTTPS traffic](#dump-all-the-httphttps-traffic)
+    - [Hostname mapping with Local DNS resolver](#hostname-mapping-with-local-dns-resolver)
+    - [Match/Filter traffic with with DSL language.](#matchfilter-traffic-with-with-dsl-language)
+    - [Match and Replace on the fly](#match-and-replace-on-the-fly)
+    - [Replay all traffic into burp](#replay-all-traffic-into-burp)
+    - [Applications of Proxify](#applications-of-proxify)
 
 # Features
 
 <h1 align="left">
-  <img src="static/profixy-run.png" alt="profixy" width="700px"></a>
+  <img src="static/proxify-run.png" alt="proxify" width="700px"></a>
   <br>
 </h1>
 
@@ -49,20 +49,20 @@ Additionally a replay utility allows to import the dumped traffic (request/respo
 
 ### From Binary
 
-The installation is easy. You can download the pre-built binaries for your platform from the [Releases](https://github.com/projectdiscovery/profixy/releases/) page. Extract them using tar, move it to your `$PATH`and you're ready to go.
+The installation is easy. You can download the pre-built binaries for your platform from the [Releases](https://github.com/projectdiscovery/proxify/releases/) page. Extract them using tar, move it to your `$PATH`and you're ready to go.
 
 ```sh
-▶ tar -xvf profixy-linux-amd64.tar
-▶ mv profixy-linux-amd64 /usr/local/bin/profixy
-▶ profixy -version
+▶ tar -xvf proxify-linux-amd64.tar
+▶ mv proxify-linux-amd64 /usr/local/bin/proxify
+▶ proxify -version
 ```
 
-**profixy** requires **go1.14+** to install successfully. Run the following command to get the repo -
+**proxify** requires **go1.14+** to install successfully. Run the following command to get the repo -
 
 ### From Source
 
 ```sh
-▶ GO111MODULE=on go get -u github.com/projectdiscovery/proxify/cmd/profixy
+▶ GO111MODULE=on go get -u github.com/projectdiscovery/proxify/cmd/proxify
 ```
 
 ### From Github
@@ -81,21 +81,21 @@ This will display help for the tool. Here are all the switches it supports.
 
 | Flag                       | Description                | Example                                                      |
 | -------------------------- | -------------------------- | ------------------------------------------------------------ |
-| addr                       | Listen HTTP IP and Port    | profixy -addr 127.0.0.1:8080                                 |
-| dns-addr                   | Listen DNS IP and Port     | profixy -dns-addr '127.0.0.1:80'                             |
-| dns-mapping                | DNS A mapping              | profixy -dns-mapping test.com:80                             |
-| dns-resolver               | Listen DNS IP and Port     | profixy -dns-resolver '127.0.0.1:5353'                       |
-| http-proxy                 | Upstream HTTP Proxy        | profixy -http-proxy hxxp://127.0.0.1:8080                    |
-| no-color                   | No Color in output         | profixy -no-color                                            |
-| output                     | Output Folder              | profixy -output logs                                         |
-| request-dsl                | Request Filter DSL         | profixy -request-dsl "contains(request,'admim')"             |
-| request-match-replace-dsl  | Request Match-Replace DSL  | profixy -request-match-replace-dsl "replace(request,'false','true')" |
-| response-dsl               | Response Filter DSL        | profixy -response-dsl "contains(response, md5('test'))"      |
-| response-match-replace-dsl | Response Match-Replace DSL | profixy -response-match-replace-dsl "regex(response, '^authentication failed$', 'authentication ok')" |
-| silent                     | Silent output              | profixy -silent                                              |
-| socks5-proxy               | Upstream socks5 proxy      | profixy -socks5-proxy socks5://proxy-ip:port                 |
-| v                          | Verbose output             | profixy -v                                                   |
-| version                    | Current version            | profixy -version                                             |
+| addr                       | Listen HTTP IP and Port    | proxify -addr 127.0.0.1:8080                                 |
+| dns-addr                   | Listen DNS IP and Port     | proxify -dns-addr '127.0.0.1:80'                             |
+| dns-mapping                | DNS A mapping              | proxify -dns-mapping test.com:80                             |
+| dns-resolver               | Listen DNS IP and Port     | proxify -dns-resolver '127.0.0.1:5353'                       |
+| http-proxy                 | Upstream HTTP Proxy        | proxify -http-proxy hxxp://127.0.0.1:8080                    |
+| no-color                   | No Color in output         | proxify -no-color                                            |
+| output                     | Output Folder              | proxify -output logs                                         |
+| request-dsl                | Request Filter DSL         | proxify -request-dsl "contains(request,'admim')"             |
+| request-match-replace-dsl  | Request Match-Replace DSL  | proxify -request-match-replace-dsl "replace(request,'false','true')" |
+| response-dsl               | Response Filter DSL        | proxify -response-dsl "contains(response, md5('test'))"      |
+| response-match-replace-dsl | Response Match-Replace DSL | proxify -response-match-replace-dsl "regex(response, '^authentication failed$', 'authentication ok')" |
+| silent                     | Silent output              | proxify -silent                                              |
+| socks5-proxy               | Upstream socks5 proxy      | proxify -socks5-proxy socks5://proxy-ip:port                 |
+| v                          | Verbose output             | proxify -v                                                   |
+| version                    | Current version            | proxify -version                                             |
 
 
 
@@ -154,7 +154,7 @@ Proxify supports modifying Request and Responses on the fly with DSL language.
 
 ### Replay all traffic into burp
 
-Replay all the dumped requests/responses into the destination URL (http://127.0.0.1:8080) if not specified. For this to work it's necessary to configure burp to use profixy as upstream proxy, as it will take care to hijack the dns resolutions and simulate the remote server with the dumped request. This allows to have in the burp history exactly all requests/responses as if they were originally sent through it, allowing for example to perform a remote interception on cloud, and merge all results locally within burp.
+Replay all the dumped requests/responses into the destination URL (http://127.0.0.1:8080) if not specified. For this to work it's necessary to configure burp to use proxify as upstream proxy, as it will take care to hijack the dns resolutions and simulate the remote server with the dumped request. This allows to have in the burp history exactly all requests/responses as if they were originally sent through it, allowing for example to perform a remote interception on cloud, and merge all results locally within burp.
 
 ```sh
 ▶ replay -output "logs/"
