@@ -40,7 +40,7 @@ func ParseOptions() *Options {
 	options := &Options{}
 	flag.StringVar(&options.OutputDirectory, "output", "logs", "Output Folder")
 	flag.BoolVar(&options.Verbose, "v", false, "Verbose")
-	flag.StringVar(&options.Directory, "directory", path.Join(homeDir, ".config", "proxify"), "Directory for storing program information")
+	flag.StringVar(&options.Directory, "config", path.Join(homeDir, ".config", "proxify"), "Directory for storing program information")
 	flag.IntVar(&options.CertCacheSize, "cert-cache-size", 256, "Number of certificates to cache")
 	flag.BoolVar(&options.Silent, "silent", false, "Silent")
 	flag.BoolVar(&options.NoColor, "no-color", true, "No Color")
