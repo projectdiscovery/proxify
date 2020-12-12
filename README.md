@@ -27,7 +27,7 @@ Additionally a replay utility allows to import the dumped traffic (request/respo
     - [Match/Filter traffic with with DSL language.](#matchfilter-traffic-with-with-dsl-language)
     - [Match and Replace on the fly](#match-and-replace-on-the-fly)
     - [Replay all traffic into burp](#replay-all-traffic-into-burp)
-    - [Applications of Proxify](#applications-of-proxify)
+ - [Applications of Proxify](#applications-of-proxify)
 
 # Features
 
