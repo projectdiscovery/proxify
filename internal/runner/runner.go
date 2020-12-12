@@ -15,8 +15,10 @@ type Runner struct {
 
 // NewRunner instance
 func NewRunner(options *Options) (*Runner, error) {
-	proxy := proxify.NewProxy(&proxify.Options{
+	proxy, err := proxify.NewProxy(&proxify.Options{
 		Silent:                  options.Silent,
+		Directory:               options.Directory,
+		CertCacheSize:           options.CertCacheSize,
 		Verbose:                 options.Verbose,
 		ListenAddr:              options.ListenAddr,
 		OutputDirectory:         options.OutputDirectory,
@@ -30,6 +32,9 @@ func NewRunner(options *Options) (*Runner, error) {
 		RequestMatchReplaceDSL:  options.RequestMatchReplaceDSL,
 		ResponseMatchReplaceDSL: options.ResponseMatchReplaceDSL,
 	})
+	if err != nil {
+		return nil, err
+	}
 	return &Runner{options: options, proxy: proxy}, nil
 }
 

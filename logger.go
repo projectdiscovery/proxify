@@ -16,9 +16,8 @@ type OptionsLogger struct {
 }
 
 type OutputData struct {
-	userdata   UserData
-	isResponse bool
-	data       []byte
+	userdata UserData
+	data     []byte
 }
 
 type Logger struct {
@@ -31,7 +30,7 @@ func NewLogger(options *OptionsLogger) *Logger {
 		options:    options,
 		asyncqueue: make(chan OutputData, 1000),
 	}
-	logger.createOutputFolder()
+	_ = logger.createOutputFolder()
 	go logger.AsyncWrite()
 	return logger
 }
@@ -40,7 +39,6 @@ func (l *Logger) createOutputFolder() error {
 	if l.options.OutputFolder == "" {
 		return nil
 	}
-
 	return os.MkdirAll(l.options.OutputFolder, 0755)
 }
 
@@ -59,7 +57,7 @@ func (l *Logger) AsyncWrite() {
 			if outputdata.userdata.match {
 				outputFileName = destFile + ".match.txt"
 			}
-			os.Rename(destFile, outputFileName)
+			_ = os.Rename(destFile, outputFileName)
 		}
 	}
 }
@@ -100,12 +98,4 @@ func (l *Logger) LogResponse(resp *http.Response, userdata UserData) error {
 
 func (l *Logger) Close() {
 	close(l.asyncqueue)
-}
-
-func fileExists(filename string) bool {
-	info, err := os.Stat(filename)
-	if os.IsNotExist(err) {
-		return false
-	}
-	return !info.IsDir()
 }

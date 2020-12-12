@@ -3,6 +3,7 @@ package runner
 import (
 	"flag"
 	"os"
+	"path"
 
 	"github.com/projectdiscovery/gologger"
 )
@@ -11,6 +12,8 @@ import (
 //nolint:maligned // used once
 type Options struct {
 	OutputDirectory         string
+	Directory               string
+	CertCacheSize           int
 	Verbose                 bool
 	Silent                  bool
 	Version                 bool
@@ -28,9 +31,17 @@ type Options struct {
 }
 
 func ParseOptions() *Options {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		// Almost never here but panic
+		panic(err)
+	}
+
 	options := &Options{}
 	flag.StringVar(&options.OutputDirectory, "output", "logs", "Output Folder")
 	flag.BoolVar(&options.Verbose, "v", false, "Verbose")
+	flag.StringVar(&options.Directory, "directory", path.Join(homeDir, ".config", "proxify"), "Directory for storing program information")
+	flag.IntVar(&options.CertCacheSize, "cert-cache-size", 256, "Number of certificates to cache")
 	flag.BoolVar(&options.Silent, "silent", false, "Silent")
 	flag.BoolVar(&options.NoColor, "no-color", true, "No Color")
 	flag.BoolVar(&options.Version, "version", false, "Version")
@@ -46,6 +57,7 @@ func ParseOptions() *Options {
 	flag.StringVar(&options.UpstreamSocks5Proxy, "socks5-proxy", "", "Upstream SOCKS5 Proxy (eg socks5://proxyip:proxyport")
 
 	flag.Parse()
+	_ = os.MkdirAll(options.Directory, os.ModePerm)
 
 	// Read the inputs and configure the logging
 	options.configureOutput()
