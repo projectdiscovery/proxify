@@ -2,6 +2,7 @@ package proxify
 
 import (
 	"bufio"
+	"bytes"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"github.com/projectdiscovery/dsl"
 	"github.com/projectdiscovery/fastdialer/fastdialer"
 	"github.com/projectdiscovery/mapsutil"
+	"github.com/projectdiscovery/proxify/pkg/certs"
 	"github.com/projectdiscovery/tinydns"
 	"github.com/rs/xid"
 	"golang.org/x/net/proxy"
@@ -32,6 +34,8 @@ type OnConnectFunc func(string, *goproxy.ProxyCtx) (*goproxy.ConnectAction, stri
 type Options struct {
 	Silent                  bool
 	Verbose                 bool
+	CertCacheSize           int
+	Directory               string
 	ListenAddr              string
 	OutputDirectory         string
 	RequestDSL              string
@@ -52,6 +56,7 @@ type Proxy struct {
 	Dialer    *fastdialer.Dialer
 	options   *Options
 	logger    *Logger
+	certs     *certs.Manager
 	httpproxy *goproxy.ProxyHttpServer
 	tinydns   *tinydns.TinyDNS
 }
@@ -79,7 +84,7 @@ func (p *Proxy) OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Reque
 		req = p.MatchReplaceRequest(req)
 	}
 
-	p.logger.LogRequest(req, userdata)
+	_ = p.logger.LogRequest(req, userdata)
 	ctx.UserData = userdata
 
 	return req, nil
@@ -99,8 +104,7 @@ func (p *Proxy) OnResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Res
 		p.MatchReplaceResponse(resp)
 	}
 
-	p.logger.LogResponse(resp, userdata)
-
+	_ = p.logger.LogResponse(resp, userdata)
 	ctx.UserData = userdata
 	return resp
 }
@@ -212,6 +216,31 @@ func (p *Proxy) Run() error {
 	p.httpproxy.OnRequest().HandleConnectFunc(onConnect)
 	p.httpproxy.OnRequest().DoFunc(onRequest)
 	p.httpproxy.OnResponse().DoFunc(onResponse)
+
+	// Serve the certificate when the user makes requests to /proxify
+	p.httpproxy.OnRequest(goproxy.DstHostIs("proxify")).DoFunc(
+		func(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
+			if r.URL.Path != "/cacert.crt" {
+				return r, goproxy.NewResponse(r, "text/plain", 404, "Invalid path given")
+			}
+
+			_, ca := p.certs.GetCA()
+			reader := bytes.NewReader(ca)
+
+			header := http.Header{}
+			header.Set("Content-Type", "application/pkix-cert")
+			resp := &http.Response{
+				Request:          r,
+				TransferEncoding: r.TransferEncoding,
+				Header:           header,
+				StatusCode:       200,
+				Status:           http.StatusText(200),
+				ContentLength:    int64(reader.Len()),
+				Body:             ioutil.NopCloser(reader),
+			}
+			return r, resp
+		},
+	)
 	return http.ListenAndServe(p.options.ListenAddr, p.httpproxy)
 }
 
@@ -219,13 +248,30 @@ func (p *Proxy) Stop() {
 
 }
 
-func NewProxy(options *Options) *Proxy {
+func NewProxy(options *Options) (*Proxy, error) {
+	certs, err := certs.New(&certs.Options{
+		CacheSize: options.CertCacheSize,
+		Directory: options.Directory,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	httpproxy := goproxy.NewProxyHttpServer()
 	if options.Silent {
 		httpproxy.Logger = log.New(ioutil.Discard, "", log.Ltime|log.Lshortfile)
 	} else {
 		httpproxy.Verbose = true
 	}
+	httpproxy.Verbose = false
+
+	ca, _ := certs.GetCA()
+	goproxy.GoproxyCa = ca
+	goproxy.OkConnect = &goproxy.ConnectAction{Action: goproxy.ConnectAccept, TLSConfig: certs.TLSConfigFromCA()}
+	goproxy.MitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectMitm, TLSConfig: certs.TLSConfigFromCA()}
+	goproxy.HTTPMitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectHTTPMitm, TLSConfig: certs.TLSConfigFromCA()}
+	goproxy.RejectConnect = &goproxy.ConnectAction{Action: goproxy.ConnectReject, TLSConfig: certs.TLSConfigFromCA()}
+
 	logger := NewLogger(&OptionsLogger{
 		Verbose:      options.Verbose,
 		OutputFolder: options.OutputDirectory,
@@ -253,7 +299,7 @@ func NewProxy(options *Options) *Proxy {
 	}
 	dialer, err := fastdialer.NewDialer(fastdialerOptions)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return &Proxy{httpproxy: httpproxy, logger: logger, options: options, Dialer: dialer, tinydns: tdns}
+	return &Proxy{httpproxy: httpproxy, certs: certs, logger: logger, options: options, Dialer: dialer, tinydns: tdns}, nil
 }

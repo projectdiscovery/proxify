@@ -14,7 +14,6 @@ Additionally a replay utility allows to import the dumped traffic (request/respo
 
 # Resources
 
-- [Resources](#resources)
 - [Features](#features)
 - [Installation](#installation)
     - [From Binary](#from-binary)
@@ -27,7 +26,8 @@ Additionally a replay utility allows to import the dumped traffic (request/respo
     - [Match/Filter traffic with with DSL language.](#matchfilter-traffic-with-with-dsl-language)
     - [Match and Replace on the fly](#match-and-replace-on-the-fly)
     - [Replay all traffic into burp](#replay-all-traffic-into-burp)
- - [Applications of Proxify](#applications-of-proxify)
+- [Installing SSL Certificate](#installing-ssl-certificate)
+- [Applications of Proxify](#applications-of-proxify)
 
 # Features
 
@@ -79,24 +79,25 @@ The installation is easy. You can download the pre-built binaries for your platf
 
 This will display help for the tool. Here are all the switches it supports.
 
-| Flag                       | Description                | Example                                                      |
-| -------------------------- | -------------------------- | ------------------------------------------------------------ |
-| addr                       | Listen HTTP IP and Port    | proxify -addr 127.0.0.1:8080                                 |
-| dns-addr                   | Listen DNS IP and Port     | proxify -dns-addr '127.0.0.1:80'                             |
-| dns-mapping                | DNS A mapping              | proxify -dns-mapping test.com:80                             |
-| dns-resolver               | Listen DNS IP and Port     | proxify -dns-resolver '127.0.0.1:5353'                       |
-| http-proxy                 | Upstream HTTP Proxy        | proxify -http-proxy hxxp://127.0.0.1:8080                    |
-| no-color                   | No Color in output         | proxify -no-color                                            |
-| output                     | Output Folder              | proxify -output logs                                         |
-| request-dsl                | Request Filter DSL         | proxify -request-dsl "contains(request,'admim')"             |
-| request-match-replace-dsl  | Request Match-Replace DSL  | proxify -request-match-replace-dsl "replace(request,'false','true')" |
-| response-dsl               | Response Filter DSL        | proxify -response-dsl "contains(response, md5('test'))"      |
-| response-match-replace-dsl | Response Match-Replace DSL | proxify -response-match-replace-dsl "regex(response, '^authentication failed$', 'authentication ok')" |
-| silent                     | Silent output              | proxify -silent                                              |
-| socks5-proxy               | Upstream socks5 proxy      | proxify -socks5-proxy socks5://proxy-ip:port                 |
-| v                          | Verbose output             | proxify -v                                                   |
-| version                    | Current version            | proxify -version                                             |
-
+| Flag                       | Description                     | Example                                                      |
+| -------------------------- | ------------------------------- | ------------------------------------------------------------ |
+| addr                       | Listen HTTP IP and Port         | proxify -addr 127.0.0.1:8080                                 |
+| config                     | Config data path                | proxify -config certs                                        |
+| cert-cache-size            | Number of certificates to cache | proxify -cert-cache-size 1024                                |
+| dns-addr                   | Listen DNS IP and Port          | proxify -dns-addr '127.0.0.1:80'                             |
+| dns-mapping                | DNS A mapping                   | proxify -dns-mapping test.com:80                             |
+| dns-resolver               | Listen DNS IP and Port          | proxify -dns-resolver '127.0.0.1:5353'                       |
+| http-proxy                 | Upstream HTTP Proxy             | proxify -http-proxy hxxp://127.0.0.1:8080                    |
+| no-color                   | No Color in output              | proxify -no-color                                            |
+| output                     | Output Folder                   | proxify -output logs                                         |
+| request-dsl                | Request Filter DSL              | proxify -request-dsl "contains(request,'admim')"             |
+| request-match-replace-dsl  | Request Match-Replace DSL       | proxify -request-match-replace-dsl "replace(request,'false','true')" |
+| response-dsl               | Response Filter DSL             | proxify -response-dsl "contains(response, md5('test'))"      |
+| response-match-replace-dsl | Response Match-Replace DSL      | proxify -response-match-replace-dsl "regex(response, '^authentication failed$', 'authentication ok')" |
+| silent                     | Silent output                   | proxify -silent                                              |
+| socks5-proxy               | Upstream socks5 proxy           | proxify -socks5-proxy socks5://proxy-ip:port                 |
+| v                          | Verbose output                  | proxify -v                                                   |
+| version                    | Current version                 | proxify -version                                             |
 
 
 ### Use Upstream proxy
@@ -160,6 +161,11 @@ Replay all the dumped requests/responses into the destination URL (http://127.0.
 ▶ replay -output "logs/"
 ```
 
+### Installing SSL Certificate
+
+A certificate authority is generated for proxify which is stored in the folder `~/.config/proxify/` as default, manually can be specified by `-config` flag. The generated certificate can be imported by visiting [http://proxify/cacert.crt](http://proxify/cacert.crt) in a browser connected to proxify. 
+
+Installation steps for the Root Certificate is similar to other proxy tools which includes adding the cert to system trusted root store.
 
 ### Applications of Proxify
 
@@ -203,7 +209,6 @@ Start Chrome browser in Mac OS,
 
 </details>
 
-
 <details>
 <summary> Store all the response of while you fuzz as per you config at run time. </summary>
 
@@ -221,5 +226,6 @@ ffuf -x http://127.0.0.1:9999 FFUF_CMD_HERE
 ```
 
 </details>
+
 
 Proxify is made with 🖤 by the [projectdiscovery](https://projectdiscovery.io) team. Community contributions have made the project what it is. See the **[Thanks.md](https://github.com/projectdiscovery/proxify/blob/master/THANKS.md)** file for more details.

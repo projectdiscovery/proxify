@@ -23,14 +23,6 @@ var (
 	responses  map[string]*http.Response
 )
 
-func OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-	key := req.Header.Get("proxify")
-	response := responses[key]
-	delete(responses, key)
-	ctx.Resp = response
-	return req, response
-}
-
 type Options struct {
 	DNSListenerAddress       string
 	HTTPListenerAddress      string
@@ -62,7 +54,11 @@ func main() {
 	httpproxy.Tr.DialContext = dialer.Dial
 	httpproxy.OnRequest().HandleConnect(goproxy.AlwaysMitm)
 	// httpproxy.OnRequest().DoFunc(OnRequest)
-	go http.ListenAndServe(options.HTTPProxyListenerAddress, httpproxy)
+	go func() {
+		if err := http.ListenAndServe(options.HTTPProxyListenerAddress, httpproxy); err != nil {
+			log.Fatalf("Could not serve proxy: %s\n", err)
+		}
+	}()
 
 	// dns server
 	var domainsToAddresses map[string]string = map[string]string{
@@ -85,9 +81,13 @@ func main() {
 			w.Header().Add(k, strings.Join(v, "; "))
 		}
 		w.WriteHeader(response.StatusCode)
-		io.Copy(w, response.Body)
+		_, _ = io.Copy(w, response.Body)
 	})
-	go http.ListenAndServe(":80", nil)
+	go func() {
+		if err := http.ListenAndServe(":80", nil); err != nil {
+			log.Fatalf("Could not listen and serve: %s\n", err)
+		}
+	}()
 
 	// http client proxy
 	proxyUrl, err := url.Parse(options.HTTPBurpAddress)
@@ -125,8 +125,8 @@ func visit() filepath.WalkFunc {
 		}
 
 		filename := filepath.Base(path)
-		filename = strings.TrimRight(filename, ".txt")
-		filename = strings.TrimRight(filename, ".match")
+		filename = strings.TrimSuffix(filename, ".txt")
+		filename = strings.TrimSuffix(filename, ".match")
 
 		file, err := os.Open(path)
 		if err != nil {
@@ -163,7 +163,6 @@ func visit() filepath.WalkFunc {
 
 		responses[id] = response
 		_, err = httpclient.Do(request)
-
-		return nil
+		return err
 	}
 }
