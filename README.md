@@ -26,7 +26,7 @@ Additionally a replay utility allows to import the dumped traffic (request/respo
     - [Match/Filter traffic with with DSL language.](#matchfilter-traffic-with-with-dsl-language)
     - [Match and Replace on the fly](#match-and-replace-on-the-fly)
     - [Replay all traffic into burp](#replay-all-traffic-into-burp)
-- [Download SSL Certificate](#installing-ssl-certificate)
+- [Installing SSL Certificate](#installing-ssl-certificate)
 - [Applications of Proxify](#applications-of-proxify)
 
 # Features
@@ -163,7 +163,7 @@ Replay all the dumped requests/responses into the destination URL (http://127.0.
 
 ### Installing SSL Certificate
 
-A random certificate authority key is generated for proxify which is stored in the folder `~/.config/proxify/` as default, manually can be specified by `-config` flag. The generated certificate can be imported by visiting [http://proxify/cacert.crt](http://proxify/cacert.crt) in a browser connected to proxify. 
+A certificate authority is generated for proxify which is stored in the folder `~/.config/proxify/` as default, manually can be specified by `-config` flag. The generated certificate can be imported by visiting [http://proxify/cacert.crt](http://proxify/cacert.crt) in a browser connected to proxify. 
 
 Installation steps for the Root Certificate is similar to other proxy tools which includes adding the cert to system trusted root store.
 
