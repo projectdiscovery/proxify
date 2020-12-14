@@ -17,7 +17,7 @@ import (
 type Options struct {
 	DNSListenerAddress  string
 	HTTPListenerAddress string
-	HTTPBurpAddress     string
+	HTTPProxy           string
 	OutputFolder        string
 	ServerTLS           bool
 	ServerCert          string
