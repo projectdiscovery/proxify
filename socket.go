@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/projectdiscovery/dsl"
 )
 
 // SocketProxy - connect two sockets with TLS inspection
@@ -20,49 +22,61 @@ type SocketProxy struct {
 
 // SocketConn represent the single full duplex pipe
 type SocketConn struct {
-	laddr, raddr  net.Addr
-	lconn, rconn  net.Conn
-	erred         bool
-	errsig        chan bool
-	httpclient    *http.Client
-	HTTPServer    string
-	sentBytes     uint64
-	receivedBytes uint64
-	Verbose       bool
-	OutputHex     bool
-	Timeout       time.Duration
+	laddr, raddr            net.Addr
+	lconn, rconn            net.Conn
+	erred                   bool
+	errsig                  chan bool
+	httpclient              *http.Client
+	HTTPServer              string
+	sentBytes               uint64
+	receivedBytes           uint64
+	Verbose                 bool
+	OutputHex               bool
+	Timeout                 time.Duration
+	RequestMatchReplaceDSL  string
+	ResponseMatchReplaceDSL string
+	OnRequest               func([]byte) []byte
+	OnResponse              func([]byte) []byte
 }
 
 type SocketProxyOptions struct {
-	Protocol        string
-	ListenAddress   string
-	RemoteAddress   string
-	HTTPProxy       string
-	HTTPServer      string
-	listenAddress   net.TCPAddr
-	remoteAddress   net.TCPAddr
-	TLSClientConfig *tls.Config
-	TLSClient       bool
-	TLSServerConfig *tls.Config
-	TLSServer       bool
-	Verbose         bool
-	OutputHex       bool
-	Timeout         time.Duration
+	Protocol                string
+	ListenAddress           string
+	RemoteAddress           string
+	HTTPProxy               string
+	HTTPServer              string
+	listenAddress           net.TCPAddr
+	remoteAddress           net.TCPAddr
+	TLSClientConfig         *tls.Config
+	TLSClient               bool
+	TLSServerConfig         *tls.Config
+	TLSServer               bool
+	Verbose                 bool
+	OutputHex               bool
+	Timeout                 time.Duration
+	RequestMatchReplaceDSL  string
+	ResponseMatchReplaceDSL string
+	OnRequest               func([]byte) []byte
+	OnResponse              func([]byte) []byte
 }
 
 func (so *SocketProxyOptions) Clone() SocketProxyOptions {
 	return SocketProxyOptions{
-		Protocol:        so.Protocol,
-		ListenAddress:   so.ListenAddress,
-		RemoteAddress:   so.RemoteAddress,
-		HTTPProxy:       so.HTTPProxy,
-		HTTPServer:      so.HTTPServer,
-		listenAddress:   so.listenAddress,
-		remoteAddress:   so.remoteAddress,
-		TLSClientConfig: so.TLSClientConfig,
-		TLSClient:       so.TLSClient,
-		TLSServerConfig: so.TLSServerConfig,
-		TLSServer:       so.TLSServer,
+		Protocol:                so.Protocol,
+		ListenAddress:           so.ListenAddress,
+		RemoteAddress:           so.RemoteAddress,
+		HTTPProxy:               so.HTTPProxy,
+		HTTPServer:              so.HTTPServer,
+		listenAddress:           so.listenAddress,
+		remoteAddress:           so.remoteAddress,
+		TLSClientConfig:         so.TLSClientConfig,
+		TLSClient:               so.TLSClient,
+		TLSServerConfig:         so.TLSServerConfig,
+		TLSServer:               so.TLSServer,
+		OnRequest:               so.OnRequest,
+		OnResponse:              so.OnResponse,
+		RequestMatchReplaceDSL:  so.RequestMatchReplaceDSL,
+		ResponseMatchReplaceDSL: so.ResponseMatchReplaceDSL,
 	}
 }
 
@@ -141,6 +155,13 @@ func (p *SocketProxy) Proxy(conn net.Conn) error {
 		}
 		socketConn.HTTPServer = p.options.HTTPServer
 	}
+
+	socketConn.OnRequest = p.options.OnRequest
+	socketConn.OnResponse = p.options.OnResponse
+
+	socketConn.RequestMatchReplaceDSL = p.options.RequestMatchReplaceDSL
+	socketConn.ResponseMatchReplaceDSL = p.options.ResponseMatchReplaceDSL
+
 	socketConn.errsig = make(chan bool)
 	socketConn.fullduplex()
 
@@ -197,6 +218,47 @@ func (p *SocketConn) pipe(src, dst io.ReadWriter) {
 			return
 		}
 		b := buff[:n]
+
+		// Client => Proxy => Destination
+		if islocal {
+			// DSL
+			if p.RequestMatchReplaceDSL != "" {
+				args := make(map[string]interface{})
+				args["data"] = b
+				newB, err := dsl.EvalExpr(p.RequestMatchReplaceDSL, args)
+				// In case of error use the original value
+				if err != nil {
+					log.Printf("%s\n", err)
+				} else {
+					// otherwise replace it
+					b = newB.([]byte)
+				}
+			}
+
+			// Custom callback
+			if p.OnRequest != nil {
+				b = p.OnRequest(b)
+			}
+		} else { // Destination => Proxy => Client
+			// DSL
+			if p.ResponseMatchReplaceDSL != "" {
+				args := make(map[string]interface{})
+				args["data"] = b
+				newB, err := dsl.EvalExpr(p.ResponseMatchReplaceDSL, args)
+				// In case of error use the original value
+				if err != nil {
+					log.Printf("%s\n", err)
+				} else {
+					// otherwise replace it
+					b = newB.([]byte)
+				}
+			}
+
+			// Custom callback
+			if p.OnResponse != nil {
+				b = p.OnResponse(b)
+			}
+		}
 
 		// show output
 		log.Printf(dataDirection, n, "")

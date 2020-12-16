@@ -15,22 +15,24 @@ import (
 )
 
 type Options struct {
-	DNSListenerAddress  string
-	HTTPListenerAddress string
-	HTTPProxy           string
-	OutputFolder        string
-	ServerTLS           bool
-	ServerCert          string
-	ServerKey           string
-	ClientTLS           bool
-	ClientCert          string
-	ClientKey           string
-	Protocol            string
-	Relays              Relays
-	DNSFallbackResolver string
-	ListenDNSAddr       string
-	DNSMapping          string
-	Timeout             int
+	DNSListenerAddress      string
+	HTTPListenerAddress     string
+	HTTPProxy               string
+	OutputFolder            string
+	ServerTLS               bool
+	ServerCert              string
+	ServerKey               string
+	ClientTLS               bool
+	ClientCert              string
+	ClientKey               string
+	Protocol                string
+	Relays                  Relays
+	DNSFallbackResolver     string
+	ListenDNSAddr           string
+	DNSMapping              string
+	Timeout                 int
+	RequestMatchReplaceDSL  string
+	ResponseMatchReplaceDSL string
 }
 
 func httpserver(addr string) error {
@@ -76,6 +78,8 @@ func main() {
 	flag.StringVar(&options.ListenDNSAddr, "dns-addr", ":5353", "Listen DNS Ip and port (ip:port)")
 	flag.StringVar(&options.DNSMapping, "dns-mapping", "", "DNS A mapping (eg domain:ip,domain:ip,..)")
 	flag.IntVar(&options.Timeout, "timeout", 180, "Connection Timeout In Seconds")
+	flag.StringVar(&options.RequestMatchReplaceDSL, "request-match-replace-dsl", "", "Request Match-Replace DSL")
+	flag.StringVar(&options.ResponseMatchReplaceDSL, "response-match-replace-dsl", "", "Request Match-Replace DSL")
 	// Single protocol for now
 	flag.StringVar(&options.Protocol, "protocol", "tcp", "tcp or udp")
 	flag.Var(&options.Relays, "relay", "listen_ip:listen_port => destination_ip:destination_port")
@@ -106,6 +110,8 @@ func main() {
 	}
 	proxyOpts.Protocol = options.Protocol
 	proxyOpts.HTTPProxy = options.HTTPProxy
+	proxyOpts.RequestMatchReplaceDSL = options.RequestMatchReplaceDSL
+	proxyOpts.ResponseMatchReplaceDSL = options.ResponseMatchReplaceDSL
 
 	if options.Timeout >= 0 {
 		proxyOpts.Timeout = time.Duration(options.Timeout) * time.Second
