@@ -3,6 +3,7 @@ package proxify
 import (
 	"bufio"
 	"bytes"
+	"crypto/tls"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -189,14 +190,14 @@ func (p *Proxy) Run() error {
 	if p.options.UpstreamHTTPProxy != "" {
 		p.httpproxy.Tr = &http.Transport{Proxy: func(req *http.Request) (*url.URL, error) {
 			return url.Parse(p.options.UpstreamHTTPProxy)
-		}}
+		}, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
 		p.httpproxy.ConnectDial = p.httpproxy.NewConnectDialToProxy(p.options.UpstreamHTTPProxy)
 	} else if p.options.UpstreamSock5Proxy != "" {
 		dialer, err := proxy.SOCKS5("tcp", p.options.UpstreamSock5Proxy, nil, proxy.Direct)
 		if err != nil {
 			return err
 		}
-		p.httpproxy.Tr = &http.Transport{Dial: dialer.Dial}
+		p.httpproxy.Tr = &http.Transport{Dial: dialer.Dial, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
 		p.httpproxy.ConnectDial = nil
 	} else {
 		p.httpproxy.Tr.DialContext = p.Dialer.Dial
