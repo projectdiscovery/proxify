@@ -33,6 +33,8 @@ type OnResponseFunc func(*http.Response, *goproxy.ProxyCtx) *http.Response
 type OnConnectFunc func(string, *goproxy.ProxyCtx) (*goproxy.ConnectAction, string)
 
 type Options struct {
+	DumpRequest             bool
+	DumpResponse            bool
 	Silent                  bool
 	Verbose                 bool
 	CertCacheSize           int
@@ -276,6 +278,8 @@ func NewProxy(options *Options) (*Proxy, error) {
 	logger := NewLogger(&OptionsLogger{
 		Verbose:      options.Verbose,
 		OutputFolder: options.OutputDirectory,
+		DumpRequest:  options.DumpRequest,
+		DumpResponse: options.DumpResponse,
 	})
 
 	var tdns *tinydns.TinyDNS

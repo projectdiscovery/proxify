@@ -19,6 +19,8 @@ const (
 type OptionsLogger struct {
 	Verbose      bool
 	OutputFolder string
+	DumpRequest  bool
+	DumpResponse bool
 }
 
 type OutputData struct {
@@ -36,7 +38,7 @@ func NewLogger(options *OptionsLogger) *Logger {
 		options:    options,
 		asyncqueue: make(chan OutputData, 1000),
 	}
-	_ = logger.createOutputFolder()
+	logger.createOutputFolder() //nolint
 	go logger.AsyncWrite()
 	return logger
 }
@@ -49,16 +51,28 @@ func (l *Logger) createOutputFolder() error {
 }
 
 func (l *Logger) AsyncWrite() {
-	var format string
+	var (
+		format     string
+		partSuffix string
+	)
 	for outputdata := range l.asyncqueue {
-		format = dataWithoutNewLine
-		destFile := path.Join(l.options.OutputFolder, fmt.Sprintf("%s-%s", outputdata.userdata.host, outputdata.userdata.id))
+		if !l.options.DumpRequest && !l.options.DumpResponse {
+			partSuffix = ""
+		} else if l.options.DumpRequest && !outputdata.userdata.hasResponse {
+			partSuffix = ".request"
+		} else if l.options.DumpResponse && outputdata.userdata.hasResponse {
+			partSuffix = ".response"
+		} else {
+			continue
+		}
+		destFile := path.Join(l.options.OutputFolder, fmt.Sprintf("%s%s-%s", outputdata.userdata.host, partSuffix, outputdata.userdata.id))
 		// if it's a response and file doesn't exist skip
 		f, err := os.OpenFile(destFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			continue
 		}
 
+		format = dataWithoutNewLine
 		if !strings.HasSuffix(string(outputdata.data), "\n") {
 			format = dataWithNewLine
 		}
