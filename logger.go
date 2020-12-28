@@ -6,8 +6,14 @@ import (
 	"net/http/httputil"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/projectdiscovery/gologger"
+)
+
+const (
+	dataWithNewLine    = "%s\n\n"
+	dataWithoutNewLine = "%s"
 )
 
 type OptionsLogger struct {
@@ -43,21 +49,29 @@ func (l *Logger) createOutputFolder() error {
 }
 
 func (l *Logger) AsyncWrite() {
+	var format string
 	for outputdata := range l.asyncqueue {
+		format = dataWithoutNewLine
 		destFile := path.Join(l.options.OutputFolder, fmt.Sprintf("%s-%s", outputdata.userdata.host, outputdata.userdata.id))
 		// if it's a response and file doesn't exist skip
 		f, err := os.OpenFile(destFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			continue
 		}
-		fmt.Fprintf(f, "%s", outputdata.data)
+
+		if !strings.HasSuffix(string(outputdata.data), "\n") {
+			format = dataWithNewLine
+		}
+
+		fmt.Fprintf(f, format, outputdata.data)
+
 		f.Close()
 		if outputdata.userdata.hasResponse {
 			outputFileName := destFile + ".txt"
 			if outputdata.userdata.match {
 				outputFileName = destFile + ".match.txt"
 			}
-			_ = os.Rename(destFile, outputFileName)
+			os.Rename(destFile, outputFileName) //nolint
 		}
 	}
 }
@@ -72,7 +86,7 @@ func (l *Logger) LogRequest(req *http.Request, userdata UserData) error {
 	}
 
 	if l.options.Verbose {
-		gologger.Silentf(string(reqdump))
+		gologger.Silentf("%s", string(reqdump))
 	}
 
 	return nil
@@ -91,7 +105,7 @@ func (l *Logger) LogResponse(resp *http.Response, userdata UserData) error {
 	}
 
 	if l.options.Verbose {
-		gologger.Silentf(string(respdump))
+		gologger.Silentf("%s", string(respdump))
 	}
 	return nil
 }

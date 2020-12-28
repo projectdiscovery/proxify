@@ -85,7 +85,7 @@ func (p *Proxy) OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Reque
 		req = p.MatchReplaceRequest(req)
 	}
 
-	_ = p.logger.LogRequest(req, userdata)
+	p.logger.LogRequest(req, userdata) //nolint
 	ctx.UserData = userdata
 
 	return req, nil
@@ -105,7 +105,7 @@ func (p *Proxy) OnResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Res
 		p.MatchReplaceResponse(resp)
 	}
 
-	_ = p.logger.LogResponse(resp, userdata)
+	p.logger.LogResponse(resp, userdata) //nolint
 	ctx.UserData = userdata
 	return resp
 }
