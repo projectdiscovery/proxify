@@ -186,8 +186,8 @@ func (p *SocketConn) fullduplex() {
 	go p.pipe(p.lconn, p.rconn)
 	go p.pipe(p.rconn, p.lconn)
 	if p.Timeout > 0 {
-		p.lconn.SetDeadline(time.Now().Add(p.Timeout))
-		p.rconn.SetDeadline(time.Now().Add(p.Timeout))
+		p.lconn.SetDeadline(time.Now().Add(p.Timeout)) //nolint
+		p.rconn.SetDeadline(time.Now().Add(p.Timeout)) //nolint
 	}
 
 	//wait for close...

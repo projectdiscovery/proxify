@@ -81,7 +81,7 @@ func main() {
 			w.Header().Add(k, strings.Join(v, "; "))
 		}
 		w.WriteHeader(response.StatusCode)
-		_, _ = io.Copy(w, response.Body)
+		io.Copy(w, response.Body) //nolint
 	})
 	go func() {
 		if err := http.ListenAndServe(":80", nil); err != nil {
