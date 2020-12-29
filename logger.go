@@ -54,18 +54,22 @@ func (l *Logger) AsyncWrite() {
 	var (
 		format     string
 		partSuffix string
+		ext        string
 	)
 	for outputdata := range l.asyncqueue {
 		if !l.options.DumpRequest && !l.options.DumpResponse {
 			partSuffix = ""
+			ext = ""
 		} else if l.options.DumpRequest && !outputdata.userdata.hasResponse {
 			partSuffix = ".request"
+			ext = ".txt"
 		} else if l.options.DumpResponse && outputdata.userdata.hasResponse {
 			partSuffix = ".response"
+			ext = ".txt"
 		} else {
 			continue
 		}
-		destFile := path.Join(l.options.OutputFolder, fmt.Sprintf("%s%s-%s", outputdata.userdata.host, partSuffix, outputdata.userdata.id))
+		destFile := path.Join(l.options.OutputFolder, fmt.Sprintf("%s%s-%s%s", outputdata.userdata.host, partSuffix, outputdata.userdata.id, ext))
 		// if it's a response and file doesn't exist skip
 		f, err := os.OpenFile(destFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
