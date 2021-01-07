@@ -84,7 +84,7 @@ func (l *Logger) AsyncWrite() {
 		fmt.Fprintf(f, format, outputdata.data)
 
 		f.Close()
-		if outputdata.userdata.hasResponse {
+		if outputdata.userdata.hasResponse && !(l.options.DumpRequest || l.options.DumpResponse) {
 			outputFileName := destFile + ".txt"
 			if outputdata.userdata.match {
 				outputFileName = destFile + ".match.txt"
