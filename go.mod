@@ -1,6 +1,6 @@
 module github.com/projectdiscovery/proxify
 
-go 1.14
+go 1.15
 
 require (
 	github.com/Knetic/govaluate v3.0.0+incompatible // indirect
@@ -14,5 +14,5 @@ require (
 	github.com/projectdiscovery/tinydns v0.0.1
 	github.com/rs/xid v1.2.1
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
-	golang.org/x/net v0.0.0-20201209123823-ac852fbbde11
+	golang.org/x/net v0.0.0-20201224014010-6772e930b67b
 )

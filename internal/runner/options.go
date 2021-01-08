@@ -28,6 +28,8 @@ type Options struct {
 	ResponseMatchReplaceDSL string
 	UpstreamHTTPProxy       string
 	UpstreamSocks5Proxy     string
+	DumpRequest             bool
+	DumpResponse            bool
 }
 
 func ParseOptions() *Options {
@@ -54,7 +56,9 @@ func ParseOptions() *Options {
 	flag.StringVar(&options.ListenDNSAddr, "dns-addr", "", "Listen DNS Ip and port (ip:port)")
 	flag.StringVar(&options.DNSMapping, "dns-mapping", "", "DNS A mapping (eg domain:ip,domain:ip,..)")
 	flag.StringVar(&options.UpstreamHTTPProxy, "http-proxy", "", "Upstream HTTP Proxy (eg http://proxyip:proxyport")
-	flag.StringVar(&options.UpstreamSocks5Proxy, "socks5-proxy", "", "Upstream SOCKS5 Proxy (eg socks5://proxyip:proxyport")
+	flag.StringVar(&options.UpstreamSocks5Proxy, "socks5-proxy", "", "Upstream SOCKS5 Proxy (eg socks5://proxyip:proxyport)")
+	flag.BoolVar(&options.DumpRequest, "dump-req", false, "Dump requests in separate files")
+	flag.BoolVar(&options.DumpResponse, "dump-resp", false, "Dump responses in separate files")
 
 	flag.Parse()
 	_ = os.MkdirAll(options.Directory, os.ModePerm)

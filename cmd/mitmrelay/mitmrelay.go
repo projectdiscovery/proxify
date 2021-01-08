@@ -38,7 +38,7 @@ type Options struct {
 func httpserver(addr string) error {
 	// echo server
 	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-		io.Copy(w, req.Body)
+		io.Copy(w, req.Body) //nolint
 	})
 
 	return http.ListenAndServe(addr, nil)
@@ -117,8 +117,8 @@ func main() {
 		proxyOpts.Timeout = time.Duration(options.Timeout) * time.Second
 	}
 
-	go httpserver(options.HTTPListenerAddress)
-	go dnsserver(options.ListenDNSAddr, options.DNSFallbackResolver, options.DNSMapping)
+	go httpserver(options.HTTPListenerAddress)                                           //nolint
+	go dnsserver(options.ListenDNSAddr, options.DNSFallbackResolver, options.DNSMapping) //nolint
 
 	var wgproxies sync.WaitGroup
 
