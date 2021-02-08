@@ -72,7 +72,7 @@ func (l *Logger) LogRequest(req *http.Request, userdata UserData) error {
 	}
 
 	if l.options.Verbose {
-		gologger.Silentf(string(reqdump))
+		gologger.Silent().Msgf("%s", string(reqdump))
 	}
 
 	return nil
@@ -91,7 +91,7 @@ func (l *Logger) LogResponse(resp *http.Response, userdata UserData) error {
 	}
 
 	if l.options.Verbose {
-		gologger.Silentf(string(respdump))
+		gologger.Silent().Msgf("%s", string(respdump))
 	}
 	return nil
 }
