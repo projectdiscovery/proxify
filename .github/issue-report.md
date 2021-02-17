@@ -11,7 +11,7 @@ assignees: ''
 A clear and concise description of what the bug is.
 
 **Proxify version**
-Please share the version of the nuclei you are running with `proxify -version` 
+Please share the version of the proxify you are running with `proxify -version` 
 
 
 **Screenshot of the error or bug**

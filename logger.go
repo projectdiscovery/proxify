@@ -6,13 +6,21 @@ import (
 	"net/http/httputil"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/projectdiscovery/gologger"
+)
+
+const (
+	dataWithNewLine    = "%s\n\n"
+	dataWithoutNewLine = "%s"
 )
 
 type OptionsLogger struct {
 	Verbose      bool
 	OutputFolder string
+	DumpRequest  bool
+	DumpResponse bool
 }
 
 type OutputData struct {
@@ -25,12 +33,13 @@ type Logger struct {
 	asyncqueue chan OutputData
 }
 
+// NewLogger instance
 func NewLogger(options *OptionsLogger) *Logger {
 	logger := &Logger{
 		options:    options,
 		asyncqueue: make(chan OutputData, 1000),
 	}
-	_ = logger.createOutputFolder()
+	logger.createOutputFolder() //nolint
 	go logger.AsyncWrite()
 	return logger
 }
@@ -42,26 +51,52 @@ func (l *Logger) createOutputFolder() error {
 	return os.MkdirAll(l.options.OutputFolder, 0755)
 }
 
+// AsyncWrite data
 func (l *Logger) AsyncWrite() {
+	var (
+		format     string
+		partSuffix string
+		ext        string
+	)
 	for outputdata := range l.asyncqueue {
-		destFile := path.Join(l.options.OutputFolder, fmt.Sprintf("%s-%s", outputdata.userdata.host, outputdata.userdata.id))
+		if !l.options.DumpRequest && !l.options.DumpResponse {
+			partSuffix = ""
+			ext = ""
+		} else if l.options.DumpRequest && !outputdata.userdata.hasResponse {
+			partSuffix = ".request"
+			ext = ".txt"
+		} else if l.options.DumpResponse && outputdata.userdata.hasResponse {
+			partSuffix = ".response"
+			ext = ".txt"
+		} else {
+			continue
+		}
+		destFile := path.Join(l.options.OutputFolder, fmt.Sprintf("%s%s-%s%s", outputdata.userdata.host, partSuffix, outputdata.userdata.id, ext))
 		// if it's a response and file doesn't exist skip
 		f, err := os.OpenFile(destFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			continue
 		}
-		fmt.Fprintf(f, "%s", outputdata.data)
+
+		format = dataWithoutNewLine
+		if !strings.HasSuffix(string(outputdata.data), "\n") {
+			format = dataWithNewLine
+		}
+
+		fmt.Fprintf(f, format, outputdata.data)
+
 		f.Close()
-		if outputdata.userdata.hasResponse {
+		if outputdata.userdata.hasResponse && !(l.options.DumpRequest || l.options.DumpResponse) {
 			outputFileName := destFile + ".txt"
 			if outputdata.userdata.match {
 				outputFileName = destFile + ".match.txt"
 			}
-			_ = os.Rename(destFile, outputFileName)
+			os.Rename(destFile, outputFileName) //nolint
 		}
 	}
 }
 
+// LogRequest and user data
 func (l *Logger) LogRequest(req *http.Request, userdata UserData) error {
 	reqdump, err := httputil.DumpRequest(req, true)
 	if err != nil {
@@ -78,6 +113,7 @@ func (l *Logger) LogRequest(req *http.Request, userdata UserData) error {
 	return nil
 }
 
+// LogResponse and user data
 func (l *Logger) LogResponse(resp *http.Response, userdata UserData) error {
 	if resp == nil {
 		return nil
@@ -96,6 +132,7 @@ func (l *Logger) LogResponse(resp *http.Response, userdata UserData) error {
 	return nil
 }
 
+// Close logger instance
 func (l *Logger) Close() {
 	close(l.asyncqueue)
 }

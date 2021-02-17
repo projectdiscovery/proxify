@@ -3,6 +3,7 @@ package proxify
 import (
 	"bufio"
 	"bytes"
+	"crypto/tls"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -32,6 +33,8 @@ type OnResponseFunc func(*http.Response, *goproxy.ProxyCtx) *http.Response
 type OnConnectFunc func(string, *goproxy.ProxyCtx) (*goproxy.ConnectAction, string)
 
 type Options struct {
+	DumpRequest             bool
+	DumpResponse            bool
 	Silent                  bool
 	Verbose                 bool
 	CertCacheSize           int
@@ -84,7 +87,7 @@ func (p *Proxy) OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Reque
 		req = p.MatchReplaceRequest(req)
 	}
 
-	_ = p.logger.LogRequest(req, userdata)
+	p.logger.LogRequest(req, userdata) //nolint
 	ctx.UserData = userdata
 
 	return req, nil
@@ -104,7 +107,7 @@ func (p *Proxy) OnResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Res
 		p.MatchReplaceResponse(resp)
 	}
 
-	_ = p.logger.LogResponse(resp, userdata)
+	p.logger.LogResponse(resp, userdata) //nolint
 	ctx.UserData = userdata
 	return resp
 }
@@ -189,14 +192,14 @@ func (p *Proxy) Run() error {
 	if p.options.UpstreamHTTPProxy != "" {
 		p.httpproxy.Tr = &http.Transport{Proxy: func(req *http.Request) (*url.URL, error) {
 			return url.Parse(p.options.UpstreamHTTPProxy)
-		}}
+		}, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
 		p.httpproxy.ConnectDial = p.httpproxy.NewConnectDialToProxy(p.options.UpstreamHTTPProxy)
 	} else if p.options.UpstreamSock5Proxy != "" {
 		dialer, err := proxy.SOCKS5("tcp", p.options.UpstreamSock5Proxy, nil, proxy.Direct)
 		if err != nil {
 			return err
 		}
-		p.httpproxy.Tr = &http.Transport{Dial: dialer.Dial}
+		p.httpproxy.Tr = &http.Transport{Dial: dialer.Dial, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
 		p.httpproxy.ConnectDial = nil
 	} else {
 		p.httpproxy.Tr.DialContext = p.Dialer.Dial
@@ -275,6 +278,8 @@ func NewProxy(options *Options) (*Proxy, error) {
 	logger := NewLogger(&OptionsLogger{
 		Verbose:      options.Verbose,
 		OutputFolder: options.OutputDirectory,
+		DumpRequest:  options.DumpRequest,
+		DumpResponse: options.DumpResponse,
 	})
 
 	var tdns *tinydns.TinyDNS

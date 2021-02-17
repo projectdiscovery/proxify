@@ -84,7 +84,7 @@ func (m *Manager) createAuthority(certPath, keyPath string) error {
 var errExpiredCert = errors.New("expired cert error")
 
 // readCertificateDisk reads a certificate and key file from disk
-func (m *Manager) readCertificateDisk(certFile string, keyFile string) (*tls.Certificate, error) {
+func (m *Manager) readCertificateDisk(certFile, keyFile string) (*tls.Certificate, error) {
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
 		return nil, err

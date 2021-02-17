@@ -10,6 +10,28 @@ builds:
         - 386
         - arm
         - arm64
+    - binary: replay
+      main: cmd/replay/replay.go
+      goos:
+        - linux
+        - windows
+        - darwin
+      goarch:
+        - amd64
+        - 386
+        - arm
+        - arm64
+    - binary: mitmrelay
+      main: cmd/mitmrelay/mitmrelay.go
+      goos:
+        - linux
+        - windows
+        - darwin
+      goarch:
+        - amd64
+        - 386
+        - arm
+        - arm64
   
 archives:
     - id: tgz

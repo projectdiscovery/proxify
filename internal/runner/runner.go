@@ -31,6 +31,8 @@ func NewRunner(options *Options) (*Runner, error) {
 		DNSFallbackResolver:     options.DNSFallbackResolver,
 		RequestMatchReplaceDSL:  options.RequestMatchReplaceDSL,
 		ResponseMatchReplaceDSL: options.ResponseMatchReplaceDSL,
+		DumpRequest:             options.DumpRequest,
+		DumpResponse:            options.DumpResponse,
 	})
 	if err != nil {
 		return nil, err
