@@ -43,24 +43,24 @@ func NewRunner(options *Options) (*Runner, error) {
 // Run polling and notification
 func (r *Runner) Run() error {
 	// configuration summary
-	gologger.Printf("Proxy Listening on %s\n", r.options.ListenAddr)
+	gologger.Print().Msgf("Proxy Listening on %s\n", r.options.ListenAddr)
 	if r.options.OutputDirectory != "" {
-		gologger.Printf("Saving traffic to %s\n", r.options.OutputDirectory)
+		gologger.Print().Msgf("Saving traffic to %s\n", r.options.OutputDirectory)
 	}
 
 	if r.options.UpstreamHTTPProxy != "" {
-		gologger.Printf("Using upstream HTTP proxy: %s\n", r.options.UpstreamHTTPProxy)
+		gologger.Print().Msgf("Using upstream HTTP proxy: %s\n", r.options.UpstreamHTTPProxy)
 	} else if r.options.UpstreamSocks5Proxy != "" {
-		gologger.Printf("Using upstream SOCKS5 proxy: %s\n", r.options.UpstreamSocks5Proxy)
+		gologger.Print().Msgf("Using upstream SOCKS5 proxy: %s\n", r.options.UpstreamSocks5Proxy)
 	}
 
 	if r.options.DNSMapping != "" {
 		for _, v := range strings.Split(r.options.DNSMapping, ",") {
-			gologger.Printf("Domain => IP: %s\n", v)
+			gologger.Print().Msgf("Domain => IP: %s\n", v)
 		}
 
 		if r.options.DNSFallbackResolver != "" {
-			gologger.Printf("Fallback Resolver: %s\n", r.options.DNSFallbackResolver)
+			gologger.Print().Msgf("Fallback Resolver: %s\n", r.options.DNSFallbackResolver)
 		}
 
 	}
