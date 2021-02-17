@@ -140,7 +140,7 @@ func (m *Manager) signCertificate(host string) (*tls.Certificate, error) {
 		template.DNSNames = append(template.DNSNames, host)
 	}
 
-	certpriv, err := rsa.GenerateKey(rand.Reader, 1024)
+	certpriv, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return nil, err
 	}

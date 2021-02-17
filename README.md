@@ -62,7 +62,7 @@ The installation is easy. You can download the pre-built binaries for your platf
 ### From Source
 
 ```sh
-▶ GO111MODULE=on go get -u github.com/projectdiscovery/proxify/cmd/proxify
+▶ GO111MODULE=on go get -v github.com/projectdiscovery/proxify/cmd/proxify
 ```
 
 ### From Github
