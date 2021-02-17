@@ -4,12 +4,12 @@ import (
 	"crypto/tls"
 	"flag"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/proxify"
 	"github.com/projectdiscovery/tinydns"
 )
@@ -92,7 +92,7 @@ func main() {
 	if options.ClientCert != "" && options.ClientKey != "" {
 		cert, err := tls.LoadX509KeyPair(options.ClientCert, options.ClientKey)
 		if err != nil {
-			log.Fatal(err)
+			gologger.Fatal().Msgf("%s\n", err)
 		}
 		config := tls.Config{Certificates: []tls.Certificate{cert}, InsecureSkipVerify: true}
 		proxyOpts.TLSClientConfig = &config
@@ -103,7 +103,7 @@ func main() {
 	if options.ServerCert != "" && options.ServerKey != "" {
 		cert, err := tls.LoadX509KeyPair(options.ServerCert, options.ServerKey)
 		if err != nil {
-			log.Fatal(err)
+			gologger.Fatal().Msgf("%s\n", err)
 		}
 		config := tls.Config{Certificates: []tls.Certificate{cert}, InsecureSkipVerify: true}
 		proxyOpts.TLSServerConfig = &config
@@ -128,14 +128,14 @@ func main() {
 			defer wgproxies.Done()
 			addresses := strings.Split(relay, "=>")
 			if len(addresses) != 2 {
-				log.Printf("[!] Skipping invalid relay %s", relay)
+				gologger.Print().Msgf("[!] Skipping invalid relay %s", relay)
 				return
 			}
 			ropts := proxyOpts.Clone()
 			ropts.ListenAddress, ropts.RemoteAddress = strings.TrimSpace(addresses[0]), strings.TrimSpace(addresses[1])
 			sproxy := proxify.NewSocketProxy(&ropts)
-			log.Printf("[+] Relay listening on %s -> %s", ropts.ListenAddress, ropts.RemoteAddress)
-			log.Print(sproxy.Run())
+			gologger.Print().Msgf("[+] Relay listening on %s -> %s", ropts.ListenAddress, ropts.RemoteAddress)
+			gologger.Print().Msgf("%s\n", sproxy.Run())
 		}(relay)
 	}
 

@@ -33,6 +33,7 @@ type Logger struct {
 	asyncqueue chan OutputData
 }
 
+// NewLogger instance
 func NewLogger(options *OptionsLogger) *Logger {
 	logger := &Logger{
 		options:    options,
@@ -50,6 +51,7 @@ func (l *Logger) createOutputFolder() error {
 	return os.MkdirAll(l.options.OutputFolder, 0755)
 }
 
+// AsyncWrite data
 func (l *Logger) AsyncWrite() {
 	var (
 		format     string
@@ -94,6 +96,7 @@ func (l *Logger) AsyncWrite() {
 	}
 }
 
+// LogRequest and user data
 func (l *Logger) LogRequest(req *http.Request, userdata UserData) error {
 	reqdump, err := httputil.DumpRequest(req, true)
 	if err != nil {
@@ -104,12 +107,13 @@ func (l *Logger) LogRequest(req *http.Request, userdata UserData) error {
 	}
 
 	if l.options.Verbose {
-		gologger.Silentf("%s", string(reqdump))
+		gologger.Silent().Msgf("%s", string(reqdump))
 	}
 
 	return nil
 }
 
+// LogResponse and user data
 func (l *Logger) LogResponse(resp *http.Response, userdata UserData) error {
 	if resp == nil {
 		return nil
@@ -123,11 +127,12 @@ func (l *Logger) LogResponse(resp *http.Response, userdata UserData) error {
 	}
 
 	if l.options.Verbose {
-		gologger.Silentf("%s", string(respdump))
+		gologger.Silent().Msgf("%s", string(respdump))
 	}
 	return nil
 }
 
+// Close logger instance
 func (l *Logger) Close() {
 	close(l.asyncqueue)
 }

@@ -6,6 +6,8 @@ import (
 	"path"
 
 	"github.com/projectdiscovery/gologger"
+	"github.com/projectdiscovery/gologger/formatter"
+	"github.com/projectdiscovery/gologger/levels"
 )
 
 // Options of the internal runner
@@ -61,13 +63,13 @@ func ParseOptions() *Options {
 	flag.BoolVar(&options.DumpResponse, "dump-resp", false, "Dump responses in separate files")
 
 	flag.Parse()
-	_ = os.MkdirAll(options.Directory, os.ModePerm)
+	os.MkdirAll(options.Directory, os.ModePerm) //nolint
 
 	// Read the inputs and configure the logging
 	options.configureOutput()
 
 	if options.Version {
-		gologger.Infof("Current Version: %s\n", Version)
+		gologger.Info().Msgf("Current Version: %s\n", Version)
 		os.Exit(0)
 	}
 
@@ -79,12 +81,12 @@ func ParseOptions() *Options {
 
 func (options *Options) configureOutput() {
 	if options.Verbose {
-		gologger.MaxLevel = gologger.Verbose
+		gologger.DefaultLogger.SetMaxLevel(levels.LevelVerbose)
 	}
 	if options.NoColor {
-		gologger.UseColors = false
+		gologger.DefaultLogger.SetFormatter(formatter.NewCLI(true))
 	}
 	if options.Silent {
-		gologger.MaxLevel = gologger.Silent
+		gologger.DefaultLogger.SetMaxLevel(levels.LevelSilent)
 	}
 }
