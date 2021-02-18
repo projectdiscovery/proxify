@@ -31,6 +31,7 @@ func NewRunner(options *Options) (*Runner, error) {
 		DNSFallbackResolver:     options.DNSFallbackResolver,
 		RequestMatchReplaceDSL:  options.RequestMatchReplaceDSL,
 		ResponseMatchReplaceDSL: options.ResponseMatchReplaceDSL,
+		OutputKafka:             options.OutputKafka,
 	})
 	if err != nil {
 		return nil, err

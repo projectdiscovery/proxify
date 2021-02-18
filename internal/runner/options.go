@@ -28,6 +28,7 @@ type Options struct {
 	ResponseMatchReplaceDSL string
 	UpstreamHTTPProxy       string
 	UpstreamSocks5Proxy     string
+	OutputKafka             string
 }
 
 func ParseOptions() *Options {
@@ -55,6 +56,7 @@ func ParseOptions() *Options {
 	flag.StringVar(&options.DNSMapping, "dns-mapping", "", "DNS A mapping (eg domain:ip,domain:ip,..)")
 	flag.StringVar(&options.UpstreamHTTPProxy, "http-proxy", "", "Upstream HTTP Proxy (eg http://proxyip:proxyport")
 	flag.StringVar(&options.UpstreamSocks5Proxy, "socks5-proxy", "", "Upstream SOCKS5 Proxy (eg socks5://proxyip:proxyport")
+	flag.StringVar(&options.OutputKafka, "output-kafka", "", "Send output to kafka  (eg ip:port,ip:port|topic")
 
 	flag.Parse()
 	_ = os.MkdirAll(options.Directory, os.ModePerm)
