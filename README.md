@@ -191,7 +191,7 @@ Now all the request/response history will be stored in `logs` folder that can be
 
 
 <details>
-<summary> Store all your browse histroy locally. </summary>
+<summary> Store all your browse history locally. </summary>
 
 
 While you browse the application, you can point the browser to `proxify` to store all the HTTP request / response to file.
