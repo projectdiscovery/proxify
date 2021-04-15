@@ -16,6 +16,7 @@ import (
 	"github.com/projectdiscovery/fastdialer/fastdialer"
 	"github.com/projectdiscovery/mapsutil"
 	"github.com/projectdiscovery/proxify/pkg/certs"
+	"github.com/projectdiscovery/proxify/pkg/types"
 	"github.com/projectdiscovery/tinydns"
 	"github.com/rs/xid"
 	"golang.org/x/net/proxy"
@@ -53,6 +54,8 @@ type Options struct {
 	OnConnectCallback       OnConnectFunc
 	OnRequestCallback       OnRequestFunc
 	OnResponseCallback      OnResponseFunc
+	Deny                    types.CustomList
+	Allow                   types.CustomList
 }
 
 type Proxy struct {
@@ -285,6 +288,9 @@ func NewProxy(options *Options) (*Proxy, error) {
 	var tdns *tinydns.TinyDNS
 
 	fastdialerOptions := fastdialer.DefaultOptions
+	fastdialerOptions.EnableFallback = true
+	fastdialerOptions.Deny = options.Deny
+	fastdialerOptions.Allow = options.Allow
 	if options.ListenDNSAddr != "" {
 		dnsmapping := make(map[string]string)
 		for _, record := range strings.Split(options.DNSMapping, ",") {

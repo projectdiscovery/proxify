@@ -8,6 +8,7 @@ import (
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/gologger/formatter"
 	"github.com/projectdiscovery/gologger/levels"
+	"github.com/projectdiscovery/proxify/pkg/types"
 )
 
 // Options of the internal runner
@@ -32,6 +33,8 @@ type Options struct {
 	UpstreamSocks5Proxy     string
 	DumpRequest             bool
 	DumpResponse            bool
+	Deny                    types.CustomList
+	Allow                   types.CustomList
 }
 
 func ParseOptions() *Options {
@@ -61,6 +64,8 @@ func ParseOptions() *Options {
 	flag.StringVar(&options.UpstreamSocks5Proxy, "socks5-proxy", "", "Upstream SOCKS5 Proxy (eg socks5://proxyip:proxyport)")
 	flag.BoolVar(&options.DumpRequest, "dump-req", false, "Dump requests in separate files")
 	flag.BoolVar(&options.DumpResponse, "dump-resp", false, "Dump responses in separate files")
+	flag.Var(&options.Allow, "allow", "Whitelist ip/cidr")
+	flag.Var(&options.Deny, "deny", "Blacklist ip/cidr")
 
 	flag.Parse()
 	os.MkdirAll(options.Directory, os.ModePerm) //nolint
