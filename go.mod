@@ -9,12 +9,11 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/pkg/errors v0.9.1
 	github.com/projectdiscovery/dsl v0.0.2
-	github.com/projectdiscovery/fastdialer v0.0.10-0.20210409124257-e036b0add198
+	github.com/projectdiscovery/fastdialer v0.0.10-0.20210429154054-50371bb58a8d
 	github.com/projectdiscovery/gologger v1.1.4
 	github.com/projectdiscovery/mapsutil v0.0.1
 	github.com/projectdiscovery/tinydns v0.0.1
 	github.com/rs/xid v1.3.0
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
-	golang.org/x/net v0.0.0-20210414194228-064579744ee0
-	golang.org/x/sys v0.0.0-20210414055047-fe65e336abe0 // indirect
+	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
 )
