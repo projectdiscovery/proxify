@@ -98,6 +98,8 @@ This will display help for the tool. Here are all the switches it supports.
 | socks5-proxy               | Upstream socks5 proxy           | proxify -socks5-proxy socks5://proxy-ip:port                 |
 | v                          | Verbose output                  | proxify -v                                                   |
 | version                    | Current version                 | proxify -version                                             |
+| allow                      | Allow connections only to hosts matching cidr/ip/regex   | proxify -allow 127.0.0.0/24         |
+| deny                       | Deny connections to hosts matching cidr/ip/regex   | proxify -allow 127.0.0.0/24               |
 
 
 ### Use Upstream proxy
