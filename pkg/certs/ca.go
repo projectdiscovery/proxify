@@ -17,12 +17,12 @@ import (
 // Constants used for the SSL Certificates
 const (
 	bits          = 2048
-	organization  = "ProjectDiscovery, Inc."
-	country       = "IN"
-	province      = "Maharashtra"
-	locality      = "B.P.Lane"
-	streetAddress = "321, B.P.Lane West."
-	postalCode    = "400003"
+	organization  = "Proxify CA"
+	country       = "US"
+	province      = "CA"
+	locality      = "San Francisco"
+	streetAddress = "548 Market St"
+	postalCode    = "94104"
 )
 
 // createCertificateAuthority creates a new certificate authority
@@ -140,7 +140,7 @@ func (m *Manager) signCertificate(host string) (*tls.Certificate, error) {
 		template.DNSNames = append(template.DNSNames, host)
 	}
 
-	certpriv, err := rsa.GenerateKey(rand.Reader, 2048)
+	certpriv, err := rsa.GenerateKey(rand.Reader, bits)
 	if err != nil {
 		return nil, err
 	}
