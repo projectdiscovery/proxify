@@ -14,6 +14,7 @@ import (
 
 	"github.com/elazarl/goproxy"
 	"github.com/projectdiscovery/fastdialer/fastdialer"
+	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/tinydns"
 )
 
@@ -45,7 +46,7 @@ func main() {
 	dialerOpts.BaseResolvers = []string{"127.0.0.1" + options.DNSListenerAddress}
 	dialer, err := fastdialer.NewDialer(dialerOpts)
 	if err != nil {
-		log.Fatal(err)
+		gologger.Fatal().Msgf("%s\n", err)
 	}
 
 	responses = make(map[string]*http.Response)
@@ -56,7 +57,7 @@ func main() {
 	// httpproxy.OnRequest().DoFunc(OnRequest)
 	go func() {
 		if err := http.ListenAndServe(options.HTTPProxyListenerAddress, httpproxy); err != nil {
-			log.Fatalf("Could not serve proxy: %s\n", err)
+			gologger.Fatal().Msgf("Could not serve proxy: %s\n", err)
 		}
 	}()
 
@@ -81,11 +82,11 @@ func main() {
 			w.Header().Add(k, strings.Join(v, "; "))
 		}
 		w.WriteHeader(response.StatusCode)
-		_, _ = io.Copy(w, response.Body)
+		io.Copy(w, response.Body) //nolint
 	})
 	go func() {
 		if err := http.ListenAndServe(":80", nil); err != nil {
-			log.Fatalf("Could not listen and serve: %s\n", err)
+			gologger.Fatal().Msgf("Could not listen and serve: %s\n", err)
 		}
 	}()
 
