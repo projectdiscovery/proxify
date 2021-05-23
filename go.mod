@@ -16,4 +16,5 @@ require (
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	golang.org/x/crypto v0.0.0-20201208171446-5f87f3452ae9 // indirect
 	golang.org/x/net v0.0.0-20201209123823-ac852fbbde11
+	github.com/Shopify/sarama v1.27.2
 )

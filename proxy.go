@@ -47,6 +47,7 @@ type Options struct {
 	DNSFallbackResolver     string
 	RequestMatchReplaceDSL  string
 	ResponseMatchReplaceDSL string
+	OutputKafka             string
 	OnConnectCallback       OnConnectFunc
 	OnRequestCallback       OnRequestFunc
 	OnResponseCallback      OnResponseFunc
@@ -272,9 +273,13 @@ func NewProxy(options *Options) (*Proxy, error) {
 	goproxy.HTTPMitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectHTTPMitm, TLSConfig: certs.TLSConfigFromCA()}
 	goproxy.RejectConnect = &goproxy.ConnectAction{Action: goproxy.ConnectReject, TLSConfig: certs.TLSConfigFromCA()}
 
+
+
 	logger := NewLogger(&OptionsLogger{
 		Verbose:      options.Verbose,
 		OutputFolder: options.OutputDirectory,
+		OutputKafka:  options.OutputKafka,
+
 	})
 
 	var tdns *tinydns.TinyDNS

@@ -1,11 +1,15 @@
 package proxify
 
 import (
+	"bytes"
 	"fmt"
+	"github.com/Shopify/sarama"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/projectdiscovery/gologger"
 )
@@ -13,6 +17,7 @@ import (
 type OptionsLogger struct {
 	Verbose      bool
 	OutputFolder string
+	OutputKafka  string
 }
 
 type OutputData struct {
@@ -33,6 +38,32 @@ func NewLogger(options *OptionsLogger) *Logger {
 	_ = logger.createOutputFolder()
 	go logger.AsyncWrite()
 	return logger
+}
+
+func msg2kafka(content []byte, id string, addr string, topic string) {
+	config := sarama.NewConfig()
+	config.Producer.RequiredAcks = sarama.WaitForAll
+	config.Producer.Return.Successes = true
+	config.Producer.Partitioner = sarama.NewRandomPartitioner
+	msg := &sarama.ProducerMessage{}
+	msg.Topic = topic
+	var id_byte []byte = []byte(id + "\r\n")
+	join_content := [][]byte{id_byte, content}
+	msg.Value = sarama.ByteEncoder(bytes.Join(join_content, []byte{}))
+	addrs := strings.Split(addr, ",")
+	producer, err := sarama.NewSyncProducer(addrs, config)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	defer producer.Close()
+	_, _, err = producer.SendMessage(msg)
+
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
 }
 
 func (l *Logger) createOutputFolder() error {
@@ -75,6 +106,17 @@ func (l *Logger) LogRequest(req *http.Request, userdata UserData) error {
 		gologger.Silentf(string(reqdump))
 	}
 
+	if l.options.OutputKafka != "" {
+		split_arr := strings.Split(l.options.OutputKafka, "|")
+		if len(split_arr) == 2 {
+			addr := split_arr[0]
+			topic := split_arr[1]
+			msg2kafka(reqdump, userdata.id, addr, topic)
+		} else {
+			gologger.Printf("kafka module is invalid because of wrong configuration\r\n")
+		}
+	}
+
 	return nil
 }
 
@@ -93,6 +135,18 @@ func (l *Logger) LogResponse(resp *http.Response, userdata UserData) error {
 	if l.options.Verbose {
 		gologger.Silentf(string(respdump))
 	}
+
+	if l.options.OutputKafka != "" {
+		split_arr := strings.Split(l.options.OutputKafka, "|")
+		if len(split_arr) == 2 {
+			addr := split_arr[0]
+			topic := split_arr[1]
+			msg2kafka(respdump, userdata.id, addr, topic)
+		} else {
+			gologger.Printf("kafka module is invalid because of wrong configuration\r\n")
+		}
+	}
+
 	return nil
 }
 
