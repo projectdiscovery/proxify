@@ -16,7 +16,7 @@ import (
 
 // Constants used for the SSL Certificates
 const (
-	bits          = 2048
+	bits          = 4096
 	organization  = "ProjectDiscovery, Inc."
 	country       = "IN"
 	province      = "Maharashtra"
