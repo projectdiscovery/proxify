@@ -35,17 +35,19 @@ Additionally a replay utility allows to import the dumped traffic (request/respo
 </h1>
 
 
- - Simple and modular code base making it easy to contribute.
+ - Intercept / Manipulate **HTTP/HTTPS** & **NON-HTTTP** traffic
+ - **Invisible & Thick clients** traffic proxy support
+ - TLS MITM support with client/server certificates
  - **HTTP** and **SOCKS5** support for upstream proxy
- - Native MITM support
- - Full traffic dump (request/responses)
- - Traffic Match / Filter with DSL language
- - Traffic Match and Replace support
- - Traffic replay in Burp
+ - Traffic **Match/Filter and Replace** DSL support
+ - Full traffic dump to file (request/responses)
+ - Native embedded DNS server
+ - Plugin Support to decode specific protocols (e.g XMPP/SMTP/FTP/SSH/)
+ - Proxify Traffic replay in Burp
 
 # Installation
 
-Download the ready to run [binary](https://github.com/projectdiscovery/proxify/releases/) or install using GO
+Download the ready to run [binary](https://github.com/projectdiscovery/proxify/releases/) or install/build using GO
 
 ```sh
 GO111MODULE=on go get -v github.com/projectdiscovery/proxify/cmd/proxify
@@ -70,7 +72,7 @@ This will display help for the tool. Here are all the switches it supports.
   -cert-cache-size int
       Number of certificates to cache (default 256)
   -config string
-      Directory for storing program information (default "/Users/geekboy/.config/proxify")
+      Directory for storing program information (default "$HOME/.config/proxify")
   -deny value
       Blacklist ip/cidr
   -dns-addr string
