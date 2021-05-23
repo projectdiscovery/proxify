@@ -16,9 +16,6 @@ Additionally a replay utility allows to import the dumped traffic (request/respo
 
 - [Features](#features)
 - [Installation](#installation)
-    - [From Binary](#from-binary)
-    - [From Source](#from-source)
-    - [From Github](#from-github)
 - [Usage](#usage)
     - [Use Upstream proxy](#use-upstream-proxy)
     - [Dump all the HTTP/HTTPS traffic](#dump-all-the-httphttps-traffic)
@@ -47,28 +44,10 @@ Additionally a replay utility allows to import the dumped traffic (request/respo
 
 # Installation
 
-### From Binary
-
-The installation is easy. You can download the pre-built binaries for your platform from the [Releases](https://github.com/projectdiscovery/proxify/releases/) page. Extract them using tar, move it to your `$PATH`and you're ready to go.
+Download the ready to run [binary](https://github.com/projectdiscovery/proxify/releases/) or install using GO
 
 ```sh
-▶ tar -xvf proxify-linux-amd64.tar
-▶ mv proxify-linux-amd64 /usr/local/bin/proxify
-▶ proxify -version
-```
-
-**proxify** requires **go1.14+** to install successfully. Run the following command to get the repo -
-
-### From Source
-
-```sh
-▶ GO111MODULE=on go get -v github.com/projectdiscovery/proxify/cmd/proxify
-```
-
-### From Github
-
-```sh
-▶ git clone https://github.com/projectdiscovery/proxify.git; cd proxify/cmd/proxify; go build; cp proxify /usr/local/bin; proxify -version
+GO111MODULE=on go get -v github.com/projectdiscovery/proxify/cmd/proxify
 ```
 
 # Usage
