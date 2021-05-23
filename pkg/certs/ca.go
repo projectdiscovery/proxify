@@ -16,7 +16,7 @@ import (
 
 // Constants used for the SSL Certificates
 const (
-	bits          = 4096
+	bits          = 2048
 	organization  = "ProjectDiscovery, Inc."
 	country       = "IN"
 	province      = "Maharashtra"
@@ -140,7 +140,7 @@ func (m *Manager) signCertificate(host string) (*tls.Certificate, error) {
 		template.DNSNames = append(template.DNSNames, host)
 	}
 
-	certpriv, err := rsa.GenerateKey(rand.Reader, 1024)
+	certpriv, err := rsa.GenerateKey(rand.Reader, bits)
 	if err != nil {
 		return nil, err
 	}
