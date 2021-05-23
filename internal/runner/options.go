@@ -56,7 +56,7 @@ func ParseOptions() *Options {
 	flag.StringVar(&options.ResponseDSL, "response-dsl", "", "Response Filter DSL")
 	flag.StringVar(&options.RequestMatchReplaceDSL, "request-match-replace-dsl", "", "Request Match-Replace DSL")
 	flag.StringVar(&options.ResponseMatchReplaceDSL, "response-match-replace-dsl", "", "Request Match-Replace DSL")
-	flag.StringVar(&options.ListenAddr, "addr", "127.0.0.1:8080", "Listen Ip and port (ip:port)")
+	flag.StringVar(&options.ListenAddr, "addr", "127.0.0.1:8888", "Listen Ip and port (ip:port)")
 	flag.StringVar(&options.DNSFallbackResolver, "dns-resolver", "", "Listen DNS Ip and port (ip:port)")
 	flag.StringVar(&options.ListenDNSAddr, "dns-addr", "", "Listen DNS Ip and port (ip:port)")
 	flag.StringVar(&options.DNSMapping, "dns-mapping", "", "DNS A mapping (eg domain:ip,domain:ip,..)")
