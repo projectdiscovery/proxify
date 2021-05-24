@@ -17,12 +17,12 @@ import (
 // Constants used for the SSL Certificates
 const (
 	bits          = 2048
-	organization  = "ProjectDiscovery, Inc."
-	country       = "IN"
-	province      = "Maharashtra"
-	locality      = "B.P.Lane"
-	streetAddress = "321, B.P.Lane West."
-	postalCode    = "400003"
+	organization  = "Proxify CA"
+	country       = "US"
+	province      = "CA"
+	locality      = "San Francisco"
+	streetAddress = "548 Market St"
+	postalCode    = "94104"
 )
 
 // createCertificateAuthority creates a new certificate authority
@@ -84,7 +84,7 @@ func (m *Manager) createAuthority(certPath, keyPath string) error {
 var errExpiredCert = errors.New("expired cert error")
 
 // readCertificateDisk reads a certificate and key file from disk
-func (m *Manager) readCertificateDisk(certFile string, keyFile string) (*tls.Certificate, error) {
+func (m *Manager) readCertificateDisk(certFile, keyFile string) (*tls.Certificate, error) {
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
 		return nil, err
@@ -140,7 +140,7 @@ func (m *Manager) signCertificate(host string) (*tls.Certificate, error) {
 		template.DNSNames = append(template.DNSNames, host)
 	}
 
-	certpriv, err := rsa.GenerateKey(rand.Reader, 1024)
+	certpriv, err := rsa.GenerateKey(rand.Reader, bits)
 	if err != nil {
 		return nil, err
 	}

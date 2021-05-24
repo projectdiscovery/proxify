@@ -6,6 +6,9 @@ import (
 	"path"
 
 	"github.com/projectdiscovery/gologger"
+	"github.com/projectdiscovery/gologger/formatter"
+	"github.com/projectdiscovery/gologger/levels"
+	"github.com/projectdiscovery/proxify/pkg/types"
 )
 
 // Options of the internal runner
@@ -28,6 +31,10 @@ type Options struct {
 	ResponseMatchReplaceDSL string
 	UpstreamHTTPProxy       string
 	UpstreamSocks5Proxy     string
+	DumpRequest             bool
+	DumpResponse            bool
+	Deny                    types.CustomList
+	Allow                   types.CustomList
 }
 
 func ParseOptions() *Options {
@@ -49,21 +56,25 @@ func ParseOptions() *Options {
 	flag.StringVar(&options.ResponseDSL, "response-dsl", "", "Response Filter DSL")
 	flag.StringVar(&options.RequestMatchReplaceDSL, "request-match-replace-dsl", "", "Request Match-Replace DSL")
 	flag.StringVar(&options.ResponseMatchReplaceDSL, "response-match-replace-dsl", "", "Request Match-Replace DSL")
-	flag.StringVar(&options.ListenAddr, "addr", "127.0.0.1:8080", "Listen Ip and port (ip:port)")
+	flag.StringVar(&options.ListenAddr, "addr", "127.0.0.1:8888", "Listen Ip and port (ip:port)")
 	flag.StringVar(&options.DNSFallbackResolver, "dns-resolver", "", "Listen DNS Ip and port (ip:port)")
 	flag.StringVar(&options.ListenDNSAddr, "dns-addr", "", "Listen DNS Ip and port (ip:port)")
 	flag.StringVar(&options.DNSMapping, "dns-mapping", "", "DNS A mapping (eg domain:ip,domain:ip,..)")
 	flag.StringVar(&options.UpstreamHTTPProxy, "http-proxy", "", "Upstream HTTP Proxy (eg http://proxyip:proxyport")
-	flag.StringVar(&options.UpstreamSocks5Proxy, "socks5-proxy", "", "Upstream SOCKS5 Proxy (eg socks5://proxyip:proxyport")
+	flag.StringVar(&options.UpstreamSocks5Proxy, "socks5-proxy", "", "Upstream SOCKS5 Proxy (eg socks5://proxyip:proxyport)")
+	flag.BoolVar(&options.DumpRequest, "dump-req", false, "Dump requests in separate files")
+	flag.BoolVar(&options.DumpResponse, "dump-resp", false, "Dump responses in separate files")
+	flag.Var(&options.Allow, "allow", "Whitelist ip/cidr")
+	flag.Var(&options.Deny, "deny", "Blacklist ip/cidr")
 
 	flag.Parse()
-	_ = os.MkdirAll(options.Directory, os.ModePerm)
+	os.MkdirAll(options.Directory, os.ModePerm) //nolint
 
 	// Read the inputs and configure the logging
 	options.configureOutput()
 
 	if options.Version {
-		gologger.Infof("Current Version: %s\n", Version)
+		gologger.Info().Msgf("Current Version: %s\n", Version)
 		os.Exit(0)
 	}
 
@@ -75,12 +86,12 @@ func ParseOptions() *Options {
 
 func (options *Options) configureOutput() {
 	if options.Verbose {
-		gologger.MaxLevel = gologger.Verbose
+		gologger.DefaultLogger.SetMaxLevel(levels.LevelVerbose)
 	}
 	if options.NoColor {
-		gologger.UseColors = false
+		gologger.DefaultLogger.SetFormatter(formatter.NewCLI(true))
 	}
 	if options.Silent {
-		gologger.MaxLevel = gologger.Silent
+		gologger.DefaultLogger.SetMaxLevel(levels.LevelSilent)
 	}
 }

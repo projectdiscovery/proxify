@@ -16,7 +16,7 @@ func main() {
 
 	proxifyRunner, err := runner.NewRunner(options)
 	if err != nil {
-		gologger.Fatalf("Could not create runner: %s\n", err)
+		gologger.Fatal().Msgf("Could not create runner: %s\n", err)
 	}
 
 	// Setup close handler
@@ -33,7 +33,7 @@ func main() {
 
 	err = proxifyRunner.Run()
 	if err != nil {
-		gologger.Fatalf("Could not run proxify: %s\n", err)
+		gologger.Fatal().Msgf("Could not run proxify: %s\n", err)
 	}
 
 }
