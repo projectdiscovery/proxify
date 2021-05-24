@@ -10,6 +10,8 @@ builds:
         - 386
         - arm
         - arm64
+      id: proxify
+
     - binary: replay
       main: cmd/replay/replay.go
       goos:
@@ -21,6 +23,8 @@ builds:
         - 386
         - arm
         - arm64
+      id: replay
+
     - binary: mitmrelay
       main: cmd/mitmrelay/mitmrelay.go
       goos:
@@ -32,7 +36,8 @@ builds:
         - 386
         - arm
         - arm64
-  
+      id: mitmrelay
+
 archives:
     - id: tgz
       format: tar.gz
