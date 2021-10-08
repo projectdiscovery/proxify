@@ -108,7 +108,7 @@ func (p *SocketProxy) Run() error {
 			log.Println(err)
 			return err
 		}
-		go p.Proxy(conn)
+		go p.Proxy(conn)  //nolint
 	}
 }
 
