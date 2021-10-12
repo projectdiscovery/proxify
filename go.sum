@@ -5,6 +5,8 @@ github.com/Djarvur/go-err113 v0.0.0-20200410182137-af658d038157 h1:hY39LwQHh+1ka
 github.com/Djarvur/go-err113 v0.0.0-20200410182137-af658d038157/go.mod h1:4UJr5HIiMZrwgkSPdsjy2uOQExX/WEILpIrO9UPGuXs=
 github.com/Knetic/govaluate v3.0.0+incompatible h1:7o6+MAPhYTCF0+fdvoz1xDedhRb4f6s9Tn1Tt7/WTEg=
 github.com/Knetic/govaluate v3.0.0+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
+github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d h1:Byv0BzEl3/e6D5CLfI0j/7hiIEtvGVFPCZ7Ei2oq8iQ=
+github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d/go.mod h1:WaHUgvxTVq04UNunO+XhnAqY/wQc+bxr74GqbsZ/Jqw=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/OpenPeeDeeP/depguard v1.0.1 h1:VlW4R6jmBIv3/u1JNlawEvJMM4J+dPORPaZasQee8Us=
 github.com/OpenPeeDeeP/depguard v1.0.1/go.mod h1:xsIw86fROiiwelg+jB2uM9PiKihMMmUx/1V+TNhjQvM=
@@ -284,6 +286,8 @@ github.com/projectdiscovery/networkpolicy v0.0.0-20210429152441-95886460520e h1:
 github.com/projectdiscovery/networkpolicy v0.0.0-20210429152441-95886460520e/go.mod h1:asvdg5wMy3LPVMGALatebKeOYH5n5fV5RCTv6DbxpIs=
 github.com/projectdiscovery/retryabledns v1.0.11 h1:jyzTass/CD3MgaK4pQSXJzwb91ksVYocwiE0AQ1ytEo=
 github.com/projectdiscovery/retryabledns v1.0.11/go.mod h1:4sMC8HZyF01HXukRleSQYwz4870bwgb4+hTSXTMrkf4=
+github.com/projectdiscovery/stringsutil v0.0.0-20210830151154-f567170afdd9 h1:xbL1/7h0k6HE3RzPdYk9W/8pUxESrGWewTaZdIB5Pes=
+github.com/projectdiscovery/stringsutil v0.0.0-20210830151154-f567170afdd9/go.mod h1:oTRc18WBv9t6BpaN9XBY+QmG28PUpsyDzRht56Qf49I=
 github.com/projectdiscovery/tinydns v0.0.1 h1:Ls5TAlMJoCfEObpsC7S+Hg4WLyF5wiN+O1xNgEIjnEc=
 github.com/projectdiscovery/tinydns v0.0.1/go.mod h1:xPZcaMje/MWozKc5Sdln3XWptINYoWqCBXgLeSrNB1Q=
 github.com/prometheus/client_golang v0.9.1/go.mod h1:7SWBe2y4D6OKWSNQJUaRYU/AaXPKyh/dDVn+NZz0KFw=
