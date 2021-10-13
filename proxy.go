@@ -108,7 +108,7 @@ func (p *Proxy) OnResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Res
 
 	// perform match and replace
 	if p.options.ResponseMatchReplaceDSL != "" {
-		p.MatchReplaceResponse(resp)
+		resp = p.MatchReplaceResponse(resp)
 	}
 
 	p.logger.LogResponse(resp, userdata) //nolint
@@ -142,9 +142,9 @@ func (p *Proxy) MatchReplaceRequest(req *http.Request) *http.Request {
 		if err != nil {
 			return req
 		}
-
-		requestNew.RequestURI = ""
-		u, err := url.Parse(req.RequestURI)
+		fmt.Println(requestNew.RequestURI, req.RequestURI, "URI")
+		//requestNew.RequestURI = ""
+		u, err := url.Parse(requestNew.RequestURI)
 		if err != nil {
 			return req
 		}
