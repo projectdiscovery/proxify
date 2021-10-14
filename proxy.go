@@ -142,15 +142,6 @@ func (p *Proxy) MatchReplaceRequest(req *http.Request) *http.Request {
 		if err != nil {
 			return req
 		}
-		fmt.Println(requestNew.RequestURI, req.RequestURI, "URI")
-		//requestNew.RequestURI = ""
-		u, err := url.Parse(requestNew.RequestURI)
-		if err != nil {
-			return req
-		}
-		requestNew.URL = u
-
-		// swap requests
 		// closes old body to allow memory reuse
 		req.Body.Close()
 		return requestNew
