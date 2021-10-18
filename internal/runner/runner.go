@@ -24,8 +24,8 @@ func NewRunner(options *Options) (*Runner, error) {
 		OutputDirectory:         options.OutputDirectory,
 		RequestDSL:              options.RequestDSL,
 		ResponseDSL:             options.ResponseDSL,
-		UpstreamHTTPProxy:       options.UpstreamHTTPProxy,
-		UpstreamSock5Proxy:      options.UpstreamSocks5Proxy,
+		UpstreamHTTPProxies:     options.UpstreamHTTPProxies,
+		UpstreamSock5Proxies:    options.UpstreamSocks5Proxies,
 		ListenDNSAddr:           options.ListenDNSAddr,
 		DNSMapping:              options.DNSMapping,
 		DNSFallbackResolver:     options.DNSFallbackResolver,
@@ -48,10 +48,10 @@ func (r *Runner) Run() error {
 		gologger.Print().Msgf("Saving traffic to %s\n", r.options.OutputDirectory)
 	}
 
-	if r.options.UpstreamHTTPProxy != "" {
-		gologger.Print().Msgf("Using upstream HTTP proxy: %s\n", r.options.UpstreamHTTPProxy)
-	} else if r.options.UpstreamSocks5Proxy != "" {
-		gologger.Print().Msgf("Using upstream SOCKS5 proxy: %s\n", r.options.UpstreamSocks5Proxy)
+	if len(r.options.UpstreamHTTPProxies) > 0 {
+		gologger.Print().Msgf("Using upstream HTTP proxies: %s\n", strings.Join(r.options.UpstreamHTTPProxies, ","))
+	} else if len(r.options.UpstreamSocks5Proxies) > 0 {
+		gologger.Print().Msgf("Using upstream SOCKS5 proxies: %s\n", strings.Join(r.options.UpstreamSocks5Proxies, ","))
 	}
 
 	if r.options.DNSMapping != "" {

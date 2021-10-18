@@ -29,8 +29,8 @@ type Options struct {
 	RequestMatchReplaceDSL  string
 	ResponseDSL             string
 	ResponseMatchReplaceDSL string
-	UpstreamHTTPProxy       string
-	UpstreamSocks5Proxy     string
+	UpstreamHTTPProxies     types.CustomList
+	UpstreamSocks5Proxies   types.CustomList
 	DumpRequest             bool
 	DumpResponse            bool
 	Deny                    types.CustomList
@@ -60,8 +60,8 @@ func ParseOptions() *Options {
 	flag.StringVar(&options.DNSFallbackResolver, "dns-resolver", "", "Listen DNS Ip and port (ip:port)")
 	flag.StringVar(&options.ListenDNSAddr, "dns-addr", "", "Listen DNS Ip and port (ip:port)")
 	flag.StringVar(&options.DNSMapping, "dns-mapping", "", "DNS A mapping (eg domain:ip,domain:ip,..)")
-	flag.StringVar(&options.UpstreamHTTPProxy, "http-proxy", "", "Upstream HTTP Proxy (eg http://proxyip:proxyport")
-	flag.StringVar(&options.UpstreamSocks5Proxy, "socks5-proxy", "", "Upstream SOCKS5 Proxy (eg socks5://proxyip:proxyport)")
+	flag.Var(&options.UpstreamHTTPProxies, "http-proxy", "Upstream HTTP Proxy (eg http://proxyip:proxyport")
+	flag.Var(&options.UpstreamSocks5Proxies, "socks5-proxy", "Upstream SOCKS5 Proxy (eg socks5://proxyip:proxyport)")
 	flag.BoolVar(&options.DumpRequest, "dump-req", false, "Dump requests in separate files")
 	flag.BoolVar(&options.DumpResponse, "dump-resp", false, "Dump responses in separate files")
 	flag.Var(&options.Allow, "allow", "Whitelist ip/cidr")
