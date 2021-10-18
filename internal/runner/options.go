@@ -8,6 +8,8 @@ import (
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/gologger/formatter"
 	"github.com/projectdiscovery/gologger/levels"
+	"github.com/projectdiscovery/proxify/pkg/logger/elastic"
+	"github.com/projectdiscovery/proxify/pkg/logger/kafka"
 	"github.com/projectdiscovery/proxify/pkg/types"
 )
 
@@ -35,6 +37,8 @@ type Options struct {
 	DumpResponse            bool
 	Deny                    types.CustomList
 	Allow                   types.CustomList
+	Elastic                 elastic.Options
+	Kafka                   kafka.Options
 }
 
 func ParseOptions() *Options {
@@ -66,6 +70,14 @@ func ParseOptions() *Options {
 	flag.BoolVar(&options.DumpResponse, "dump-resp", false, "Dump responses in separate files")
 	flag.Var(&options.Allow, "allow", "Whitelist ip/cidr")
 	flag.Var(&options.Deny, "deny", "Blacklist ip/cidr")
+	flag.StringVar(&options.Elastic.Addr, "elastic-address", "", "elastic search address(ip:port)")
+	flag.BoolVar(&options.Elastic.SSL, "elastic-ssl", false, "enable elastic search ssl")
+	flag.BoolVar(&options.Elastic.SSLVerification, "elastic-ssl-verification", false, "enable elastic search ssl verification")
+	flag.StringVar(&options.Elastic.Username, "elastic-username", "", "elastic search username")
+	flag.StringVar(&options.Elastic.Password, "elastic-password", "", "elastic search password")
+	flag.StringVar(&options.Elastic.IndexName, "elastic-index", "", "elastic search index name")
+	flag.StringVar(&options.Kafka.Addr, "kafka-address", "", "address of kafka broker(ip:port)")
+	flag.StringVar(&options.Kafka.Topic, "kafka-topic", "", "kafka topic to publish messages on")
 
 	flag.Parse()
 	os.MkdirAll(options.Directory, os.ModePerm) //nolint

@@ -33,6 +33,8 @@ func NewRunner(options *Options) (*Runner, error) {
 		ResponseMatchReplaceDSL: options.ResponseMatchReplaceDSL,
 		DumpRequest:             options.DumpRequest,
 		DumpResponse:            options.DumpResponse,
+		Elastic:                 &options.Elastic,
+		Kafka:                   &options.Kafka,
 	})
 	if err != nil {
 		return nil, err

@@ -1,4 +1,4 @@
-package proxify
+package logger
 
 import (
 	"fmt"
@@ -11,6 +11,10 @@ import (
 
 	"github.com/asaskevich/govalidator"
 	"github.com/projectdiscovery/gologger"
+	"github.com/projectdiscovery/proxify/pkg/logger/elastic"
+	"github.com/projectdiscovery/proxify/pkg/logger/kafka"
+
+	"github.com/projectdiscovery/proxify/pkg/types"
 	"github.com/projectdiscovery/stringsutil"
 )
 
@@ -24,26 +28,52 @@ type OptionsLogger struct {
 	OutputFolder string
 	DumpRequest  bool
 	DumpResponse bool
+	Elastic      *elastic.Options
+	Kafka        *kafka.Options
 }
 
-type OutputData struct {
-	userdata UserData
-	data     []byte
+type Store interface {
+	Store(data string) error
 }
 
 type Logger struct {
-	options    *OptionsLogger
-	asyncqueue chan OutputData
+	options       *OptionsLogger
+	asyncqueue    chan types.OutputData
+	ExternalStore []Store
 }
 
 // NewLogger instance
 func NewLogger(options *OptionsLogger) *Logger {
 	logger := &Logger{
 		options:    options,
-		asyncqueue: make(chan OutputData, 1000),
+		asyncqueue: make(chan types.OutputData, 1000),
 	}
 	logger.createOutputFolder() //nolint
+
+	if options.Elastic.Addr != "" {
+		exporter, err := elastic.New(&elastic.Options{
+			Addr:      options.Elastic.Addr,
+			IndexName: options.Elastic.IndexName,
+		})
+		if err != nil {
+			return nil
+		}
+		logger.ExternalStore = append(logger.ExternalStore, exporter)
+	}
+
+	if options.Kafka.Addr != "" {
+		kfoptions := kafka.Options{
+			Addr: options.Kafka.Addr,
+		}
+		exporter, err := kafka.New(&kfoptions)
+		if err != nil {
+			return nil
+		}
+		logger.ExternalStore = append(logger.ExternalStore, exporter)
+	}
+
 	go logger.AsyncWrite()
+
 	return logger
 }
 
@@ -65,16 +95,16 @@ func (l *Logger) AsyncWrite() {
 		if !l.options.DumpRequest && !l.options.DumpResponse {
 			partSuffix = ""
 			ext = ""
-		} else if l.options.DumpRequest && !outputdata.userdata.hasResponse {
+		} else if l.options.DumpRequest && !outputdata.Userdata.HasResponse {
 			partSuffix = ".request"
 			ext = ".txt"
-		} else if l.options.DumpResponse && outputdata.userdata.hasResponse {
+		} else if l.options.DumpResponse && outputdata.Userdata.HasResponse {
 			partSuffix = ".response"
 			ext = ".txt"
 		} else {
 			continue
 		}
-		destFile := path.Join(l.options.OutputFolder, fmt.Sprintf("%s%s-%s%s", outputdata.userdata.host, partSuffix, outputdata.userdata.id, ext))
+		destFile := path.Join(l.options.OutputFolder, fmt.Sprintf("%s%s-%s%s", outputdata.Userdata.Host, partSuffix, outputdata.Userdata.ID, ext))
 		// if it's a response and file doesn't exist skip
 		f, err := os.OpenFile(destFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
@@ -82,16 +112,24 @@ func (l *Logger) AsyncWrite() {
 		}
 
 		format = dataWithoutNewLine
-		if !strings.HasSuffix(string(outputdata.data), "\n") {
+		if !strings.HasSuffix(string(outputdata.Data), "\n") {
 			format = dataWithNewLine
 		}
+		formatted := fmt.Sprintf(format, outputdata.Data)
 
-		fmt.Fprintf(f, format, outputdata.data)
+		if len(l.ExternalStore) > 0 {
+			for _, st := range l.ExternalStore {
+				st.Store(formatted)
+			}
+		}
+
+		fmt.Fprintf(f, format, outputdata.Data)
+		fmt.Fprint(f, formatted)
 
 		f.Close()
-		if outputdata.userdata.hasResponse && !(l.options.DumpRequest || l.options.DumpResponse) {
+		if outputdata.Userdata.HasResponse && !(l.options.DumpRequest || l.options.DumpResponse) {
 			outputFileName := destFile + ".txt"
-			if outputdata.userdata.match {
+			if outputdata.Userdata.Match {
 				outputFileName = destFile + ".match.txt"
 			}
 			os.Rename(destFile, outputFileName) //nolint
@@ -100,13 +138,13 @@ func (l *Logger) AsyncWrite() {
 }
 
 // LogRequest and user data
-func (l *Logger) LogRequest(req *http.Request, userdata UserData) error {
+func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
 	reqdump, err := httputil.DumpRequest(req, true)
 	if err != nil {
 		return err
 	}
 	if l.options.OutputFolder != "" {
-		l.asyncqueue <- OutputData{data: reqdump, userdata: userdata}
+		l.asyncqueue <- types.OutputData{Data: reqdump, Userdata: userdata}
 	}
 
 	if l.options.Verbose {
@@ -124,7 +162,7 @@ func removeNonPrintableASCII(contentType string) bool {
 }
 
 // LogResponse and user data
-func (l *Logger) LogResponse(resp *http.Response, userdata UserData) error {
+func (l *Logger) LogResponse(resp *http.Response, userdata types.UserData) error {
 	if resp == nil {
 		return nil
 	}
@@ -133,7 +171,7 @@ func (l *Logger) LogResponse(resp *http.Response, userdata UserData) error {
 		return err
 	}
 	if l.options.OutputFolder != "" {
-		l.asyncqueue <- OutputData{data: respdump, userdata: userdata}
+		l.asyncqueue <- types.OutputData{Data: respdump, Userdata: userdata}
 	}
 	if l.options.Verbose {
 		contentType := resp.Header.Get("Content-Type")

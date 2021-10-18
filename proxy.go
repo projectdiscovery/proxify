@@ -16,18 +16,14 @@ import (
 	"github.com/projectdiscovery/fastdialer/fastdialer"
 	"github.com/projectdiscovery/mapsutil"
 	"github.com/projectdiscovery/proxify/pkg/certs"
+	"github.com/projectdiscovery/proxify/pkg/logger"
+	"github.com/projectdiscovery/proxify/pkg/logger/elastic"
+	"github.com/projectdiscovery/proxify/pkg/logger/kafka"
 	"github.com/projectdiscovery/proxify/pkg/types"
 	"github.com/projectdiscovery/tinydns"
 	"github.com/rs/xid"
 	"golang.org/x/net/proxy"
 )
-
-type UserData struct {
-	id          string
-	match       bool
-	hasResponse bool
-	host        string
-}
 
 type OnRequestFunc func(*http.Request, *goproxy.ProxyCtx) (*http.Request, *http.Response)
 type OnResponseFunc func(*http.Response, *goproxy.ProxyCtx) *http.Response
@@ -56,34 +52,36 @@ type Options struct {
 	OnResponseCallback      OnResponseFunc
 	Deny                    types.CustomList
 	Allow                   types.CustomList
+	Elastic                 *elastic.Options
+	Kafka                   *kafka.Options
 }
 
 type Proxy struct {
 	Dialer    *fastdialer.Dialer
 	options   *Options
-	logger    *Logger
+	logger    *logger.Logger
 	certs     *certs.Manager
 	httpproxy *goproxy.ProxyHttpServer
 	tinydns   *tinydns.TinyDNS
 }
 
 func (p *Proxy) OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-	var userdata UserData
+	var userdata types.UserData
 	if ctx.UserData != nil {
-		userdata = ctx.UserData.(UserData)
+		userdata = ctx.UserData.(types.UserData)
 	} else {
-		userdata.host = req.URL.Host
+		userdata.Host = req.URL.Host
 	}
 
 	// check dsl
 	if p.options.RequestDSL != "" {
 		m, _ := mapsutil.HTTPRequesToMap(req)
 		v, err := dsl.EvalExpr(p.options.RequestDSL, m)
-		userdata.match = err == nil && v.(bool)
+		userdata.Match = err == nil && v.(bool)
 	}
 
 	id := xid.New().String()
-	userdata.id = id
+	userdata.ID = id
 
 	// perform match and replace
 	if p.options.RequestMatchReplaceDSL != "" {
@@ -97,12 +95,12 @@ func (p *Proxy) OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Reque
 }
 
 func (p *Proxy) OnResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
-	userdata := ctx.UserData.(UserData)
-	userdata.hasResponse = true
-	if p.options.ResponseDSL != "" && !userdata.match {
+	userdata := ctx.UserData.(types.UserData)
+	userdata.HasResponse = true
+	if p.options.ResponseDSL != "" && !userdata.Match {
 		m, _ := mapsutil.HTTPResponseToMap(resp)
 		v, err := dsl.EvalExpr(p.options.ResponseDSL, m)
-		userdata.match = err == nil && v.(bool)
+		userdata.Match = err == nil && v.(bool)
 	}
 
 	// perform match and replace
@@ -116,7 +114,7 @@ func (p *Proxy) OnResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Res
 }
 
 func (p *Proxy) OnConnect(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
-	ctx.UserData = UserData{host: host}
+	ctx.UserData = types.UserData{Host: host}
 	return goproxy.MitmConnect, host
 }
 
@@ -278,11 +276,13 @@ func NewProxy(options *Options) (*Proxy, error) {
 	goproxy.HTTPMitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectHTTPMitm, TLSConfig: certs.TLSConfigFromCA()}
 	goproxy.RejectConnect = &goproxy.ConnectAction{Action: goproxy.ConnectReject, TLSConfig: certs.TLSConfigFromCA()}
 
-	logger := NewLogger(&OptionsLogger{
+	logger := logger.NewLogger(&logger.OptionsLogger{
 		Verbose:      options.Verbose,
 		OutputFolder: options.OutputDirectory,
 		DumpRequest:  options.DumpRequest,
 		DumpResponse: options.DumpResponse,
+		Elastic:      options.Elastic,
+		Kafka:        options.Kafka,
 	})
 
 	var tdns *tinydns.TinyDNS
