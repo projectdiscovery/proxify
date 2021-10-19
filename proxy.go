@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/tls"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -107,7 +108,7 @@ func (p *Proxy) OnResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Res
 
 	// perform match and replace
 	if p.options.ResponseMatchReplaceDSL != "" {
-		p.MatchReplaceResponse(resp)
+		resp = p.MatchReplaceResponse(resp)
 	}
 
 	p.logger.LogResponse(resp, userdata) //nolint
@@ -134,23 +135,13 @@ func (p *Proxy) MatchReplaceRequest(req *http.Request) *http.Request {
 	if v, err := dsl.EvalExpr(p.options.RequestMatchReplaceDSL, m); err != nil {
 		return req
 	} else {
-		reqbuffer := v.(string)
-
+		reqbuffer := fmt.Sprint(v)
 		// lazy mode - epic level - rebuild
 		bf := bufio.NewReader(strings.NewReader(reqbuffer))
 		requestNew, err := http.ReadRequest(bf)
 		if err != nil {
 			return req
 		}
-
-		requestNew.RequestURI = ""
-		u, err := url.Parse(req.RequestURI)
-		if err != nil {
-			return req
-		}
-		requestNew.URL = u
-
-		// swap requests
 		// closes old body to allow memory reuse
 		req.Body.Close()
 		return requestNew
@@ -171,8 +162,7 @@ func (p *Proxy) MatchReplaceResponse(resp *http.Response) *http.Response {
 	if v, err := dsl.EvalExpr(p.options.ResponseMatchReplaceDSL, m); err != nil {
 		return resp
 	} else {
-		respbuffer := v.(string)
-
+		respbuffer := fmt.Sprint(v)
 		// lazy mode - epic level - rebuild
 		bf := bufio.NewReader(strings.NewReader(respbuffer))
 		responseNew, err := http.ReadResponse(bf, nil)
