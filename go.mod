@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/Knetic/govaluate v3.0.0+incompatible // indirect
-	github.com/Mzack9999/roundrobin v0.0.0-20211018165333-d59d60c50445
+	github.com/Mzack9999/roundrobin v0.0.0-20211019094217-f3f5553da353
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/elazarl/goproxy v0.0.0-20210110162100-a92cc753f88e
 	github.com/elazarl/goproxy/ext v0.0.0-20210110162100-a92cc753f88e // indirect

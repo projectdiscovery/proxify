@@ -4,6 +4,8 @@ github.com/Knetic/govaluate v3.0.0+incompatible h1:7o6+MAPhYTCF0+fdvoz1xDedhRb4f
 github.com/Knetic/govaluate v3.0.0+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
 github.com/Mzack9999/roundrobin v0.0.0-20211018165333-d59d60c50445 h1:+NNTjeEiYJAutYkRJY54JIhawqpH7BK+sR5+p0VfaTM=
 github.com/Mzack9999/roundrobin v0.0.0-20211018165333-d59d60c50445/go.mod h1:jaPtvFne4154rQDj6lyDdPnvHc9II1X/3uXfJtjGKBQ=
+github.com/Mzack9999/roundrobin v0.0.0-20211019094217-f3f5553da353 h1:bT3DmkkW7jy6r4gzAz+VcTuDGf4msFjXonsvzsPxlio=
+github.com/Mzack9999/roundrobin v0.0.0-20211019094217-f3f5553da353/go.mod h1:jaPtvFne4154rQDj6lyDdPnvHc9II1X/3uXfJtjGKBQ=
 github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d h1:Byv0BzEl3/e6D5CLfI0j/7hiIEtvGVFPCZ7Ei2oq8iQ=
 github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d/go.mod h1:WaHUgvxTVq04UNunO+XhnAqY/wQc+bxr74GqbsZ/Jqw=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=

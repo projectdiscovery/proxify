@@ -36,28 +36,29 @@ type OnResponseFunc func(*http.Response, *goproxy.ProxyCtx) *http.Response
 type OnConnectFunc func(string, *goproxy.ProxyCtx) (*goproxy.ConnectAction, string)
 
 type Options struct {
-	DumpRequest             bool
-	DumpResponse            bool
-	Silent                  bool
-	Verbose                 bool
-	CertCacheSize           int
-	Directory               string
-	ListenAddr              string
-	OutputDirectory         string
-	RequestDSL              string
-	ResponseDSL             string
-	UpstreamHTTPProxies     types.CustomList
-	UpstreamSock5Proxies    types.CustomList
-	ListenDNSAddr           string
-	DNSMapping              string
-	DNSFallbackResolver     string
-	RequestMatchReplaceDSL  string
-	ResponseMatchReplaceDSL string
-	OnConnectCallback       OnConnectFunc
-	OnRequestCallback       OnRequestFunc
-	OnResponseCallback      OnResponseFunc
-	Deny                    types.CustomList
-	Allow                   types.CustomList
+	DumpRequest                 bool
+	DumpResponse                bool
+	Silent                      bool
+	Verbose                     bool
+	CertCacheSize               int
+	Directory                   string
+	ListenAddr                  string
+	OutputDirectory             string
+	RequestDSL                  string
+	ResponseDSL                 string
+	UpstreamHTTPProxies         types.CustomList
+	UpstreamSock5Proxies        types.CustomList
+	ListenDNSAddr               string
+	DNSMapping                  string
+	DNSFallbackResolver         string
+	RequestMatchReplaceDSL      string
+	ResponseMatchReplaceDSL     string
+	OnConnectCallback           OnConnectFunc
+	OnRequestCallback           OnRequestFunc
+	OnResponseCallback          OnResponseFunc
+	Deny                        types.CustomList
+	Allow                       types.CustomList
+	UpstreamProxyRequestsNumber int
 }
 
 type Proxy struct {
@@ -330,13 +331,13 @@ func NewProxy(options *Options) (*Proxy, error) {
 
 	var rbhttp, rbsocks5 *rbtransport.RoundTransport
 	if len(options.UpstreamHTTPProxies) > 0 {
-		rbhttp, err = rbtransport.New(options.UpstreamHTTPProxies...)
+		rbhttp, err = rbtransport.NewWithOptions(options.UpstreamProxyRequestsNumber, options.UpstreamHTTPProxies...)
 		if err != nil {
 			return nil, err
 		}
 	}
 	if len(options.UpstreamSock5Proxies) > 0 {
-		rbsocks5, err = rbtransport.New(options.UpstreamSock5Proxies...)
+		rbsocks5, err = rbtransport.NewWithOptions(options.UpstreamProxyRequestsNumber, options.UpstreamSock5Proxies...)
 		if err != nil {
 			return nil, err
 		}
