@@ -273,7 +273,7 @@ func (p *Proxy) Run() error {
 				return r, resp
 			},
 		)
-		go http.ListenAndServe(p.options.ListenAddrHTTP, p.httpproxy)
+		go http.ListenAndServe(p.options.ListenAddrHTTP, p.httpproxy) // nolint
 	}
 
 	// socks5 proxy
