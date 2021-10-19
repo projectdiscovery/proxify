@@ -1,17 +1,40 @@
-# dockerhub-push pushes docker build to dockerhub automatically
-# on the creation of a new release
-name: Publish to Dockerhub on creation of a new release
-on: 
-  release:
-    types: [published]
+name: 🌥 Docker Push
+
+on:
+  workflow_run:
+    workflows: ["🎉 Release Binary"]
+    types:
+      - completed
+  workflow_dispatch:
+
 jobs:
-  build:
+  docker:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
-    - name: Publish to Dockerhub Registry
-      uses: elgohr/Publish-Docker-Github-Action@master
-      with:
-        name: projectdiscovery/proxify
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Get Github tag
+        id: meta
+        run: |
+          echo "::set-output name=tag::$(curl --silent "https://api.github.com/repos/projectdiscovery/proxify/releases/latest" | jq -r .tag_name)"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1 
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64,linux/arm
+          push: true
+          tags: projectdiscovery/proxify:latest,projectdiscovery/proxify:${{ steps.meta.outputs.tag }}
