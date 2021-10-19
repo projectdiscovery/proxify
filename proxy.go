@@ -241,7 +241,6 @@ func (p *Proxy) Run() error {
 		if p.options.OnResponseCallback != nil {
 			onResponse = p.options.OnResponseCallback
 		}
-		// p.httpproxy.OnRequest().HandleConnectFunc(onConnect)
 		p.httpproxy.OnRequest(goproxy.ReqHostMatches(regexp.MustCompile("^.*:80$"))).HandleConnectFunc(onConnectHTTP)
 		p.httpproxy.OnRequest(goproxy.ReqHostMatches(regexp.MustCompile("^.*:443$"))).HandleConnectFunc(onConnectHTTPS)
 		// catch all
