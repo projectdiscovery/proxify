@@ -3,15 +3,22 @@ package proxify
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/tls"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"regexp"
+	"strconv"
 	"strings"
 
+	"github.com/armon/go-socks5"
 	"github.com/elazarl/goproxy"
+	"github.com/haxii/fastproxy/bufiopool"
+	"github.com/haxii/fastproxy/superproxy"
 	"github.com/projectdiscovery/dsl"
 	"github.com/projectdiscovery/fastdialer/fastdialer"
 	"github.com/projectdiscovery/mapsutil"
@@ -40,7 +47,8 @@ type Options struct {
 	Verbose                 bool
 	CertCacheSize           int
 	Directory               string
-	ListenAddr              string
+	ListenAddrHTTP          string
+	ListenAddrSocks5        string
 	OutputDirectory         string
 	RequestDSL              string
 	ResponseDSL             string
@@ -51,7 +59,8 @@ type Options struct {
 	DNSFallbackResolver     string
 	RequestMatchReplaceDSL  string
 	ResponseMatchReplaceDSL string
-	OnConnectCallback       OnConnectFunc
+	OnConnectHTTPCallback   OnConnectFunc
+	OnConnectHTTPSCallback  OnConnectFunc
 	OnRequestCallback       OnRequestFunc
 	OnResponseCallback      OnResponseFunc
 	Deny                    types.CustomList
@@ -59,12 +68,15 @@ type Options struct {
 }
 
 type Proxy struct {
-	Dialer    *fastdialer.Dialer
-	options   *Options
-	logger    *Logger
-	certs     *certs.Manager
-	httpproxy *goproxy.ProxyHttpServer
-	tinydns   *tinydns.TinyDNS
+	Dialer       *fastdialer.Dialer
+	options      *Options
+	logger       *Logger
+	certs        *certs.Manager
+	httpproxy    *goproxy.ProxyHttpServer
+	socks5proxy  *socks5.Server
+	socks5tunnel *superproxy.SuperProxy
+	bufioPool    *bufiopool.Pool
+	tinydns      *tinydns.TinyDNS
 }
 
 func (p *Proxy) OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
@@ -110,12 +122,16 @@ func (p *Proxy) OnResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Res
 		p.MatchReplaceResponse(resp)
 	}
 
-	p.logger.LogResponse(resp, userdata) //nolint
 	ctx.UserData = userdata
 	return resp
 }
 
-func (p *Proxy) OnConnect(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
+func (p *Proxy) OnConnectHTTP(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
+	ctx.UserData = UserData{host: host}
+	return goproxy.HTTPMitmConnect, host
+}
+
+func (p *Proxy) OnConnectHTTPS(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
 	ctx.UserData = UserData{host: host}
 	return goproxy.MitmConnect, host
 }
@@ -192,62 +208,96 @@ func (p *Proxy) Run() error {
 		go p.tinydns.Run()
 	}
 
-	if p.options.UpstreamHTTPProxy != "" {
-		p.httpproxy.Tr = &http.Transport{Proxy: func(req *http.Request) (*url.URL, error) {
-			return url.Parse(p.options.UpstreamHTTPProxy)
-		}, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-		p.httpproxy.ConnectDial = p.httpproxy.NewConnectDialToProxy(p.options.UpstreamHTTPProxy)
-	} else if p.options.UpstreamSock5Proxy != "" {
-		dialer, err := proxy.SOCKS5("tcp", p.options.UpstreamSock5Proxy, nil, proxy.Direct)
-		if err != nil {
-			return err
+	// http proxy
+	if p.httpproxy != nil {
+		if p.options.UpstreamHTTPProxy != "" {
+			p.httpproxy.Tr = &http.Transport{Proxy: func(req *http.Request) (*url.URL, error) {
+				return url.Parse(p.options.UpstreamHTTPProxy)
+			}, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+			p.httpproxy.ConnectDial = p.httpproxy.NewConnectDialToProxy(p.options.UpstreamHTTPProxy)
+		} else if p.options.UpstreamSock5Proxy != "" {
+			dialer, err := proxy.SOCKS5("tcp", p.options.UpstreamSock5Proxy, nil, proxy.Direct)
+			if err != nil {
+				return err
+			}
+			p.httpproxy.Tr = &http.Transport{Dial: dialer.Dial, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+			p.httpproxy.ConnectDial = nil
+		} else {
+			p.httpproxy.Tr.DialContext = p.Dialer.Dial
 		}
-		p.httpproxy.Tr = &http.Transport{Dial: dialer.Dial, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-		p.httpproxy.ConnectDial = nil
-	} else {
-		p.httpproxy.Tr.DialContext = p.Dialer.Dial
-	}
-	onConnect := p.OnConnect
-	if p.options.OnConnectCallback != nil {
-		onConnect = p.options.OnConnectCallback
-	}
-	onRequest := p.OnRequest
-	if p.options.OnRequestCallback != nil {
-		onRequest = p.options.OnRequestCallback
-	}
-	onResponse := p.OnResponse
-	if p.options.OnResponseCallback != nil {
-		onResponse = p.options.OnResponseCallback
-	}
-	p.httpproxy.OnRequest().HandleConnectFunc(onConnect)
-	p.httpproxy.OnRequest().DoFunc(onRequest)
-	p.httpproxy.OnResponse().DoFunc(onResponse)
+		onConnectHTTP := p.OnConnectHTTP
+		if p.options.OnConnectHTTPCallback != nil {
+			onConnectHTTP = p.options.OnConnectHTTPCallback
+		}
+		onConnectHTTPS := p.OnConnectHTTPS
+		if p.options.OnConnectHTTPSCallback != nil {
+			onConnectHTTPS = p.options.OnConnectHTTPSCallback
+		}
+		onRequest := p.OnRequest
+		if p.options.OnRequestCallback != nil {
+			onRequest = p.options.OnRequestCallback
+		}
+		onResponse := p.OnResponse
+		if p.options.OnResponseCallback != nil {
+			onResponse = p.options.OnResponseCallback
+		}
+		// p.httpproxy.OnRequest().HandleConnectFunc(onConnect)
+		p.httpproxy.OnRequest(goproxy.ReqHostMatches(regexp.MustCompile("^.*:80$"))).HandleConnectFunc(onConnectHTTP)
+		p.httpproxy.OnRequest(goproxy.ReqHostMatches(regexp.MustCompile("^.*:443$"))).HandleConnectFunc(onConnectHTTPS)
+		// catch all
+		p.httpproxy.OnRequest().HandleConnectFunc(onConnectHTTPS)
+		p.httpproxy.OnRequest().DoFunc(onRequest)
+		p.httpproxy.OnResponse().DoFunc(onResponse)
 
-	// Serve the certificate when the user makes requests to /proxify
-	p.httpproxy.OnRequest(goproxy.DstHostIs("proxify")).DoFunc(
-		func(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-			if r.URL.Path != "/cacert.crt" {
-				return r, goproxy.NewResponse(r, "text/plain", 404, "Invalid path given")
+		// Serve the certificate when the user makes requests to /proxify
+		p.httpproxy.OnRequest(goproxy.DstHostIs("proxify")).DoFunc(
+			func(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
+				if r.URL.Path != "/cacert.crt" {
+					return r, goproxy.NewResponse(r, "text/plain", 404, "Invalid path given")
+				}
+
+				_, ca := p.certs.GetCA()
+				reader := bytes.NewReader(ca)
+
+				header := http.Header{}
+				header.Set("Content-Type", "application/pkix-cert")
+				resp := &http.Response{
+					Request:          r,
+					TransferEncoding: r.TransferEncoding,
+					Header:           header,
+					StatusCode:       200,
+					Status:           http.StatusText(200),
+					ContentLength:    int64(reader.Len()),
+					Body:             ioutil.NopCloser(reader),
+				}
+				return r, resp
+			},
+		)
+		go http.ListenAndServe(p.options.ListenAddrHTTP, p.httpproxy)
+	}
+
+	// socks5 proxy
+	if p.socks5proxy != nil {
+		if p.httpproxy != nil {
+			httpProxyIP, httpProxyPort, err := net.SplitHostPort(p.options.ListenAddrHTTP)
+			if err != nil {
+				return err
 			}
-
-			_, ca := p.certs.GetCA()
-			reader := bytes.NewReader(ca)
-
-			header := http.Header{}
-			header.Set("Content-Type", "application/pkix-cert")
-			resp := &http.Response{
-				Request:          r,
-				TransferEncoding: r.TransferEncoding,
-				Header:           header,
-				StatusCode:       200,
-				Status:           http.StatusText(200),
-				ContentLength:    int64(reader.Len()),
-				Body:             ioutil.NopCloser(reader),
+			httpProxyPortUint, err := strconv.ParseInt(httpProxyPort, 10, 32)
+			if err != nil {
+				return err
 			}
-			return r, resp
-		},
-	)
-	return http.ListenAndServe(p.options.ListenAddr, p.httpproxy)
+			p.socks5tunnel, err = superproxy.NewSuperProxy(httpProxyIP, uint16(httpProxyPortUint), superproxy.ProxyTypeHTTP, "", "", "")
+			if err != nil {
+				return err
+			}
+			p.bufioPool = bufiopool.New(4096, 4096)
+		}
+
+		return p.socks5proxy.ListenAndServe("tcp", p.options.ListenAddrSocks5)
+	}
+
+	return nil
 }
 
 func (p *Proxy) Stop() {
@@ -263,13 +313,17 @@ func NewProxy(options *Options) (*Proxy, error) {
 		return nil, err
 	}
 
-	httpproxy := goproxy.NewProxyHttpServer()
-	if options.Silent {
-		httpproxy.Logger = log.New(ioutil.Discard, "", log.Ltime|log.Lshortfile)
-	} else {
-		httpproxy.Verbose = true
+	var httpproxy *goproxy.ProxyHttpServer
+	if options.ListenAddrHTTP != "" {
+		httpproxy = goproxy.NewProxyHttpServer()
+		if options.Silent {
+			httpproxy.Logger = log.New(ioutil.Discard, "", log.Ltime|log.Lshortfile)
+		} else if options.Verbose {
+			httpproxy.Verbose = true
+		} else {
+			httpproxy.Verbose = false
+		}
 	}
-	httpproxy.Verbose = false
 
 	ca, _ := certs.GetCA()
 	goproxy.GoproxyCa = ca
@@ -312,5 +366,35 @@ func NewProxy(options *Options) (*Proxy, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Proxy{httpproxy: httpproxy, certs: certs, logger: logger, options: options, Dialer: dialer, tinydns: tdns}, nil
+
+	proxy := &Proxy{
+		httpproxy: httpproxy,
+		certs:     certs,
+		logger:    logger,
+		options:   options,
+		Dialer:    dialer,
+		tinydns:   tdns,
+	}
+
+	var socks5proxy *socks5.Server
+	if options.ListenAddrSocks5 != "" {
+		socks5Config := &socks5.Config{
+			Dial: proxy.httpTunnelDialer,
+		}
+		if options.Silent {
+			socks5Config.Logger = log.New(ioutil.Discard, "", log.Ltime|log.Lshortfile)
+		}
+		socks5proxy, err = socks5.New(socks5Config)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	proxy.socks5proxy = socks5proxy
+
+	return proxy, nil
+}
+
+func (p *Proxy) httpTunnelDialer(ctx context.Context, network, addr string) (net.Conn, error) {
+	return p.socks5tunnel.MakeTunnel(nil, nil, p.bufioPool, addr)
 }

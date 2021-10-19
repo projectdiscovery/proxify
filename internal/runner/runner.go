@@ -20,7 +20,8 @@ func NewRunner(options *Options) (*Runner, error) {
 		Directory:               options.Directory,
 		CertCacheSize:           options.CertCacheSize,
 		Verbose:                 options.Verbose,
-		ListenAddr:              options.ListenAddr,
+		ListenAddrHTTP:          options.ListenAddrHTTP,
+		ListenAddrSocks5:        options.ListenAddrSocks5,
 		OutputDirectory:         options.OutputDirectory,
 		RequestDSL:              options.RequestDSL,
 		ResponseDSL:             options.ResponseDSL,
@@ -43,7 +44,13 @@ func NewRunner(options *Options) (*Runner, error) {
 // Run polling and notification
 func (r *Runner) Run() error {
 	// configuration summary
-	gologger.Print().Msgf("Proxy Listening on %s\n", r.options.ListenAddr)
+	if r.options.ListenAddrHTTP != "" {
+		gologger.Print().Msgf("HTTP Proxy Listening on %s\n", r.options.ListenAddrHTTP)
+	}
+	if r.options.ListenAddrSocks5 != "" {
+		gologger.Print().Msgf("Socks5 Proxy Listening on %s\n", r.options.ListenAddrSocks5)
+	}
+
 	if r.options.OutputDirectory != "" {
 		gologger.Print().Msgf("Saving traffic to %s\n", r.options.OutputDirectory)
 	}
