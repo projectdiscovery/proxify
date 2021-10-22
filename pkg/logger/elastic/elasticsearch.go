@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 
 	"github.com/pkg/errors"
+	"github.com/projectdiscovery/proxify/pkg/types"
 )
 
 // Options contains necessary options required for elasticsearch communicaiton
@@ -37,7 +38,7 @@ type Client struct {
 	httpClient     *http.Client
 }
 
-// New creates and returns a new exporter for elasticsearch
+// New creates and returns a new client for elasticsearch
 func New(option *Options) (*Client, error) {
 
 	httpClient := &http.Client{
@@ -60,7 +61,7 @@ func New(option *Options) (*Client, error) {
 		auth = "Basic " + auth
 		authentication = auth
 	}
-	url := fmt.Sprintf("%s%s/%s/_doc", scheme, option.Addr, option.IndexName)
+	url := fmt.Sprintf("%s%s/%s/_update/", scheme, option.Addr, option.IndexName)
 
 	ei := &Client{
 		url:            url,
@@ -70,10 +71,9 @@ func New(option *Options) (*Client, error) {
 	return ei, nil
 }
 
-// Export exports a passed result event to elasticsearch
-func (c *Client) Store(data string) error {
-	// creating a request
-	req, err := http.NewRequest(http.MethodPost, c.url, nil)
+// Store stores a passed log event in elasticsearch
+func (c *Client) Store(data types.OutputData) error {
+	req, err := http.NewRequest(http.MethodPost, c.url+data.Name, nil)
 	if err != nil {
 		return errors.Wrap(err, "could not make request")
 	}
@@ -81,17 +81,27 @@ func (c *Client) Store(data string) error {
 		req.Header.Add("Authorization", c.authentication)
 	}
 	req.Header.Add("Content-Type", "application/json")
-
-	d := map[string]interface{}{
-		"Event":     data,
-		"Timestamp": time.Now().Format(time.RFC3339),
+	var d map[string]interface{}
+	if data.Userdata.HasResponse {
+		d = map[string]interface{}{
+			"response":  data.DataString,
+			"timestamp": time.Now().Format(time.RFC3339),
+		}
+	} else {
+		d = map[string]interface{}{
+			"request":   data.DataString,
+			"timestamp": time.Now().Format(time.RFC3339),
+		}
 	}
-	b, err := json.Marshal(&d)
+
+	b, err := json.Marshal(&map[string]interface{}{
+		"doc":           d,
+		"doc_as_upsert": true,
+	})
 	if err != nil {
 		return err
 	}
 	req.Body = ioutil.NopCloser(bytes.NewReader(b))
-
 	res, err := c.httpClient.Do(req)
 	if err != nil {
 		return err
@@ -101,7 +111,6 @@ func (c *Client) Store(data string) error {
 	if err != nil {
 		return errors.New(err.Error() + "error thrown by elasticsearch " + string(b))
 	}
-
 	if res.StatusCode >= 300 {
 		return errors.New("elasticsearch responded with an error: " + string(b))
 	}

@@ -8,6 +8,10 @@ type UserData struct {
 }
 
 type OutputData struct {
-	Userdata UserData
-	Data     []byte
+	Userdata   UserData
+	Data       []byte
+	DataString string
+	Name       string
+	PartSuffix string
+	Format     string
 }

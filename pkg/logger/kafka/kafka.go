@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"github.com/Shopify/sarama"
+	"github.com/projectdiscovery/proxify/pkg/types"
 )
 
 // Options required for kafka
@@ -12,7 +13,7 @@ type Options struct {
 	Topic string `yaml:"topic"`
 }
 
-// Server for Kafka
+// Client for Kafka
 type Client struct {
 	producer sarama.SyncProducer
 	topic    string
@@ -26,33 +27,31 @@ func New(option *Options) (*Client, error) {
 	config.Producer.RequiredAcks = sarama.WaitForAll
 	// Retry up to 10 times to produce the message
 	config.Producer.Retry.Max = 10
+	config.Producer.Return.Successes = true
 
 	producer, err := sarama.NewSyncProducer([]string{option.Addr}, config)
 	if err != nil {
 		return nil, err
 	}
-	ksrvr := &Client{
+	return &Client{
 		producer: producer,
 		topic:    option.Topic,
-	}
-	return ksrvr, nil
+	}, nil
 }
 
 // Store passes the message to kafka
-func (c *Client) Store(data string) error {
+func (c *Client) Store(data types.OutputData) error {
+
 	msg := &sarama.ProducerMessage{
 		Topic: c.topic,
-		Value: sarama.StringEncoder(data),
+		Value: sarama.StringEncoder(data.DataString),
 	}
 
 	_, _, err := c.producer.SendMessage(msg)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
-// Close closes the client
+// Close closes the sarama kafka client
 func (c *Client) Close() error {
 	return c.producer.Close()
 }

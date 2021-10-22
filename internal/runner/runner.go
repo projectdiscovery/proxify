@@ -49,6 +49,12 @@ func (r *Runner) Run() error {
 	if r.options.OutputDirectory != "" {
 		gologger.Print().Msgf("Saving traffic to %s\n", r.options.OutputDirectory)
 	}
+	if r.options.Kafka.Addr != "" {
+		gologger.Print().Msgf("Sending traffic to Kafka at %s\n", r.options.Kafka.Addr)
+	}
+	if r.options.Elastic.Addr != "" {
+		gologger.Print().Msgf("Sending traffic to Elasticsearch at %s\n", r.options.Elastic.Addr)
+	}
 
 	if r.options.UpstreamHTTPProxy != "" {
 		gologger.Print().Msgf("Using upstream HTTP proxy: %s\n", r.options.UpstreamHTTPProxy)

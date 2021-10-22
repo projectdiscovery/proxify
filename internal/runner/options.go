@@ -49,7 +49,7 @@ func ParseOptions() *Options {
 	}
 
 	options := &Options{}
-	flag.StringVar(&options.OutputDirectory, "output", "logs", "Output Folder")
+	flag.StringVar(&options.OutputDirectory, "output", "", "Output Folder")
 	flag.BoolVar(&options.Verbose, "v", false, "Verbose")
 	flag.StringVar(&options.Directory, "config", path.Join(homeDir, ".config", "proxify"), "Directory for storing program information")
 	flag.IntVar(&options.CertCacheSize, "cert-cache-size", 256, "Number of certificates to cache")
@@ -70,14 +70,14 @@ func ParseOptions() *Options {
 	flag.BoolVar(&options.DumpResponse, "dump-resp", false, "Dump responses in separate files")
 	flag.Var(&options.Allow, "allow", "Whitelist ip/cidr")
 	flag.Var(&options.Deny, "deny", "Blacklist ip/cidr")
-	flag.StringVar(&options.Elastic.Addr, "elastic-address", "", "elastic search address(ip:port)")
-	flag.BoolVar(&options.Elastic.SSL, "elastic-ssl", false, "enable elastic search ssl")
-	flag.BoolVar(&options.Elastic.SSLVerification, "elastic-ssl-verification", false, "enable elastic search ssl verification")
-	flag.StringVar(&options.Elastic.Username, "elastic-username", "", "elastic search username")
-	flag.StringVar(&options.Elastic.Password, "elastic-password", "", "elastic search password")
-	flag.StringVar(&options.Elastic.IndexName, "elastic-index", "", "elastic search index name")
-	flag.StringVar(&options.Kafka.Addr, "kafka-address", "", "address of kafka broker(ip:port)")
-	flag.StringVar(&options.Kafka.Topic, "kafka-topic", "", "kafka topic to publish messages on")
+	flag.StringVar(&options.Elastic.Addr, "elastic-address", "", "elasticsearch address (ip:port)")
+	flag.BoolVar(&options.Elastic.SSL, "elastic-ssl", false, "enable elasticsearch ssl")
+	flag.BoolVar(&options.Elastic.SSLVerification, "elastic-ssl-verification", false, "enable elasticsearch ssl verification")
+	flag.StringVar(&options.Elastic.Username, "elastic-username", "", "elasticsearch username")
+	flag.StringVar(&options.Elastic.Password, "elastic-password", "", "elasticsearch password")
+	flag.StringVar(&options.Elastic.IndexName, "elastic-index", "proxify", "elasticsearch index name")
+	flag.StringVar(&options.Kafka.Addr, "kafka-address", "", "address of kafka broker (ip:port)")
+	flag.StringVar(&options.Kafka.Topic, "kafka-topic", "proxify", "kafka topic to publish messages on")
 
 	flag.Parse()
 	os.MkdirAll(options.Directory, os.ModePerm) //nolint
