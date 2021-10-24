@@ -11,8 +11,7 @@ import (
 	"github.com/projectdiscovery/proxify/pkg/types"
 )
 
-// Options of the internal runner
-//nolint:maligned // used once
+// Options of the runner
 type Options struct {
 	OutputDirectory         string
 	Directory               string
@@ -23,19 +22,19 @@ type Options struct {
 	ListenAddrHTTP          string
 	ListenAddrSocks5        string
 	ListenDNSAddr           string
-	DNSMapping              string
-	DNSFallbackResolver     string
-	NoColor                 bool
-	RequestDSL              string
-	RequestMatchReplaceDSL  string
-	ResponseDSL             string
-	ResponseMatchReplaceDSL string
-	UpstreamHTTPProxy       string
-	UpstreamSocks5Proxy     string
-	DumpRequest             bool
-	DumpResponse            bool
-	Deny                    types.CustomList
-	Allow                   types.CustomList
+	DNSMapping              string           // DNSMapping contains user provided hosts
+	DNSFallbackResolver     string           // Listen DNS Ip and port (ip:port)
+	NoColor                 bool             // No Color
+	RequestDSL              string           // Request Filter DSL
+	RequestMatchReplaceDSL  string           // Request Match-Replace DSL
+	ResponseDSL             string           // Response Filter DSL
+	ResponseMatchReplaceDSL string           // Request Match-Replace DSL
+	UpstreamHTTPProxy       string           // Upstream HTTP Proxy (eg http://proxyip:proxyport)
+	UpstreamSocks5Proxy     string           // Upstream SOCKS5 Proxy (eg socks5://proxyip:proxyport)
+	DumpRequest             bool             // Dump requests in separate files
+	DumpResponse            bool             // Dump responses in separate files
+	Deny                    types.CustomList // Deny ip/cidr
+	Allow                   types.CustomList // Allow ip/cidr
 }
 
 func ParseOptions() *Options {
