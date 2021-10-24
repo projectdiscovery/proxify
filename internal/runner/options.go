@@ -13,13 +13,14 @@ import (
 
 // Options of the runner
 type Options struct {
-	OutputDirectory         string // Output Folder
-	Directory               string // Directory for storing program information
-	CertCacheSize           int    // Number of certificates to cache
-	Verbose                 bool   // Verbose mode
-	Silent                  bool   // Silent mode
-	Version                 bool   // Version of the program
-	ListenAddr              string // Listen Ip and port (ip:port)
+	OutputDirectory         string
+	Directory               string
+	CertCacheSize           int
+	Verbose                 bool
+	Silent                  bool
+	Version                 bool
+	ListenAddrHTTP          string
+	ListenAddrSocks5        string
 	ListenDNSAddr           string
 	DNSMapping              string           // DNSMapping contains user provided hosts
 	DNSFallbackResolver     string           // Listen DNS Ip and port (ip:port)
@@ -45,7 +46,7 @@ func ParseOptions() *Options {
 
 	options := &Options{}
 	flagSet := goflags.NewFlagSet()
-	flagSet.SetDescription(`Swiss Army Knife Proxy for rapid deployments. Supports multiple operations such as request/response dump, filtering and manipulation via DSL language, upstream HTTP/Socks5 proxy`)
+	flagSet.SetDescription(`Swiss Army Knife Proxy for rapid deployments. Supports multiple operations such as request/response dump,filtering and manipulation via DSL language, upstream HTTP/Socks5 proxy`)
 
 	createGroup(flagSet, "output", "Output",
 		// Todo:	flagSet.BoolVar(&options.Dump, "dump", true, "Dump HTTP requests/response to output file"),
@@ -62,16 +63,19 @@ func ParseOptions() *Options {
 	)
 
 	createGroup(flagSet, "network", "Network",
-		flagSet.StringVarP(&options.ListenAddr, "addr", "a", "127.0.0.1:8888", "Listening HTTP IP and Port address (ip:port)"),
+		flagSet.StringVarP(&options.ListenAddrHTTP, "http-add", "ha", "127.0.0.1:8888", "Listening HTTP IP and Port address (ip:port)"),
+		flagSet.StringVarP(&options.ListenAddrSocks5, "socks-addr", "sa", "127.0.0.1:10080", "Listening SOCKS IP and Port address (ip:port)"),
 		flagSet.StringVarP(&options.ListenDNSAddr, "dns-addr", "da", "", "Listening DNS IP and Port address (ip:port)"),
-		flagSet.StringVarP(&options.DNSFallbackResolver, "r", "resolver", "", "Custom DNS resolvers to use (ip:port)"),
 		flagSet.StringVarP(&options.DNSMapping, "dns-mapping", "dm", "", "Domain to IP DNS mapping (eg domain:ip,domain:ip,..)"),
-		flagSet.StringVar(&options.UpstreamHTTPProxy, "http-proxy", "", "Upstream HTTP Proxy (eg http://proxyip:proxyport"),
-		flagSet.StringVar(&options.UpstreamSocks5Proxy, "socks5-proxy", "", "Upstream SOCKS5 Proxy (eg socks5://proxyip:proxyport)"),
+		flagSet.StringVarP(&options.DNSFallbackResolver, "resolver", "r", "", "Custom DNS resolvers to use (ip:port)"),
 	)
 
-	createGroup(flagSet, "configuration", "configuration",
+	createGroup(flagSet, "proxy", "Proxy",
+		flagSet.StringVarP(&options.UpstreamHTTPProxy, "http-proxy", "hp", "", "Upstream HTTP Proxy (eg http://proxy-ip:proxy-port"),
+		flagSet.StringVarP(&options.UpstreamSocks5Proxy, "socks5-proxy", "sp", "", "Upstream SOCKS5 Proxy (eg socks5://proxy-ip:proxy-port)"),
+	)
 
+	createGroup(flagSet, "configuration", "Configuration",
 		// Todo: default config file support (homeDir/.config/proxify/config.yaml)
 		flagSet.StringVar(&options.Directory, "config", path.Join(homeDir, ".config", "proxify"), "Directory for storing program information"),
 		flagSet.IntVar(&options.CertCacheSize, "cert-cache-size", 256, "Number of certificates to cache"),
@@ -79,7 +83,7 @@ func ParseOptions() *Options {
 		flagSet.Var(&options.Deny, "deny", "Denied list of IP/CIDR's to be proxied"),
 	)
 
-	createGroup(flagSet, "misc", "misc",
+	createGroup(flagSet, "miscellaneous", "Miscellaneous",
 		flagSet.BoolVar(&options.Silent, "silent", false, "Silent"),
 		flagSet.BoolVarP(&options.NoColor, "no-color", "nc", true, "No Color"),
 		flagSet.BoolVar(&options.Version, "version", false, "Version"),
