@@ -48,7 +48,7 @@ func ParseOptions() *Options {
 	flagSet.SetDescription(`Swiss Army Knife Proxy for rapid deployments. Supports multiple operations such as request/response dump, filtering and manipulation via DSL language, upstream HTTP/Socks5 proxy`)
 
 	createGroup(flagSet, "output", "Output",
-		//	flagSet.BoolVar(&options.Dump, "dump", true, "Dump HTTP requests/response to output file"),
+		// Todo:	flagSet.BoolVar(&options.Dump, "dump", true, "Dump HTTP requests/response to output file"),
 		flagSet.StringVarP(&options.OutputDirectory, "output", "o", "logs", "Output Directory to store proxy logs"),
 		flagSet.BoolVar(&options.DumpRequest, "dump-req", false, "Dump only HTTP requests to output file"),
 		flagSet.BoolVar(&options.DumpResponse, "dump-resp", false, "Dump only HTTP responses to output file"),
