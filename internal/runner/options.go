@@ -48,33 +48,42 @@ func ParseOptions() *Options {
 	flagSet.SetDescription(`Swiss Army Knife Proxy for rapid deployments. Supports multiple operations such as request/response dump, filtering and manipulation via DSL language, upstream HTTP/Socks5 proxy`)
 
 	createGroup(flagSet, "output", "Output",
-		flagSet.StringVar(&options.OutputDirectory, "output", "logs", "Output Folder"),
-		flagSet.BoolVar(&options.Verbose, "v", false, "Verbose"),
-		flagSet.StringVar(&options.Directory, "config", path.Join(homeDir, ".config", "proxify"), "Directory for storing program information"),
-		flagSet.IntVar(&options.CertCacheSize, "cert-cache-size", 256, "Number of certificates to cache"),
-		flagSet.BoolVar(&options.DumpRequest, "dump-req", false, "Dump requests in separate files"),
-		flagSet.BoolVar(&options.DumpResponse, "dump-resp", false, "Dump responses in separate files"),
-		flagSet.BoolVar(&options.Silent, "silent", false, "Silent"),
-		flagSet.BoolVar(&options.NoColor, "no-color", true, "No Color"),
-		flagSet.BoolVar(&options.Version, "version", false, "Version"),
+		//	flagSet.BoolVar(&options.Dump, "dump", true, "Dump HTTP requests/response to output file"),
+		flagSet.StringVarP(&options.OutputDirectory, "output", "o", "logs", "Output Directory to store proxy logs"),
+		flagSet.BoolVar(&options.DumpRequest, "dump-req", false, "Dump only HTTP requests to output file"),
+		flagSet.BoolVar(&options.DumpResponse, "dump-resp", false, "Dump only HTTP responses to output file"),
 	)
 
 	createGroup(flagSet, "filter", "Filter",
-		flagSet.Var(&options.Allow, "allow", "Whitelist ip/cidr"),
-		flagSet.Var(&options.Deny, "deny", "Blacklist ip/cidr"),
-		flagSet.StringVar(&options.RequestDSL, "request-dsl", "", "Request Filter DSL"),
-		flagSet.StringVar(&options.ResponseDSL, "response-dsl", "", "Response Filter DSL"),
-		flagSet.StringVar(&options.RequestMatchReplaceDSL, "request-match-replace-dsl", "", "Request Match-Replace DSL"),
-		flagSet.StringVar(&options.ResponseMatchReplaceDSL, "response-match-replace-dsl", "", "Request Match-Replace DSL"),
+		flagSet.StringVarP(&options.RequestDSL, "request-dsl", "req-fd", "", "Request Filter DSL"),
+		flagSet.StringVarP(&options.ResponseDSL, "response-dsl", "resp-fd", "", "Response Filter DSL"),
+		flagSet.StringVarP(&options.RequestMatchReplaceDSL, "request-match-replace-dsl", "req-mrd", "", "Request Match-Replace DSL"),
+		flagSet.StringVarP(&options.ResponseMatchReplaceDSL, "response-match-replace-dsl", "resp-mrd", "", "Response Match-Replace DSL"),
 	)
 
 	createGroup(flagSet, "network", "Network",
-		flagSet.StringVar(&options.ListenAddr, "addr", "127.0.0.1:8888", "Listen Ip and port (ip:port)"),
-		flagSet.StringVar(&options.DNSFallbackResolver, "dns-resolver", "", "Listen DNS Ip and port (ip:port)"),
-		flagSet.StringVar(&options.ListenDNSAddr, "dns-addr", "", "Listen DNS Ip and port (ip:port)"),
-		flagSet.StringVar(&options.DNSMapping, "dns-mapping", "", "DNS A mapping (eg domain:ip,domain:ip,..)"),
+		flagSet.StringVarP(&options.ListenAddr, "addr", "a", "127.0.0.1:8888", "Listening HTTP IP and Port address (ip:port)"),
+		flagSet.StringVarP(&options.ListenDNSAddr, "dns-addr", "da", "", "Listening DNS IP and Port address (ip:port)"),
+		flagSet.StringVarP(&options.DNSFallbackResolver, "r", "resolver", "", "Custom DNS resolvers to use (ip:port)"),
+		flagSet.StringVarP(&options.DNSMapping, "dns-mapping", "dm", "", "Domain to IP DNS mapping (eg domain:ip,domain:ip,..)"),
 		flagSet.StringVar(&options.UpstreamHTTPProxy, "http-proxy", "", "Upstream HTTP Proxy (eg http://proxyip:proxyport"),
 		flagSet.StringVar(&options.UpstreamSocks5Proxy, "socks5-proxy", "", "Upstream SOCKS5 Proxy (eg socks5://proxyip:proxyport)"),
+	)
+
+	createGroup(flagSet, "configuration", "configuration",
+
+		// Todo: default config file support (homeDir/.config/proxify/config.yaml)
+		flagSet.StringVar(&options.Directory, "config", path.Join(homeDir, ".config", "proxify"), "Directory for storing program information"),
+		flagSet.IntVar(&options.CertCacheSize, "cert-cache-size", 256, "Number of certificates to cache"),
+		flagSet.Var(&options.Allow, "allow", "Allowed list of IP/CIDR's to be proxied"),
+		flagSet.Var(&options.Deny, "deny", "Denied list of IP/CIDR's to be proxied"),
+	)
+
+	createGroup(flagSet, "misc", "misc",
+		flagSet.BoolVar(&options.Silent, "silent", false, "Silent"),
+		flagSet.BoolVarP(&options.NoColor, "no-color", "nc", true, "No Color"),
+		flagSet.BoolVar(&options.Version, "version", false, "Version"),
+		flagSet.BoolVarP(&options.Verbose, "verbose", "v", false, "Verbose"),
 	)
 
 	_ = flagSet.Parse()
