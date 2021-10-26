@@ -1,3 +1,7 @@
+before:
+  hooks:
+    - go mod tidy
+
 builds:
     - binary: proxify
       main: cmd/proxify/proxify.go
@@ -39,10 +43,9 @@ builds:
       id: mitmrelay
 
 archives:
-    - id: tgz
-      format: tar.gz
-      replacements:
-          darwin: macOS
-      format_overrides:
-          - goos: windows
-            format: zip
+  - format: zip
+    replacements:
+        darwin: macOS
+
+checksum:
+  algorithm: sha256
