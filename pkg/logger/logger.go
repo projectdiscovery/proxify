@@ -12,9 +12,9 @@ import (
 	"github.com/projectdiscovery/proxify/pkg/logger/elastic"
 	"github.com/projectdiscovery/proxify/pkg/logger/file"
 	"github.com/projectdiscovery/proxify/pkg/logger/kafka"
+	"github.com/projectdiscovery/stringsutil"
 
 	"github.com/projectdiscovery/proxify/pkg/types"
-	"github.com/projectdiscovery/stringsutil"
 )
 
 const (
@@ -32,7 +32,7 @@ type OptionsLogger struct {
 }
 
 type Store interface {
-	Store(data types.OutputData) error
+	Save(data types.OutputData) error
 }
 
 type Logger struct {
@@ -48,14 +48,14 @@ func NewLogger(options *OptionsLogger) *Logger {
 		asyncqueue: make(chan types.OutputData, 1000),
 	}
 	if options.Elastic.Addr != "" {
-		st, err := elastic.New(&elastic.Options{
+		store, err := elastic.New(&elastic.Options{
 			Addr:      options.Elastic.Addr,
 			IndexName: options.Elastic.IndexName,
 		})
 		if err != nil {
 			gologger.Warning().Msgf("Error while creating elastic logger: %s", err)
 		} else {
-			logger.Store = append(logger.Store, st)
+			logger.Store = append(logger.Store, store)
 		}
 	}
 	if options.Kafka.Addr != "" {
@@ -63,22 +63,22 @@ func NewLogger(options *OptionsLogger) *Logger {
 			Addr:  options.Kafka.Addr,
 			Topic: options.Kafka.Topic,
 		}
-		st, err := kafka.New(&kfoptions)
+		store, err := kafka.New(&kfoptions)
 		if err != nil {
 			gologger.Warning().Msgf("Error while creating kafka logger: %s", err)
 		} else {
-			logger.Store = append(logger.Store, st)
+			logger.Store = append(logger.Store, store)
 
 		}
 	}
 	if options.OutputFolder != "" {
-		st, err := file.New(&file.Options{
+		store, err := file.New(&file.Options{
 			OutputFolder: options.OutputFolder,
 		})
 		if err != nil {
 			gologger.Warning().Msgf("Error while creating file logger: %s", err)
 		} else {
-			logger.Store = append(logger.Store, st)
+			logger.Store = append(logger.Store, store)
 
 		}
 	}
@@ -114,8 +114,8 @@ func (l *Logger) AsyncWrite() {
 
 			outputdata.DataString = fmt.Sprintf(outputdata.Format, outputdata.Data)
 
-			for _, st := range l.Store {
-				err := st.Store(outputdata)
+			for _, store := range l.Store {
+				err := store.Save(outputdata)
 				if err != nil {
 					gologger.Warning().Msgf("Error while logging: %s", err)
 				}
@@ -137,14 +137,15 @@ func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
 	if l.options.Verbose {
 		contentType := req.Header.Get("Content-Type")
 		b, _ := ioutil.ReadAll(req.Body)
-		if removeNonPrintableASCII(contentType) && !govalidator.IsPrintableASCII(string(b)) {
+		if isASCIICheckRequired(contentType) && !govalidator.IsPrintableASCII(string(b)) {
 			reqdump, _ = httputil.DumpRequest(req, false)
 		}
 		gologger.Silent().Msgf("%s", string(reqdump))
 	}
 	return nil
 }
-func removeNonPrintableASCII(contentType string) bool {
+
+func isASCIICheckRequired(contentType string) bool {
 	return stringsutil.ContainsAny(contentType, "application/octet-stream", "application/x-www-form-urlencoded")
 }
 
@@ -163,7 +164,7 @@ func (l *Logger) LogResponse(resp *http.Response, userdata types.UserData) error
 	if l.options.Verbose {
 		contentType := resp.Header.Get("Content-Type")
 		b, _ := ioutil.ReadAll(resp.Body)
-		if removeNonPrintableASCII(contentType) && !govalidator.IsPrintableASCII(string(b)) {
+		if isASCIICheckRequired(contentType) && !govalidator.IsPrintableASCII(string(b)) {
 			respdump, _ = httputil.DumpResponse(resp, false)
 		}
 		gologger.Silent().Msgf("%s", string(respdump))

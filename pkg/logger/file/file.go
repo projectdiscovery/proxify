@@ -29,7 +29,7 @@ func New(option *Options) (*Client, error) {
 }
 
 // Store writes the log to the file
-func (c *Client) Store(data types.OutputData) error {
+func (c *Client) Save(data types.OutputData) error {
 	// generate the file destination file name
 	destFile := path.Join(c.options.OutputFolder, fmt.Sprintf("%s.%s", data.Name, "txt"))
 	// if it's a response and file doesn't exist skip

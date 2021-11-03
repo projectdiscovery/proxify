@@ -40,7 +40,7 @@ func New(option *Options) (*Client, error) {
 }
 
 // Store passes the message to kafka
-func (c *Client) Store(data types.OutputData) error {
+func (c *Client) Save(data types.OutputData) error {
 
 	msg := &sarama.ProducerMessage{
 		Topic: c.topic,
@@ -48,10 +48,8 @@ func (c *Client) Store(data types.OutputData) error {
 	}
 
 	_, _, err := c.producer.SendMessage(msg)
-	return err
-}
-
-// Close closes the sarama kafka client
-func (c *Client) Close() error {
-	return c.producer.Close()
+	if err != nil {
+		return err
+	}
+	return nil
 }

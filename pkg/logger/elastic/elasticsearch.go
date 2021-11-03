@@ -2,15 +2,14 @@ package elastic
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
-	"fmt"
-	"io/ioutil"
+	"encoding/json"
 	"net/http"
 	"time"
 
-	"encoding/base64"
-	"encoding/json"
-
+	elasticsearch "github.com/elastic/go-elasticsearch/v7"
+	"github.com/elastic/go-elasticsearch/v7/esapi"
 	"github.com/pkg/errors"
 	"github.com/projectdiscovery/proxify/pkg/types"
 )
@@ -33,91 +32,71 @@ type Options struct {
 
 // Client type for elasticsearch
 type Client struct {
-	url            string
-	authentication string
-	httpClient     *http.Client
+	index    string
+	esClient *elasticsearch.Client
 }
 
 // New creates and returns a new client for elasticsearch
 func New(option *Options) (*Client, error) {
-
-	httpClient := &http.Client{
-		Timeout: 5 * time.Second,
-		Transport: &http.Transport{
-			MaxIdleConns:        10,
-			MaxIdleConnsPerHost: 10,
-			TLSClientConfig:     &tls.Config{InsecureSkipVerify: option.SSLVerification},
-		},
-	}
-	// preparing url for elasticsearch
 	scheme := "http://"
 	if option.SSL {
 		scheme = "https://"
 	}
-	// if authentication is required
-	var authentication string
-	if len(option.Username) > 0 && len(option.Password) > 0 {
-		auth := base64.StdEncoding.EncodeToString([]byte(option.Username + ":" + option.Password))
-		auth = "Basic " + auth
-		authentication = auth
-	}
-	url := fmt.Sprintf("%s%s/%s/_update/", scheme, option.Addr, option.IndexName)
 
-	ei := &Client{
-		url:            url,
-		authentication: authentication,
-		httpClient:     httpClient,
+	elasticsearchClient, err := elasticsearch.NewClient(elasticsearch.Config{
+		Addresses: []string{scheme + option.Addr},
+		Username:  option.Username,
+		Password:  option.Password,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: option.SSLVerification,
+			},
+		},
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "error creating elasticsearch client")
 	}
-	return ei, nil
+	return &Client{
+		esClient: elasticsearchClient,
+		index:    option.IndexName,
+	}, nil
+
 }
 
-// Store stores a passed log event in elasticsearch
-func (c *Client) Store(data types.OutputData) error {
-	req, err := http.NewRequest(http.MethodPost, c.url+data.Name, nil)
-	if err != nil {
-		return errors.Wrap(err, "could not make request")
-	}
-	if len(c.authentication) > 0 {
-		req.Header.Add("Authorization", c.authentication)
-	}
-	req.Header.Add("Content-Type", "application/json")
-	var d map[string]interface{}
+// Store saves a passed log event in elasticsearch
+func (c *Client) Save(data types.OutputData) error {
+	var doc map[string]interface{}
 	if data.Userdata.HasResponse {
-		d = map[string]interface{}{
+		doc = map[string]interface{}{
 			"response":  data.DataString,
 			"timestamp": time.Now().Format(time.RFC3339),
 		}
 	} else {
-		d = map[string]interface{}{
+		doc = map[string]interface{}{
 			"request":   data.DataString,
 			"timestamp": time.Now().Format(time.RFC3339),
 		}
 	}
 
-	b, err := json.Marshal(&map[string]interface{}{
-		"doc":           d,
+	body, err := json.Marshal(&map[string]interface{}{
+		"doc":           doc,
 		"doc_as_upsert": true,
 	})
 	if err != nil {
 		return err
 	}
-	req.Body = ioutil.NopCloser(bytes.NewReader(b))
-	res, err := c.httpClient.Do(req)
-	if err != nil {
-		return err
+	updateRequest := esapi.UpdateRequest{
+		Index:      c.index,
+		DocumentID: data.Name,
+		Body:       bytes.NewReader(body),
 	}
+	res, err := updateRequest.Do(context.Background(), c.esClient)
 
-	b, err = ioutil.ReadAll(res.Body)
 	if err != nil {
-		return errors.New(err.Error() + "error thrown by elasticsearch " + string(b))
+		return errors.New("error thrown by elasticsearch: " + err.Error())
 	}
 	if res.StatusCode >= 300 {
-		return errors.New("elasticsearch responded with an error: " + string(b))
+		return errors.New("elasticsearch responded with an error: " + string(res.String()))
 	}
-	return nil
-}
-
-// Close closes the exporter after operation
-func (c *Client) Close() error {
 	return nil
 }
