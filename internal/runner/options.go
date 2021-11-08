@@ -1,19 +1,16 @@
 package runner
 
 import (
-	"errors"
-	"flag"
 	"os"
 	"path"
 
+	"github.com/projectdiscovery/goflags"
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/gologger/formatter"
 	"github.com/projectdiscovery/gologger/levels"
-	"github.com/projectdiscovery/proxify/pkg/types"
 )
 
-// Options of the internal runner
-//nolint:maligned // used once
+// Options of the runner
 type Options struct {
 	OutputDirectory             string
 	Directory                   string
@@ -21,22 +18,23 @@ type Options struct {
 	Verbose                     bool
 	Silent                      bool
 	Version                     bool
-	ListenAddr                  string
+	ListenAddrHTTP              string
+	ListenAddrSocks5            string
 	ListenDNSAddr               string
-	DNSMapping                  string
-	DNSFallbackResolver         string
-	NoColor                     bool
-	RequestDSL                  string
-	RequestMatchReplaceDSL      string
-	ResponseDSL                 string
-	ResponseMatchReplaceDSL     string
-	UpstreamHTTPProxies         types.CustomList
-	UpstreamSocks5Proxies       types.CustomList
+	DNSMapping                  string // DNSMapping contains user provided hosts
+	DNSFallbackResolver         string // Listen DNS Ip and port (ip:port)
+	NoColor                     bool   // No Color
+	RequestDSL                  string // Request Filter DSL
+	RequestMatchReplaceDSL      string // Request Match-Replace DSL
+	ResponseDSL                 string // Response Filter DSL
+	ResponseMatchReplaceDSL     string // Request Match-Replace DSL
+	UpstreamHTTPProxies         string
+	UpstreamSocks5Proxies       string
 	UpstreamProxyRequestsNumber int
-	DumpRequest                 bool
-	DumpResponse                bool
-	Deny                        types.CustomList
-	Allow                       types.CustomList
+	DumpRequest                 bool   // Dump requests in separate files
+	DumpResponse                bool   // Dump responses in separate files
+	Deny                        string // Deny ip/cidr
+	Allow                       string // Allow ip/cidr
 }
 
 func ParseOptions() *Options {
@@ -47,36 +45,55 @@ func ParseOptions() *Options {
 	}
 
 	options := &Options{}
-	flag.StringVar(&options.OutputDirectory, "output", "logs", "Output Folder")
-	flag.BoolVar(&options.Verbose, "v", false, "Verbose")
-	flag.StringVar(&options.Directory, "config", path.Join(homeDir, ".config", "proxify"), "Directory for storing program information")
-	flag.IntVar(&options.CertCacheSize, "cert-cache-size", 256, "Number of certificates to cache")
-	flag.BoolVar(&options.Silent, "silent", false, "Silent")
-	flag.BoolVar(&options.NoColor, "no-color", true, "No Color")
-	flag.BoolVar(&options.Version, "version", false, "Version")
-	flag.StringVar(&options.RequestDSL, "request-dsl", "", "Request Filter DSL")
-	flag.StringVar(&options.ResponseDSL, "response-dsl", "", "Response Filter DSL")
-	flag.StringVar(&options.RequestMatchReplaceDSL, "request-match-replace-dsl", "", "Request Match-Replace DSL")
-	flag.StringVar(&options.ResponseMatchReplaceDSL, "response-match-replace-dsl", "", "Request Match-Replace DSL")
-	flag.StringVar(&options.ListenAddr, "addr", "127.0.0.1:8888", "Listen Ip and port (ip:port)")
-	flag.StringVar(&options.DNSFallbackResolver, "dns-resolver", "", "Listen DNS Ip and port (ip:port)")
-	flag.StringVar(&options.ListenDNSAddr, "dns-addr", "", "Listen DNS Ip and port (ip:port)")
-	flag.StringVar(&options.DNSMapping, "dns-mapping", "", "DNS A mapping (eg domain:ip,domain:ip,..)")
-	flag.Var(&options.UpstreamHTTPProxies, "http-proxy", "Upstream HTTP Proxy (eg http://proxyip:proxyport")
-	flag.Var(&options.UpstreamSocks5Proxies, "socks5-proxy", "Upstream SOCKS5 Proxy (eg socks5://proxyip:proxyport)")
-	flag.IntVar(&options.UpstreamProxyRequestsNumber, "c", 1, "Number of requests before switching to the next upstream proxy")
-	flag.BoolVar(&options.DumpRequest, "dump-req", false, "Dump requests in separate files")
-	flag.BoolVar(&options.DumpResponse, "dump-resp", false, "Dump responses in separate files")
-	flag.Var(&options.Allow, "allow", "Whitelist ip/cidr")
-	flag.Var(&options.Deny, "deny", "Blacklist ip/cidr")
 
-	flag.Parse()
+	flagSet := goflags.NewFlagSet()
+	flagSet.SetDescription(`Swiss Army Knife Proxy for rapid deployments. Supports multiple operations such as request/response dump,filtering and manipulation via DSL language, upstream HTTP/Socks5 proxy`)
 
-	if err := options.validateOptions(); err != nil {
-		gologger.Fatal().Msgf("%s\n", err)
-	}
+	createGroup(flagSet, "output", "Output",
+		// Todo:	flagSet.BoolVar(&options.Dump, "dump", true, "Dump HTTP requests/response to output file"),
+		flagSet.StringVarP(&options.OutputDirectory, "output", "o", "logs", "Output Directory to store proxy logs"),
+		flagSet.BoolVar(&options.DumpRequest, "dump-req", false, "Dump only HTTP requests to output file"),
+		flagSet.BoolVar(&options.DumpResponse, "dump-resp", false, "Dump only HTTP responses to output file"),
+	)
 
-	_ = os.MkdirAll(options.Directory, os.ModePerm)
+	createGroup(flagSet, "filter", "Filter",
+		flagSet.StringVarP(&options.RequestDSL, "request-dsl", "req-fd", "", "Request Filter DSL"),
+		flagSet.StringVarP(&options.ResponseDSL, "response-dsl", "resp-fd", "", "Response Filter DSL"),
+		flagSet.StringVarP(&options.RequestMatchReplaceDSL, "request-match-replace-dsl", "req-mrd", "", "Request Match-Replace DSL"),
+		flagSet.StringVarP(&options.ResponseMatchReplaceDSL, "response-match-replace-dsl", "resp-mrd", "", "Response Match-Replace DSL"),
+	)
+
+	createGroup(flagSet, "network", "Network",
+		flagSet.StringVarP(&options.ListenAddrHTTP, "http-add", "ha", "127.0.0.1:8888", "Listening HTTP IP and Port address (ip:port)"),
+		flagSet.StringVarP(&options.ListenAddrSocks5, "socks-addr", "sa", "127.0.0.1:10080", "Listening SOCKS IP and Port address (ip:port)"),
+		flagSet.StringVarP(&options.ListenDNSAddr, "dns-addr", "da", "", "Listening DNS IP and Port address (ip:port)"),
+		flagSet.StringVarP(&options.DNSMapping, "dns-mapping", "dm", "", "Domain to IP DNS mapping (eg domain:ip,domain:ip,..)"),
+		flagSet.StringVarP(&options.DNSFallbackResolver, "resolver", "r", "", "Custom DNS resolvers to use (ip:port)"),
+	)
+
+	createGroup(flagSet, "proxy", "Proxy",
+		flagSet.StringVarP(&options.UpstreamHTTPProxies, "http-proxy", "hp", "", "Upstream HTTP Proxies (eg http://proxy-ip:proxy-port"),
+		flagSet.StringVarP(&options.UpstreamSocks5Proxies, "socks5-proxy", "sp", "", "Upstream SOCKS5 Proxies (eg socks5://proxy-ip:proxy-port)"),
+		flagSet.IntVar(&options.UpstreamProxyRequestsNumber, "c", 1, "Number of requests before switching to the next upstream proxy"),
+	)
+
+	createGroup(flagSet, "configuration", "Configuration",
+		// Todo: default config file support (homeDir/.config/proxify/config.yaml)
+		flagSet.StringVar(&options.Directory, "config", path.Join(homeDir, ".config", "proxify"), "Directory for storing program information"),
+		flagSet.IntVar(&options.CertCacheSize, "cert-cache-size", 256, "Number of certificates to cache"),
+		flagSet.StringVar(&options.Allow, "allow", "", "Allowed list of IP/CIDR's to be proxied"),
+		flagSet.StringVar(&options.Deny, "deny", "", "Denied list of IP/CIDR's to be proxied"),
+	)
+
+	createGroup(flagSet, "miscellaneous", "Miscellaneous",
+		flagSet.BoolVar(&options.Silent, "silent", false, "Silent"),
+		flagSet.BoolVarP(&options.NoColor, "no-color", "nc", true, "No Color"),
+		flagSet.BoolVar(&options.Version, "version", false, "Version"),
+		flagSet.BoolVarP(&options.Verbose, "verbose", "v", false, "Verbose"),
+	)
+
+	_ = flagSet.Parse()
+	os.MkdirAll(options.Directory, os.ModePerm) //nolint
 
 	// Read the inputs and configure the logging
 	options.configureOutput()
@@ -104,10 +121,9 @@ func (options *Options) configureOutput() {
 	}
 }
 
-func (options *Options) validateOptions() error {
-	if options.UpstreamProxyRequestsNumber <= 0 {
-		return errors.New("upstream request number should be at least 1")
+func createGroup(flagSet *goflags.FlagSet, groupName, description string, flags ...*goflags.FlagData) {
+	flagSet.SetGroup(groupName, description)
+	for _, currentFlag := range flags {
+		currentFlag.Group(groupName)
 	}
-
-	return nil
 }

@@ -20,12 +20,13 @@ func NewRunner(options *Options) (*Runner, error) {
 		Directory:                   options.Directory,
 		CertCacheSize:               options.CertCacheSize,
 		Verbose:                     options.Verbose,
-		ListenAddr:                  options.ListenAddr,
+		ListenAddrHTTP:              options.ListenAddrHTTP,
+		ListenAddrSocks5:            options.ListenAddrSocks5,
 		OutputDirectory:             options.OutputDirectory,
 		RequestDSL:                  options.RequestDSL,
 		ResponseDSL:                 options.ResponseDSL,
-		UpstreamHTTPProxies:         options.UpstreamHTTPProxies,
-		UpstreamSock5Proxies:        options.UpstreamSocks5Proxies,
+		UpstreamHTTPProxies:         strings.Split(options.UpstreamHTTPProxies, ","),
+		UpstreamSock5Proxies:        strings.Split(options.UpstreamSocks5Proxies, ","),
 		ListenDNSAddr:               options.ListenDNSAddr,
 		DNSMapping:                  options.DNSMapping,
 		DNSFallbackResolver:         options.DNSFallbackResolver,
@@ -44,15 +45,21 @@ func NewRunner(options *Options) (*Runner, error) {
 // Run polling and notification
 func (r *Runner) Run() error {
 	// configuration summary
-	gologger.Print().Msgf("Proxy Listening on %s\n", r.options.ListenAddr)
+	if r.options.ListenAddrHTTP != "" {
+		gologger.Print().Msgf("HTTP Proxy Listening on %s\n", r.options.ListenAddrHTTP)
+	}
+	if r.options.ListenAddrSocks5 != "" {
+		gologger.Print().Msgf("Socks5 Proxy Listening on %s\n", r.options.ListenAddrSocks5)
+	}
+
 	if r.options.OutputDirectory != "" {
 		gologger.Print().Msgf("Saving traffic to %s\n", r.options.OutputDirectory)
 	}
 
 	if len(r.options.UpstreamHTTPProxies) > 0 {
-		gologger.Print().Msgf("Using upstream HTTP proxies: %s\n", strings.Join(r.options.UpstreamHTTPProxies, ","))
+		gologger.Print().Msgf("Using upstream HTTP proxies: %s\n", r.options.UpstreamHTTPProxies)
 	} else if len(r.options.UpstreamSocks5Proxies) > 0 {
-		gologger.Print().Msgf("Using upstream SOCKS5 proxies: %s\n", strings.Join(r.options.UpstreamSocks5Proxies, ","))
+		gologger.Print().Msgf("Using upstream SOCKS5 proxies: %s\n", r.options.UpstreamSocks5Proxies)
 	}
 
 	if r.options.DNSMapping != "" {
