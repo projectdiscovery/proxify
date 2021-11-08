@@ -2,13 +2,16 @@ package proxify
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"os"
 	"path"
 	"strings"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/projectdiscovery/gologger"
+	"github.com/projectdiscovery/stringsutil"
 )
 
 const (
@@ -107,10 +110,17 @@ func (l *Logger) LogRequest(req *http.Request, userdata UserData) error {
 	}
 
 	if l.options.Verbose {
+		contentType := req.Header.Get("Content-Type")
+		b, _ := ioutil.ReadAll(req.Body)
+		if removeNonPrintableASCII(contentType) && !govalidator.IsPrintableASCII(string(b)) {
+			reqdump, _ = httputil.DumpRequest(req, false)
+		}
 		gologger.Silent().Msgf("%s", string(reqdump))
 	}
-
 	return nil
+}
+func removeNonPrintableASCII(contentType string) bool {
+	return stringsutil.ContainsAny(contentType, "application/octet-stream", "application/x-www-form-urlencoded")
 }
 
 // LogResponse and user data
@@ -125,8 +135,12 @@ func (l *Logger) LogResponse(resp *http.Response, userdata UserData) error {
 	if l.options.OutputFolder != "" {
 		l.asyncqueue <- OutputData{data: respdump, userdata: userdata}
 	}
-
 	if l.options.Verbose {
+		contentType := resp.Header.Get("Content-Type")
+		b, _ := ioutil.ReadAll(resp.Body)
+		if removeNonPrintableASCII(contentType) && !govalidator.IsPrintableASCII(string(b)) {
+			respdump, _ = httputil.DumpResponse(resp, false)
+		}
 		gologger.Silent().Msgf("%s", string(respdump))
 	}
 	return nil
