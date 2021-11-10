@@ -35,6 +35,8 @@ func NewRunner(options *Options) (*Runner, error) {
 		DumpRequest:                 options.DumpRequest,
 		DumpResponse:                options.DumpResponse,
 		UpstreamProxyRequestsNumber: options.UpstreamProxyRequestsNumber,
+		Elastic:                     &options.Elastic,
+		Kafka:                       &options.Kafka,
 	})
 	if err != nil {
 		return nil, err
@@ -54,6 +56,12 @@ func (r *Runner) Run() error {
 
 	if r.options.OutputDirectory != "" {
 		gologger.Print().Msgf("Saving traffic to %s\n", r.options.OutputDirectory)
+	}
+	if r.options.Kafka.Addr != "" {
+		gologger.Print().Msgf("Sending traffic to Kafka at %s\n", r.options.Kafka.Addr)
+	}
+	if r.options.Elastic.Addr != "" {
+		gologger.Print().Msgf("Sending traffic to Elasticsearch at %s\n", r.options.Elastic.Addr)
 	}
 
 	if len(r.options.UpstreamHTTPProxies) > 0 {
