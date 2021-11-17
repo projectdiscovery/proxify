@@ -307,7 +307,6 @@ func (p *Proxy) Stop() {
 }
 
 func NewProxy(options *Options) (*Proxy, error) {
-	log.Printf("%#v\n%d\n", options.UpstreamHTTPProxies, len(options.UpstreamHTTPProxies))
 	certs, err := certs.New(&certs.Options{
 		CacheSize: options.CertCacheSize,
 		Directory: options.Directory,
