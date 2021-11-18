@@ -16,26 +16,27 @@ type Runner struct {
 // NewRunner instance
 func NewRunner(options *Options) (*Runner, error) {
 	proxy, err := proxify.NewProxy(&proxify.Options{
-		Silent:                  options.Silent,
-		Directory:               options.Directory,
-		CertCacheSize:           options.CertCacheSize,
-		Verbose:                 options.Verbose,
-		ListenAddrHTTP:          options.ListenAddrHTTP,
-		ListenAddrSocks5:        options.ListenAddrSocks5,
-		OutputDirectory:         options.OutputDirectory,
-		RequestDSL:              options.RequestDSL,
-		ResponseDSL:             options.ResponseDSL,
-		UpstreamHTTPProxy:       options.UpstreamHTTPProxy,
-		UpstreamSock5Proxy:      options.UpstreamSocks5Proxy,
-		ListenDNSAddr:           options.ListenDNSAddr,
-		DNSMapping:              options.DNSMapping,
-		DNSFallbackResolver:     options.DNSFallbackResolver,
-		RequestMatchReplaceDSL:  options.RequestMatchReplaceDSL,
-		ResponseMatchReplaceDSL: options.ResponseMatchReplaceDSL,
-		DumpRequest:             options.DumpRequest,
-		DumpResponse:            options.DumpResponse,
-		Elastic:                 &options.Elastic,
-		Kafka:                   &options.Kafka,
+		Silent:                      options.Silent,
+		Directory:                   options.Directory,
+		CertCacheSize:               options.CertCacheSize,
+		Verbose:                     options.Verbose,
+		ListenAddrHTTP:              options.ListenAddrHTTP,
+		ListenAddrSocks5:            options.ListenAddrSocks5,
+		OutputDirectory:             options.OutputDirectory,
+		RequestDSL:                  options.RequestDSL,
+		ResponseDSL:                 options.ResponseDSL,
+		UpstreamHTTPProxies:         strings.Split(options.UpstreamHTTPProxies, ","),
+		UpstreamSock5Proxies:        strings.Split(options.UpstreamSocks5Proxies, ","),
+		ListenDNSAddr:               options.ListenDNSAddr,
+		DNSMapping:                  options.DNSMapping,
+		DNSFallbackResolver:         options.DNSFallbackResolver,
+		RequestMatchReplaceDSL:      options.RequestMatchReplaceDSL,
+		ResponseMatchReplaceDSL:     options.ResponseMatchReplaceDSL,
+		DumpRequest:                 options.DumpRequest,
+		DumpResponse:                options.DumpResponse,
+		UpstreamProxyRequestsNumber: options.UpstreamProxyRequestsNumber,
+		Elastic:                     &options.Elastic,
+		Kafka:                       &options.Kafka,
 	})
 	if err != nil {
 		return nil, err
@@ -63,10 +64,10 @@ func (r *Runner) Run() error {
 		gologger.Print().Msgf("Sending traffic to Elasticsearch at %s\n", r.options.Elastic.Addr)
 	}
 
-	if r.options.UpstreamHTTPProxy != "" {
-		gologger.Print().Msgf("Using upstream HTTP proxy: %s\n", r.options.UpstreamHTTPProxy)
-	} else if r.options.UpstreamSocks5Proxy != "" {
-		gologger.Print().Msgf("Using upstream SOCKS5 proxy: %s\n", r.options.UpstreamSocks5Proxy)
+	if len(r.options.UpstreamHTTPProxies) > 0 {
+		gologger.Print().Msgf("Using upstream HTTP proxies: %s\n", r.options.UpstreamHTTPProxies)
+	} else if len(r.options.UpstreamSocks5Proxies) > 0 {
+		gologger.Print().Msgf("Using upstream SOCKS5 proxies: %s\n", r.options.UpstreamSocks5Proxies)
 	}
 
 	if r.options.DNSMapping != "" {

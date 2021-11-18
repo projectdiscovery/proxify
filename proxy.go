@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 
+	rbtransport "github.com/Mzack9999/roundrobin/transport"
 	"github.com/armon/go-socks5"
 	"github.com/elazarl/goproxy"
 	"github.com/haxii/fastproxy/bufiopool"
@@ -38,32 +39,33 @@ type OnResponseFunc func(*http.Response, *goproxy.ProxyCtx) *http.Response
 type OnConnectFunc func(string, *goproxy.ProxyCtx) (*goproxy.ConnectAction, string)
 
 type Options struct {
-	DumpRequest             bool
-	DumpResponse            bool
-	Silent                  bool
-	Verbose                 bool
-	CertCacheSize           int
-	Directory               string
-	ListenAddrHTTP          string
-	ListenAddrSocks5        string
-	OutputDirectory         string
-	RequestDSL              string
-	ResponseDSL             string
-	UpstreamHTTPProxy       string
-	UpstreamSock5Proxy      string
-	ListenDNSAddr           string
-	DNSMapping              string
-	DNSFallbackResolver     string
-	RequestMatchReplaceDSL  string
-	ResponseMatchReplaceDSL string
-	OnConnectHTTPCallback   OnConnectFunc
-	OnConnectHTTPSCallback  OnConnectFunc
-	OnRequestCallback       OnRequestFunc
-	OnResponseCallback      OnResponseFunc
-	Deny                    types.CustomList
-	Allow                   types.CustomList
-	Elastic                 *elastic.Options
-	Kafka                   *kafka.Options
+	DumpRequest                 bool
+	DumpResponse                bool
+	Silent                      bool
+	Verbose                     bool
+	CertCacheSize               int
+	Directory                   string
+	ListenAddrHTTP              string
+	ListenAddrSocks5            string
+	OutputDirectory             string
+	RequestDSL                  string
+	ResponseDSL                 string
+	UpstreamHTTPProxies         []string
+	UpstreamSock5Proxies        []string
+	ListenDNSAddr               string
+	DNSMapping                  string
+	DNSFallbackResolver         string
+	RequestMatchReplaceDSL      string
+	ResponseMatchReplaceDSL     string
+	OnConnectHTTPCallback       OnConnectFunc
+	OnConnectHTTPSCallback      OnConnectFunc
+	OnRequestCallback           OnRequestFunc
+	OnResponseCallback          OnResponseFunc
+	Deny                        []string
+	Allow                       []string
+	UpstreamProxyRequestsNumber int
+	Elastic                     *elastic.Options
+	Kafka                       *kafka.Options
 }
 
 type Proxy struct {
@@ -76,6 +78,8 @@ type Proxy struct {
 	socks5tunnel *superproxy.SuperProxy
 	bufioPool    *bufiopool.Pool
 	tinydns      *tinydns.TinyDNS
+	rbhttp       *rbtransport.RoundTransport
+	rbsocks5     *rbtransport.RoundTransport
 }
 
 func (p *Proxy) OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
@@ -198,17 +202,28 @@ func (p *Proxy) Run() error {
 
 	// http proxy
 	if p.httpproxy != nil {
-		if p.options.UpstreamHTTPProxy != "" {
+		if len(p.options.UpstreamHTTPProxies) > 0 {
 			p.httpproxy.Tr = &http.Transport{Proxy: func(req *http.Request) (*url.URL, error) {
-				return url.Parse(p.options.UpstreamHTTPProxy)
+				return url.Parse(p.rbhttp.Next())
 			}, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-			p.httpproxy.ConnectDial = p.httpproxy.NewConnectDialToProxy(p.options.UpstreamHTTPProxy)
-		} else if p.options.UpstreamSock5Proxy != "" {
-			dialer, err := proxy.SOCKS5("tcp", p.options.UpstreamSock5Proxy, nil, proxy.Direct)
-			if err != nil {
-				return err
+			p.httpproxy.ConnectDial = nil
+		} else if len(p.options.UpstreamSock5Proxies) > 0 {
+			// for each socks5 proxy create a dialer
+			socks5Dialers := make(map[string]proxy.Dialer)
+			for _, socks5proxy := range p.options.UpstreamSock5Proxies {
+				dialer, err := proxy.SOCKS5("tcp", socks5proxy, nil, proxy.Direct)
+				if err != nil {
+					return err
+				}
+				socks5Dialers[socks5proxy] = dialer
 			}
-			p.httpproxy.Tr = &http.Transport{Dial: dialer.Dial, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+			p.httpproxy.Tr = &http.Transport{Dial: func(network, addr string) (net.Conn, error) {
+				// lookup next dialer
+				socks5Proxy := p.rbsocks5.Next()
+				socks5Dialer := socks5Dialers[socks5Proxy]
+				// use it to perform the request
+				return socks5Dialer.Dial(network, addr)
+			}, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
 			p.httpproxy.ConnectDial = nil
 		} else {
 			p.httpproxy.Tr.DialContext = p.Dialer.Dial
@@ -356,6 +371,20 @@ func NewProxy(options *Options) (*Proxy, error) {
 		return nil, err
 	}
 
+	var rbhttp, rbsocks5 *rbtransport.RoundTransport
+	if len(options.UpstreamHTTPProxies) > 0 {
+		rbhttp, err = rbtransport.NewWithOptions(options.UpstreamProxyRequestsNumber, options.UpstreamHTTPProxies...)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if len(options.UpstreamSock5Proxies) > 0 {
+		rbsocks5, err = rbtransport.NewWithOptions(options.UpstreamProxyRequestsNumber, options.UpstreamSock5Proxies...)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	proxy := &Proxy{
 		httpproxy: httpproxy,
 		certs:     certs,
@@ -363,6 +392,8 @@ func NewProxy(options *Options) (*Proxy, error) {
 		options:   options,
 		Dialer:    dialer,
 		tinydns:   tdns,
+		rbhttp:    rbhttp,
+		rbsocks5:  rbsocks5,
 	}
 
 	var socks5proxy *socks5.Server

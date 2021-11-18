@@ -10,35 +10,35 @@ import (
 	"github.com/projectdiscovery/gologger/levels"
 	"github.com/projectdiscovery/proxify/pkg/logger/elastic"
 	"github.com/projectdiscovery/proxify/pkg/logger/kafka"
-	"github.com/projectdiscovery/proxify/pkg/types"
 )
 
 // Options of the runner
 type Options struct {
-	OutputDirectory         string
-	Directory               string
-	CertCacheSize           int
-	Verbose                 bool
-	Silent                  bool
-	Version                 bool
-	ListenAddrHTTP          string
-	ListenAddrSocks5        string
-	ListenDNSAddr           string
-	DNSMapping              string           // DNSMapping contains user provided hosts
-	DNSFallbackResolver     string           // Listen DNS Ip and port (ip:port)
-	NoColor                 bool             // No Color
-	RequestDSL              string           // Request Filter DSL
-	RequestMatchReplaceDSL  string           // Request Match-Replace DSL
-	ResponseDSL             string           // Response Filter DSL
-	ResponseMatchReplaceDSL string           // Request Match-Replace DSL
-	UpstreamHTTPProxy       string           // Upstream HTTP Proxy (eg http://proxyip:proxyport)
-	UpstreamSocks5Proxy     string           // Upstream SOCKS5 Proxy (eg socks5://proxyip:proxyport)
-	DumpRequest             bool             // Dump requests in separate files
-	DumpResponse            bool             // Dump responses in separate files
-	Deny                    types.CustomList // Deny ip/cidr
-	Allow                   types.CustomList // Allow ip/cidr
-	Elastic                 elastic.Options
-	Kafka                   kafka.Options
+	OutputDirectory             string
+	Directory                   string
+	CertCacheSize               int
+	Verbose                     bool
+	Silent                      bool
+	Version                     bool
+	ListenAddrHTTP              string
+	ListenAddrSocks5            string
+	ListenDNSAddr               string
+	DNSMapping                  string // DNSMapping contains user provided hosts
+	DNSFallbackResolver         string // Listen DNS Ip and port (ip:port)
+	NoColor                     bool   // No Color
+	RequestDSL                  string // Request Filter DSL
+	RequestMatchReplaceDSL      string // Request Match-Replace DSL
+	ResponseDSL                 string // Response Filter DSL
+	ResponseMatchReplaceDSL     string // Request Match-Replace DSL
+	UpstreamHTTPProxies         string // Upstream HTTP comma separated Proxies (eg http://proxyip:proxyport)
+	UpstreamSocks5Proxies       string // Upstream SOCKS5 comma separated Proxies (eg socks5://proxyip:proxyport)
+	UpstreamProxyRequestsNumber int    // Number of requests before switching upstream proxy
+	DumpRequest                 bool   // Dump requests in separate files
+	DumpResponse                bool   // Dump responses in separate files
+	Deny                        string // Deny ip/cidr
+	Allow                       string // Allow ip/cidr
+	Elastic                     elastic.Options
+	Kafka                       kafka.Options
 }
 
 func ParseOptions() *Options {
@@ -49,6 +49,7 @@ func ParseOptions() *Options {
 	}
 
 	options := &Options{}
+
 	flagSet := goflags.NewFlagSet()
 	flagSet.SetDescription(`Swiss Army Knife Proxy for rapid deployments. Supports multiple operations such as request/response dump,filtering and manipulation via DSL language, upstream HTTP/Socks5 proxy`)
 
@@ -75,8 +76,9 @@ func ParseOptions() *Options {
 	)
 
 	createGroup(flagSet, "proxy", "Proxy",
-		flagSet.StringVarP(&options.UpstreamHTTPProxy, "http-proxy", "hp", "", "Upstream HTTP Proxy (eg http://proxy-ip:proxy-port"),
-		flagSet.StringVarP(&options.UpstreamSocks5Proxy, "socks5-proxy", "sp", "", "Upstream SOCKS5 Proxy (eg socks5://proxy-ip:proxy-port)"),
+		flagSet.StringVarP(&options.UpstreamHTTPProxies, "http-proxy", "hp", "", "Upstream HTTP Proxies (eg http://proxy-ip:proxy-port"),
+		flagSet.StringVarP(&options.UpstreamSocks5Proxies, "socks5-proxy", "sp", "", "Upstream SOCKS5 Proxies (eg socks5://proxy-ip:proxy-port)"),
+		flagSet.IntVar(&options.UpstreamProxyRequestsNumber, "c", 1, "Number of requests before switching to the next upstream proxy"),
 	)
 
 	createGroup(flagSet, "export", "Export",
@@ -94,8 +96,8 @@ func ParseOptions() *Options {
 		// Todo: default config file support (homeDir/.config/proxify/config.yaml)
 		flagSet.StringVar(&options.Directory, "config", path.Join(homeDir, ".config", "proxify"), "Directory for storing program information"),
 		flagSet.IntVar(&options.CertCacheSize, "cert-cache-size", 256, "Number of certificates to cache"),
-		flagSet.Var(&options.Allow, "allow", "Allowed list of IP/CIDR's to be proxied"),
-		flagSet.Var(&options.Deny, "deny", "Denied list of IP/CIDR's to be proxied"),
+		flagSet.StringVar(&options.Allow, "allow", "", "Allowed list of IP/CIDR's to be proxied"),
+		flagSet.StringVar(&options.Deny, "deny", "", "Denied list of IP/CIDR's to be proxied"),
 	)
 
 	createGroup(flagSet, "miscellaneous", "Miscellaneous",

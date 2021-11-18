@@ -4,10 +4,11 @@ go 1.15
 
 require (
 	github.com/Knetic/govaluate v3.0.0+incompatible // indirect
+	github.com/Mzack9999/roundrobin v0.0.0-20211108110706-e876335f5ad4
 	github.com/Shopify/sarama v1.30.0
 	github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
-	github.com/elastic/go-elasticsearch/v7 v7.15.1 // indirect
+	github.com/elastic/go-elasticsearch/v7 v7.15.1
 	github.com/elazarl/goproxy v0.0.0-20210110162100-a92cc753f88e
 	github.com/elazarl/goproxy/ext v0.0.0-20210110162100-a92cc753f88e // indirect
 	github.com/hashicorp/golang-lru v0.5.4
