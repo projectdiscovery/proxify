@@ -50,7 +50,7 @@ Additionally a replay utility allows to import the dumped traffic (request/respo
 Download the ready to run [binary](https://github.com/projectdiscovery/proxify/releases/) or install/build using GO
 
 ```sh
-GO111MODULE=on go get -v github.com/projectdiscovery/proxify/cmd/proxify
+go install -v github.com/projectdiscovery/proxify/cmd/proxify@latest
 ```
 
 # Usage
@@ -61,54 +61,56 @@ proxify -h
 
 This will display help for the tool. Here are all the switches it supports.
 
-<details>
-<summary> 👉 proxify help menu 👈</summary>
+```console
+Usage:
+  ./proxify [flags]
 
-```
-  -addr string
-      Listen Ip and port (ip:port) (default "127.0.0.1:8888")
-  -allow value
-      Whitelist ip/cidr
-  -cert-cache-size int
-      Number of certificates to cache (default 256)
-  -config string
-      Directory for storing program information (default "$HOME/.config/proxify")
-  -deny value
-      Blacklist ip/cidr
-  -dns-addr string
-      Listen DNS Ip and port (ip:port)
-  -dns-mapping string
-      DNS A mapping (eg domain:ip,domain:ip,..)
-  -dns-resolver string
-      Listen DNS Ip and port (ip:port)
-  -dump-req
-      Dump requests in separate files
-  -dump-resp
-      Dump responses in separate files
-  -http-proxy string
-      Upstream HTTP Proxy (eg http://proxyip:proxyport
-  -no-color
-      No Color (default true)
-  -output string
-      Output Folder (default "logs")
-  -request-dsl string
-      Request Filter DSL
-  -request-match-replace-dsl string
-      Request Match-Replace DSL
-  -response-dsl string
-      Response Filter DSL
-  -response-match-replace-dsl string
-      Request Match-Replace DSL
-  -silent
-      Silent
-  -socks5-proxy string
-      Upstream SOCKS5 Proxy (eg socks5://proxyip:proxyport)
-  -v  Verbose
-  -version
-      Version
-```
+Flags:
+OUTPUT:
+   -o, -output string  Output Directory to store HTTP proxy logs (default "logs")
+   -dump-req           Dump only HTTP requests to output file
+   -dump-resp          Dump only HTTP responses to output file
 
-</details>
+FILTER:
+   -req-fd, -request-dsl string                   Request Filter DSL
+   -resp-fd, -response-dsl string                 Response Filter DSL
+   -req-mrd, -request-match-replace-dsl string    Request Match-Replace DSL
+   -resp-mrd, -response-match-replace-dsl string  Response Match-Replace DSL
+
+NETWORK:
+   -ha, -http-addr string    Listening HTTP IP and Port address (ip:port) (default "127.0.0.1:8888")
+   -sa, -socks-addr string   Listening SOCKS IP and Port address (ip:port) (default "127.0.0.1:10080")
+   -da, -dns-addr string     Listening DNS IP and Port address (ip:port)
+   -dm, -dns-mapping string  Domain to IP DNS mapping (eg domain:ip,domain:ip,..)
+   -r, -resolver string      Custom DNS resolvers to use (ip:port)
+
+PROXY:
+   -hp, -http-proxy string    Upstream HTTP Proxies (eg http://proxy-ip:proxy-port
+   -sp, -socks5-proxy string  Upstream SOCKS5 Proxies (eg socks5://proxy-ip:proxy-port)
+   -c int                     Number of requests before switching to the next upstream proxy (default 1)
+
+EXPORT:
+   -elastic-address string    elasticsearch address (ip:port)
+   -elastic-ssl               enable elasticsearch ssl
+   -elastic-ssl-verification  enable elasticsearch ssl verification
+   -elastic-username string   elasticsearch username
+   -elastic-password string   elasticsearch password
+   -elastic-index string      elasticsearch index name (default "proxify")
+   -kafka-address string      address of kafka broker (ip:port)
+   -kafka-topic string        kafka topic to publish messages on (default "proxify")
+
+CONFIGURATION:
+   -config string        Directory for storing program information (default "/Users/geekboy/.config/proxify")
+   -cert-cache-size int  Number of certificates to cache (default 256)
+   -allow string         Allowed list of IP/CIDR's to be proxied
+   -deny string          Denied list of IP/CIDR's to be proxied
+
+DEBUG:
+   -silent         Silent
+   -nc, -no-color  No Color (default true)
+   -version        Version
+   -v, -verbose    Verbose
+```
 
 ### Running Proxify
 
@@ -119,7 +121,7 @@ proxify
 
 Runs a HTTP proxy on custom port **1111**
 ```sh
-proxify -addr ":1111"
+proxify -http-addr ":1111"
 ```
 
 ### Proxify with upstream proxy
