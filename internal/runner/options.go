@@ -68,7 +68,7 @@ func ParseOptions() *Options {
 	)
 
 	createGroup(flagSet, "network", "Network",
-		flagSet.StringVarP(&options.ListenAddrHTTP, "http-add", "ha", "127.0.0.1:8888", "Listening HTTP IP and Port address (ip:port)"),
+		flagSet.StringVarP(&options.ListenAddrHTTP, "http-addr", "ha", "127.0.0.1:8888", "Listening HTTP IP and Port address (ip:port)"),
 		flagSet.StringVarP(&options.ListenAddrSocks5, "socks-addr", "sa", "127.0.0.1:10080", "Listening SOCKS IP and Port address (ip:port)"),
 		flagSet.StringVarP(&options.ListenDNSAddr, "dns-addr", "da", "", "Listening DNS IP and Port address (ip:port)"),
 		flagSet.StringVarP(&options.DNSMapping, "dns-mapping", "dm", "", "Domain to IP DNS mapping (eg domain:ip,domain:ip,..)"),
@@ -100,7 +100,7 @@ func ParseOptions() *Options {
 		flagSet.StringVar(&options.Deny, "deny", "", "Denied list of IP/CIDR's to be proxied"),
 	)
 
-	createGroup(flagSet, "miscellaneous", "Miscellaneous",
+	createGroup(flagSet, "debug", "debug",
 		flagSet.BoolVar(&options.Silent, "silent", false, "Silent"),
 		flagSet.BoolVarP(&options.NoColor, "no-color", "nc", true, "No Color"),
 		flagSet.BoolVar(&options.Version, "version", false, "Version"),
