@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -290,10 +291,15 @@ func (p *Proxy) Run() error {
 			if err != nil {
 				return err
 			}
-			p.socks5tunnel, err = superproxy.NewSuperProxy(httpProxyIP, uint16(httpProxyPortUint), superproxy.ProxyTypeHTTP, "", "", "")
-			if err != nil {
-				return err
+			if httpProxyPortUint >= 0 && httpProxyPortUint <= 0xFFFF {
+				p.socks5tunnel, err = superproxy.NewSuperProxy(httpProxyIP, uint16(httpProxyPortUint), superproxy.ProxyTypeHTTP, "", "", "")
+				if err != nil {
+					return err
+				}
+			} else {
+				return errors.New("invalid value for http proxy port")
 			}
+
 			p.bufioPool = bufiopool.New(4096, 4096)
 		}
 
