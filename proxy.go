@@ -125,6 +125,7 @@ func (p *Proxy) OnResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Res
 		resp = p.MatchReplaceResponse(resp)
 	}
 
+	p.logger.LogResponse(resp, userdata) //nolint
 	ctx.UserData = userdata
 	return resp
 }
