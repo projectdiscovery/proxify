@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -158,16 +159,21 @@ func (l *Logger) LogResponse(resp *http.Response, userdata types.UserData) error
 	if err != nil {
 		return err
 	}
+	respdumpNoBody, err := httputil.DumpResponse(resp, false)
+	if err != nil {
+		return err
+	}
 	if l.options.OutputFolder != "" || l.options.Kafka.Addr != "" || l.options.Elastic.Addr != "" {
 		l.asyncqueue <- types.OutputData{Data: respdump, Userdata: userdata}
 	}
 	if l.options.Verbose {
 		contentType := resp.Header.Get("Content-Type")
-		b, _ := ioutil.ReadAll(resp.Body)
-		if isASCIICheckRequired(contentType) && !govalidator.IsPrintableASCII(string(b)) {
-			respdump, _ = httputil.DumpResponse(resp, false)
+		bodyBytes := bytes.TrimPrefix(respdump, respdumpNoBody)
+		if isASCIICheckRequired(contentType) && !govalidator.IsPrintableASCII(string(bodyBytes)) {
+			gologger.Silent().Msgf("%s", string(respdumpNoBody))
+		} else {
+			gologger.Silent().Msgf("%s", string(respdump))
 		}
-		gologger.Silent().Msgf("%s", string(respdump))
 	}
 	return nil
 }

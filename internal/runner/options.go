@@ -23,20 +23,20 @@ type Options struct {
 	ListenAddrHTTP              string
 	ListenAddrSocks5            string
 	ListenDNSAddr               string
-	DNSMapping                  string // DNSMapping contains user provided hosts
-	DNSFallbackResolver         string // Listen DNS Ip and port (ip:port)
-	NoColor                     bool   // No Color
-	RequestDSL                  string // Request Filter DSL
-	RequestMatchReplaceDSL      string // Request Match-Replace DSL
-	ResponseDSL                 string // Response Filter DSL
-	ResponseMatchReplaceDSL     string // Request Match-Replace DSL
-	UpstreamHTTPProxies         string // Upstream HTTP comma separated Proxies (eg http://proxyip:proxyport)
-	UpstreamSocks5Proxies       string // Upstream SOCKS5 comma separated Proxies (eg socks5://proxyip:proxyport)
-	UpstreamProxyRequestsNumber int    // Number of requests before switching upstream proxy
-	DumpRequest                 bool   // Dump requests in separate files
-	DumpResponse                bool   // Dump responses in separate files
-	Deny                        string // Deny ip/cidr
-	Allow                       string // Allow ip/cidr
+	DNSMapping                  string                        // DNSMapping contains user provided hosts
+	DNSFallbackResolver         string                        // Listen DNS Ip and port (ip:port)
+	NoColor                     bool                          // No Color
+	RequestDSL                  string                        // Request Filter DSL
+	RequestMatchReplaceDSL      string                        // Request Match-Replace DSL
+	ResponseDSL                 string                        // Response Filter DSL
+	ResponseMatchReplaceDSL     string                        // Request Match-Replace DSL
+	UpstreamHTTPProxies         goflags.NormalizedStringSlice // Upstream HTTP comma separated Proxies (eg http://proxyip:proxyport)
+	UpstreamSocks5Proxies       goflags.NormalizedStringSlice // Upstream SOCKS5 comma separated Proxies (eg socks5://proxyip:proxyport)
+	UpstreamProxyRequestsNumber int                           // Number of requests before switching upstream proxy
+	DumpRequest                 bool                          // Dump requests in separate files
+	DumpResponse                bool                          // Dump responses in separate files
+	Deny                        string                        // Deny ip/cidr
+	Allow                       string                        // Allow ip/cidr
 	Elastic                     elastic.Options
 	Kafka                       kafka.Options
 }
@@ -76,8 +76,8 @@ func ParseOptions() *Options {
 	)
 
 	createGroup(flagSet, "proxy", "Proxy",
-		flagSet.StringVarP(&options.UpstreamHTTPProxies, "http-proxy", "hp", "", "Upstream HTTP Proxies (eg http://proxy-ip:proxy-port"),
-		flagSet.StringVarP(&options.UpstreamSocks5Proxies, "socks5-proxy", "sp", "", "Upstream SOCKS5 Proxies (eg socks5://proxy-ip:proxy-port)"),
+		flagSet.NormalizedStringSliceVarP(&options.UpstreamHTTPProxies, "http-proxy", "hp", []string{}, "Upstream HTTP Proxies (eg http://proxy-ip:proxy-port"),
+		flagSet.NormalizedStringSliceVarP(&options.UpstreamSocks5Proxies, "socks5-proxy", "sp", []string{}, "Upstream SOCKS5 Proxies (eg socks5://proxy-ip:proxy-port)"),
 		flagSet.IntVar(&options.UpstreamProxyRequestsNumber, "c", 1, "Number of requests before switching to the next upstream proxy"),
 	)
 
