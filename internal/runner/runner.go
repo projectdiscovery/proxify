@@ -37,6 +37,8 @@ func NewRunner(options *Options) (*Runner, error) {
 		UpstreamProxyRequestsNumber: options.UpstreamProxyRequestsNumber,
 		Elastic:                     &options.Elastic,
 		Kafka:                       &options.Kafka,
+		Allow:                       options.Allow,
+		Deny:                        options.Deny,
 	})
 	if err != nil {
 		return nil, err

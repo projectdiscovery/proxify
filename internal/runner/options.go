@@ -35,8 +35,8 @@ type Options struct {
 	UpstreamProxyRequestsNumber int                           // Number of requests before switching upstream proxy
 	DumpRequest                 bool                          // Dump requests in separate files
 	DumpResponse                bool                          // Dump responses in separate files
-	Deny                        string                        // Deny ip/cidr
-	Allow                       string                        // Allow ip/cidr
+	Deny                        goflags.NormalizedStringSlice // Deny ip/cidr
+	Allow                       goflags.NormalizedStringSlice // Allow ip/cidr
 	Elastic                     elastic.Options
 	Kafka                       kafka.Options
 }
@@ -96,8 +96,8 @@ func ParseOptions() *Options {
 		// Todo: default config file support (homeDir/.config/proxify/config.yaml)
 		flagSet.StringVar(&options.Directory, "config", path.Join(homeDir, ".config", "proxify"), "Directory for storing program information"),
 		flagSet.IntVar(&options.CertCacheSize, "cert-cache-size", 256, "Number of certificates to cache"),
-		flagSet.StringVar(&options.Allow, "allow", "", "Allowed list of IP/CIDR's to be proxied"),
-		flagSet.StringVar(&options.Deny, "deny", "", "Denied list of IP/CIDR's to be proxied"),
+		flagSet.NormalizedStringSliceVar(&options.Allow, "allow", []string{}, "Allowed list of IP/CIDR's to be proxied"),
+		flagSet.NormalizedStringSliceVar(&options.Deny, "deny", []string{}, "Denied list of IP/CIDR's to be proxied"),
 	)
 
 	createGroup(flagSet, "debug", "debug",
