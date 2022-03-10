@@ -107,6 +107,8 @@ github.com/json-iterator/go v1.1.10 h1:Kz6Cvnvv2wGdaG/V8yMvfkmNiXq9Ya2KUv4rouJJr
 github.com/json-iterator/go v1.1.10/go.mod h1:KdQUCv79m/52Kvf8AW2vK1V8akMuk1QjK/uOdHXbAo4=
 github.com/json-iterator/go v1.1.11 h1:uVUAXhF2To8cbw/3xN3pxj6kk7TYKs98NIrTqPlMWAQ=
 github.com/json-iterator/go v1.1.11/go.mod h1:KdQUCv79m/52Kvf8AW2vK1V8akMuk1QjK/uOdHXbAo4=
+github.com/karrick/godirwalk v1.16.1 h1:DynhcF+bztK8gooS0+NDJFrdNZjJ3gzVzC545UNA9iw=
+github.com/karrick/godirwalk v1.16.1/go.mod h1:j4mkqPuvaLI8mp1DroR3P6ad7cyYd4c1qeJ3RV7ULlk=
 github.com/klauspost/compress v1.14.4 h1:eijASRJcobkVtSt81Olfh7JX43osYLwy5krOJo6YEu4=
 github.com/klauspost/compress v1.14.4/go.mod h1:/3/Vjq9QcHkK5uEr5lBEmyoZ1iFhe47etQ6QUkpK6sk=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
@@ -164,8 +166,13 @@ github.com/projectdiscovery/fastdialer v0.0.10-0.20210429154054-50371bb58a8d h1:
 github.com/projectdiscovery/fastdialer v0.0.10-0.20210429154054-50371bb58a8d/go.mod h1:prLWkvWEIHCLuQGlqRaMYC0ds/XkJqY1Fi1jfhuJzag=
 github.com/projectdiscovery/fastdialer v0.0.15 h1:vOLk8jty+1H9osPRzUT6acD0XBSaglyLS3MlIQaYczk=
 github.com/projectdiscovery/fastdialer v0.0.15/go.mod h1:Q28lw9oTpiZHq09uFG6YYYLUsUjsOypZ7PXWwQGBB80=
+github.com/projectdiscovery/fileutil v0.0.0-20210928100737-cab279c5d4b5/go.mod h1:U+QCpQnX8o2N2w0VUGyAzjM3yBAe4BKedVElxiImsx0=
+github.com/projectdiscovery/fileutil v0.0.0-20220215113056-ba188a0c8abc h1:dbDgsj26PW06L3zMo7AT08IbEqMd2u8QQ1BvlfMAY2w=
+github.com/projectdiscovery/fileutil v0.0.0-20220215113056-ba188a0c8abc/go.mod h1:Pm0f+MWgDFMSSI9NBedNh48LyYPs8gD3Jd8DXGmp4aQ=
 github.com/projectdiscovery/goflags v0.0.7 h1:aykmRkrOgDyRwcvGrK3qp+9aqcjGfAMs/+LtRmtyxwk=
 github.com/projectdiscovery/goflags v0.0.7/go.mod h1:Jjwsf4eEBPXDSQI2Y+6fd3dBumJv/J1U0nmpM+hy2YY=
+github.com/projectdiscovery/goflags v0.0.8-0.20220304165250-2530b305a4a9 h1:J05G/rKDM/MSWI3FrXbnCFM7PtZeV+gRic6wzS8eLqI=
+github.com/projectdiscovery/goflags v0.0.8-0.20220304165250-2530b305a4a9/go.mod h1:37KhVbVLllyuIAgpXGqcvE/hsFEwJ+ctEUSHawjhsBY=
 github.com/projectdiscovery/gologger v1.0.1/go.mod h1:Ok+axMqK53bWNwDSU1nTNwITLYMXMdZtRc8/y1c7sWE=
 github.com/projectdiscovery/gologger v1.1.4 h1:qWxGUq7ukHWT849uGPkagPKF3yBPYAsTtMKunQ8O2VI=
 github.com/projectdiscovery/gologger v1.1.4/go.mod h1:Bhb6Bdx2PV1nMaFLoXNBmHIU85iROS9y1tBuv7T5pMY=
@@ -201,6 +208,8 @@ github.com/projectdiscovery/stringsutil v0.0.0-20210804142656-fd3c28dbaafe/go.mo
 github.com/projectdiscovery/stringsutil v0.0.0-20210823090203-2f5f137e8e1d/go.mod h1:oTRc18WBv9t6BpaN9XBY+QmG28PUpsyDzRht56Qf49I=
 github.com/projectdiscovery/stringsutil v0.0.0-20210830151154-f567170afdd9 h1:xbL1/7h0k6HE3RzPdYk9W/8pUxESrGWewTaZdIB5Pes=
 github.com/projectdiscovery/stringsutil v0.0.0-20210830151154-f567170afdd9/go.mod h1:oTRc18WBv9t6BpaN9XBY+QmG28PUpsyDzRht56Qf49I=
+github.com/projectdiscovery/stringsutil v0.0.0-20220208075244-7c05502ca8e9 h1:4fvUw6b4sS4GoWbHr60mJo3dI//4mGt3BuLx8Sz9aNw=
+github.com/projectdiscovery/stringsutil v0.0.0-20220208075244-7c05502ca8e9/go.mod h1:oTRc18WBv9t6BpaN9XBY+QmG28PUpsyDzRht56Qf49I=
 github.com/projectdiscovery/tinydns v0.0.1 h1:Ls5TAlMJoCfEObpsC7S+Hg4WLyF5wiN+O1xNgEIjnEc=
 github.com/projectdiscovery/tinydns v0.0.1/go.mod h1:xPZcaMje/MWozKc5Sdln3XWptINYoWqCBXgLeSrNB1Q=
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
