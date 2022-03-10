@@ -1,5 +1,5 @@
 # Base
-FROM golang:1.17.7-alpine AS builder
+FROM golang:1.17.8-alpine AS builder
 
 RUN apk add --no-cache git
 RUN go install -v github.com/projectdiscovery/proxify/cmd/proxify@latest
