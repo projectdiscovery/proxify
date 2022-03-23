@@ -21,7 +21,7 @@ require (
 	github.com/projectdiscovery/mapsutil v0.0.1
 	github.com/projectdiscovery/stringsutil v0.0.0-20210830151154-f567170afdd9
 	github.com/projectdiscovery/tinydns v0.0.1
-	github.com/rs/xid v1.3.0
+	github.com/rs/xid v1.4.0
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
 )
