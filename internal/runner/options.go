@@ -76,7 +76,7 @@ func ParseOptions() *Options {
 	)
 
 	createGroup(flagSet, "proxy", "Proxy",
-		flagSet.NormalizedStringSliceVarP(&options.UpstreamHTTPProxies, "http-proxy", "hp", []string{}, "Upstream HTTP Proxies (eg http://proxy-ip:proxy-port"),
+		flagSet.NormalizedStringSliceVarP(&options.UpstreamHTTPProxies, "http-proxy", "hp", []string{}, "Upstream HTTP Proxies (eg http://proxy-ip:proxy-port)"),
 		flagSet.NormalizedStringSliceVarP(&options.UpstreamSocks5Proxies, "socks5-proxy", "sp", []string{}, "Upstream SOCKS5 Proxies (eg socks5://proxy-ip:proxy-port)"),
 		flagSet.IntVar(&options.UpstreamProxyRequestsNumber, "c", 1, "Number of requests before switching to the next upstream proxy"),
 	)
