@@ -49,3 +49,31 @@ archives:
 
 checksum:
   algorithm: sha256
+
+snapcrafts:
+  - id: proxify
+    replacements:
+      darwin: macOS
+    name: proxify
+    publish: false
+    summary: Swiss Army Knife Proxy for rapid deployments.
+    description: |
+      Swiss Army Knife Proxy for rapid deployments. Supports multiple operations such as request/response dump, filtering and manipulation via DSL language, upstream HTTP/Socks5 proxy.
+      Additionally a replay utility allows to import the dumped traffic (request/responses with correct domain name) into burp or any other proxy by simply setting the upstream proxy to proxify.
+    grade: stable
+    confinement: strict
+    license: MIT
+    base: core18
+    apps:
+      proxify:
+        command: proxify
+        plugs:
+          - home
+          - network
+          - removable-media
+          - dot-proxify
+    plugs:
+      dot-proxify:
+        interface: personal-files
+        write:
+          - $HOME/.config/proxify
