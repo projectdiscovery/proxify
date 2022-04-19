@@ -23,18 +23,18 @@ type Options struct {
 	ListenAddrHTTP              string
 	ListenAddrSocks5            string
 	ListenDNSAddr               string
-	DNSMapping                  string                        // DNSMapping contains user provided hosts
-	DNSFallbackResolver         string                        // Listen DNS Ip and port (ip:port)
-	NoColor                     bool                          // No Color
-	RequestDSL                  string                        // Request Filter DSL
-	RequestMatchReplaceDSL      string                        // Request Match-Replace DSL
-	ResponseDSL                 string                        // Response Filter DSL
-	ResponseMatchReplaceDSL     string                        // Request Match-Replace DSL
-	UpstreamHTTPProxies         goflags.NormalizedStringSlice // Upstream HTTP comma separated Proxies (eg http://proxyip:proxyport)
-	UpstreamSocks5Proxies       goflags.NormalizedStringSlice // Upstream SOCKS5 comma separated Proxies (eg socks5://proxyip:proxyport)
-	UpstreamProxyRequestsNumber int                           // Number of requests before switching upstream proxy
-	DumpRequest                 bool                          // Dump requests in separate files
-	DumpResponse                bool                          // Dump responses in separate files
+	DNSMapping                  string                            // DNSMapping contains user provided hosts
+	DNSFallbackResolver         string                            // Listen DNS Ip and port (ip:port)
+	NoColor                     bool                              // No Color
+	RequestDSL                  string                            // Request Filter DSL
+	RequestMatchReplaceDSL      string                            // Request Match-Replace DSL
+	ResponseDSL                 string                            // Response Filter DSL
+	ResponseMatchReplaceDSL     string                            // Request Match-Replace DSL
+	UpstreamHTTPProxies         goflags.NormalizedStringSlice     // Upstream HTTP comma separated Proxies (e.g. http://proxyip:proxyport)
+	UpstreamSocks5Proxies       goflags.NormalizedStringSlice     // Upstream SOCKS5 comma separated Proxies (e.g. socks5://proxyip:proxyport)
+	UpstreamProxyRequestsNumber int                               // Number of requests before switching upstream proxy
+	DumpRequest                 bool                              // Dump requests in separate files
+	DumpResponse                bool                              // Dump responses in separate files
 	Deny                        goflags.FileNormalizedStringSlice // Deny ip/cidr
 	Allow                       goflags.FileNormalizedStringSlice // Allow ip/cidr
 	Elastic                     elastic.Options
