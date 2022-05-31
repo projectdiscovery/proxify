@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/Mzack9999/roundrobin v0.0.0-20211108110706-e876335f5ad4
-	github.com/Shopify/sarama v1.32.0
+	github.com/Shopify/sarama v1.34.0
 	github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/elastic/go-elasticsearch/v7 v7.17.1
@@ -20,7 +20,7 @@ require (
 	github.com/projectdiscovery/stringsutil v0.0.0-20220208075244-7c05502ca8e9
 	github.com/projectdiscovery/tinydns v0.0.1
 	github.com/rs/xid v1.4.0
-	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
+	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2
 )
 
 require (
@@ -34,6 +34,8 @@ require (
 	github.com/eapache/queue v1.1.0 // indirect
 	github.com/elazarl/goproxy/ext v0.0.0-20210110162100-a92cc753f88e // indirect
 	github.com/golang/snappy v0.0.4 // indirect
+	github.com/hashicorp/errwrap v1.0.0 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
 	github.com/jcmturner/dnsutils/v2 v2.0.0 // indirect
@@ -42,12 +44,12 @@ require (
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
 	github.com/json-iterator/go v1.1.11 // indirect
 	github.com/karrick/godirwalk v1.16.1 // indirect
-	github.com/klauspost/compress v1.14.4 // indirect
+	github.com/klauspost/compress v1.15.0 // indirect
 	github.com/logrusorgru/aurora v2.0.3+incompatible // indirect
 	github.com/miekg/dns v1.1.43 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
-	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
+	github.com/pierrec/lz4/v4 v4.1.14 // indirect
 	github.com/projectdiscovery/blackrock v0.0.0-20210415162320-b38689ae3a2e // indirect
 	github.com/projectdiscovery/cryptoutil v0.0.0-20210805184155-b5d2512f9345 // indirect
 	github.com/projectdiscovery/fileutil v0.0.0-20220215113056-ba188a0c8abc // indirect
