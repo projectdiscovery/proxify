@@ -172,8 +172,17 @@ proxify -request-dsl "contains(request,'firefox')" -response-dsl "contains(respo
 
 Proxify supports modifying Request and Responses on the fly with DSL language.
 
+Here is an example to replace `firefox` word from request to `chrome`:
+
 ```shell
-proxify -request-match-replace-dsl "replace(request,'firefox','chrome')" -response-match-replace-dsl "regex(response, '^authentication failed$', 'authentication ok')"
+proxify -request-match-replace-dsl "replace(request,'firefox','chrome')"
+```
+
+Another example using **regex** based replacement of response:
+
+
+```shell
+proxify -response-match-replace-dsl "replace_regex(response, '^authentication failed$', 'authentication ok')"
 ```
 
 ### Replay all traffic into burp
