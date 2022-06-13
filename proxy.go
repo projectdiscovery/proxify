@@ -176,6 +176,9 @@ func (p *Proxy) MatchReplaceRequest(req *http.Request) *http.Request {
 
 // MatchReplaceRequest strings or regex
 func (p *Proxy) MatchReplaceResponse(resp *http.Response) *http.Response {
+	// Set Content-Length to zero to allow automatic calculation
+	resp.ContentLength = 0
+
 	// lazy mode - dump request
 	respdump, err := httputil.DumpResponse(resp, true)
 	if err != nil {
