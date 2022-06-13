@@ -23,6 +23,7 @@ import (
 	"github.com/haxii/fastproxy/superproxy"
 	"github.com/projectdiscovery/dsl"
 	"github.com/projectdiscovery/fastdialer/fastdialer"
+	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/mapsutil"
 	"github.com/projectdiscovery/proxify/pkg/certs"
 	"github.com/projectdiscovery/proxify/pkg/logger"
@@ -94,6 +95,9 @@ func (p *Proxy) OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Reque
 	if p.options.RequestDSL != "" {
 		m, _ := mapsutil.HTTPRequesToMap(req)
 		v, err := dsl.EvalExpr(p.options.RequestDSL, m)
+		if err != nil {
+			gologger.Warning().Msgf("Could not evaluate request dsl: %s\n", err)
+		}
 		userdata.Match = err == nil && v.(bool)
 	}
 
@@ -117,6 +121,9 @@ func (p *Proxy) OnResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Res
 	if p.options.ResponseDSL != "" && !userdata.Match {
 		m, _ := mapsutil.HTTPResponseToMap(resp)
 		v, err := dsl.EvalExpr(p.options.ResponseDSL, m)
+		if err != nil {
+			gologger.Warning().Msgf("Could not evaluate response dsl: %s\n", err)
+		}
 		userdata.Match = err == nil && v.(bool)
 	}
 
@@ -169,6 +176,9 @@ func (p *Proxy) MatchReplaceRequest(req *http.Request) *http.Request {
 
 // MatchReplaceRequest strings or regex
 func (p *Proxy) MatchReplaceResponse(resp *http.Response) *http.Response {
+	// Set Content-Length to zero to allow automatic calculation
+	resp.ContentLength = 0
+
 	// lazy mode - dump request
 	respdump, err := httputil.DumpResponse(resp, true)
 	if err != nil {

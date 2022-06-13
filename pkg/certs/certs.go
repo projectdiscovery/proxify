@@ -1,7 +1,7 @@
 // Package certs implements a certificate signing authority implementation
-// to sign MITM'ed hosts certificates using a self-signed authority.
+// to sign MITM-ed hosts certificates using a self-signed authority.
 //
-// It has uses an LRU-based certificate caching implementation for
+// It uses an LRU-based certificate caching implementation for
 // caching the generated certificates for frequently accessed hosts.
 package certs
 

@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img src="static/proxify-logo.png" alt="proxify" width="200px"></a>
+  <img src="static/proxify-logo.png" alt="proxify" width="200px">
   <br>
 </h1>
 
@@ -25,17 +25,17 @@
 </p>
 
 Swiss Army Knife Proxy for rapid deployments. Supports multiple operations such as request/response dump, filtering and manipulation via DSL language, upstream HTTP/Socks5 proxy.
-Additionally a replay utility allows to import the dumped traffic (request/responses with correct domain name) into burp or any other proxy by simply setting the upstream proxy to proxify.
+Additionally, a replay utility allows to import the dumped traffic (request/responses with correct domain name) into BurpSuite or any other proxy by simply setting the upstream proxy to proxify.
 
 # Features
 
 <h1 align="left">
-  <img src="static/proxify-run.png" alt="proxify" width="700px"></a>
+  <img src="static/proxify-run.png" alt="proxify" width="700px">
   <br>
 </h1>
 
 
- - Intercept / Manipulate **HTTP/HTTPS** & **NON-HTTTP** traffic
+ - Intercept / Manipulate **HTTP/HTTPS** & **NON-HTTP** traffic
  - **Invisible & Thick clients** traffic proxy support
  - TLS MITM support with client/server certificates
  - **HTTP** and **SOCKS5** support for upstream proxy
@@ -49,19 +49,19 @@ Additionally a replay utility allows to import the dumped traffic (request/respo
 
 Download the ready to run [binary](https://github.com/projectdiscovery/proxify/releases/) or install/build using GO
 
-```sh
+```shell
 go install -v github.com/projectdiscovery/proxify/cmd/proxify@latest
 ```
 
 # Usage
 
-```sh
+```shell
 proxify -h
 ```
 
 This will display help for the tool. Here are all the switches it supports.
 
-```console
+```shell
 Usage:
   ./proxify [flags]
 
@@ -114,57 +114,57 @@ DEBUG:
 
 ### Running Proxify
 
-Runs a HTTP proxy on port **8888**
-```sh
+Runs an HTTP proxy on port **8888**:
+```shell
 proxify
 ```
 
-Runs a HTTP proxy on custom port **1111**
-```sh
+Runs an HTTP proxy on custom port **1111**:
+```shell
 proxify -http-addr ":1111"
 ```
 
 ### Proxify with upstream proxy
 
-Runs a HTTP proxy on port 8888 and forward the traffic to burp on port 8080
-```sh
+Runs an HTTP proxy on port 8888 and forward the traffic to burp on port **8080**:
+```shell
 proxify -http-proxy http://127.0.0.1:8080
 ```
 
-Runs a HTTP proxy on port 8888 and forward the traffic to the TOR network
-```sh
+Runs an HTTP proxy on port 8888 and forward the traffic to the TOR network:
+```shell
 proxify -socks5-proxy socks5://127.0.0.1:9050
 ```
 
 
 ### Dump all the HTTP/HTTPS traffic
 
-Dump all the traffic into separate files with request followed by the response.
+Dump all the traffic into separate files with request followed by the response:
 
-```sh
+```shell
 proxify -output logs
 ```
 
-As default, proxied request/resposed are stored in the **logs** folder. Additionally **dump-req** or **dump-resp** flag can be used for saving specfic part of the request to the file.
+As default, proxied requests/responses are stored in the **logs** folder. Additionally, **dump-req** or **dump-resp** flag can be used for saving specific part of the request to the file.
 
 
 ### Hostname mapping with Local DNS resolver
 
 Proxify supports embedding DNS resolver to map hostnames to specific addresses and define an upstream dns server for any other domain name
 
-Runs a HTTP proxy on port `8888` using an embedded dns server listening on port `53` and resolving `www.google.it` to `192.168.1.1` and all other `fqdn` are forwarded upstream to `1.1.1.1`
+Runs an HTTP proxy on port `8888` using an embedded dns server listening on port `53` and resolving `www.google.it` to `192.168.1.1` and all other `fqdn` are forwarded upstream to `1.1.1.1`:
 
-```sh
+```shell
 proxify -dns-addr ":53" -dns-mapping "www.google.it:192.168.1.1" -dns-resolver "1.1.1.1:53"
 ```
 
 This feature is used for example by the `replay` utility to hijack the connections and simulate responses. It may be useful during internal assessments with private dns servers. Using `*` as domain name matches all dns requests.
 
-### Match/Filter traffic with with DSL language.
+### Match/Filter traffic with DSL
 
 If the request or response match the filters the dump is tagged with `.match.txt` suffix:
 
-```sh
+```shell
 proxify -request-dsl "contains(request,'firefox')" -response-dsl "contains(response, md5('test'))"
 ```
 
@@ -172,15 +172,24 @@ proxify -request-dsl "contains(request,'firefox')" -response-dsl "contains(respo
 
 Proxify supports modifying Request and Responses on the fly with DSL language.
 
-```sh
-proxify -request-match-replace-dsl "replace(request,'firefox','chrome')" -response-match-replace-dsl "regex(response, '^authentication failed$', 'authentication ok')"
+Here is an example to replace `firefox` word from request to `chrome`:
+
+```shell
+proxify -request-match-replace-dsl "replace(request,'firefox','chrome')"
+```
+
+Another example using **regex** based replacement of response:
+
+
+```shell
+proxify -response-match-replace-dsl "replace_regex(response, '^authentication failed$', 'authentication ok')"
 ```
 
 ### Replay all traffic into burp
 
 Replay all the dumped requests/responses into the destination URL (http://127.0.0.1:8080) if not specified. For this to work it's necessary to configure burp to use proxify as upstream proxy, as it will take care to hijack the dns resolutions and simulate the remote server with the dumped request. This allows to have in the burp history exactly all requests/responses as if they were originally sent through it, allowing for example to perform a remote interception on cloud, and merge all results locally within burp.
 
-```sh
+```shell
 replay -output "logs/"
 ```
 
@@ -192,23 +201,23 @@ Installation steps for the Root Certificate is similar to other proxy tools whic
 
 ### Applications of Proxify
 
-Proxify can be used for multiple places, here are some common example where Proxify comes handy:-
+Proxify can be used for multiple places, here are some common example where Proxify comes handy:
 
 <details>
 <summary>👉 Storing all the burp proxy history logs locally. </summary>
 
-Runs a HTTP proxy on port 8888 and forward the traffic to burp on port 8080
+Runs an HTTP proxy on port `8888` and forward the traffic to burp on port `8080`:
 
-```
+```shell
 proxify -http-proxy http://127.0.0.1:8080
 ```
 
-From burp, set the Upstream Proxy to forward all the traffic back to `proxify`
+From BurpSuite, set the Upstream Proxy to forward all the traffic back to `proxify`:
 
 ```
 User Options > Upstream Proxy > Proxy & Port > 127.0.0.1 & 8888
 ```
-Now all the request/response history will be stored in `logs` folder that can be used later for post processing.
+Now all the request/response history will be stored in `logs` folder that can be used later for post-processing.
 
 </details>
 
@@ -221,12 +230,12 @@ While you browse the application, you can point the browser to `proxify` to stor
 
 Start proxify on default or any port you wish,
 
-```
+```shell
 proxify -output chrome-logs
 ```
 
-Start Chrome browser in Mac OS,
-```
+Start Chrome browser in macOS,
+```shell
 /Applications/Chromium.app/Contents/MacOS/Chromium --ignore-certificate-errors --proxy-server=http://127.0.0.1:8888 &
 ```
 
@@ -236,15 +245,15 @@ Start Chrome browser in Mac OS,
 <summary>👉 Store all the response of while you fuzz as per you config at run time. </summary>
 
 
-Start proxify on default or any port you wish,
+Start proxify on default or any port you wish:
 
-```
+```shell
 proxify -output ffuf-logs
 ```
 
-Run `FFuF` with proxy pointing to `proxify`
+Run `FFuF` with proxy pointing to `proxify`:
 
-```
+```shell
 ffuf -x http://127.0.0.1:8888 FFUF_CMD_HERE
 ```
 
@@ -252,4 +261,4 @@ ffuf -x http://127.0.0.1:8888 FFUF_CMD_HERE
 
 ------
 
-Proxify is made with 🖤 by the [projectdiscovery](https://projectdiscovery.io) team. Community contributions have made the project what it is. See the **[Thanks.md](https://github.com/projectdiscovery/proxify/blob/master/THANKS.md)** file for more details.
+`Proxify` is made with 🖤 by the [projectdiscovery](https://projectdiscovery.io) team. Community contributions have made the project what it is. See the **[Thanks.md](https://github.com/projectdiscovery/proxify/blob/master/THANKS.md)** file for more details.
