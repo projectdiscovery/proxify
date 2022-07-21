@@ -49,10 +49,7 @@ func NewLogger(options *OptionsLogger) *Logger {
 		asyncqueue: make(chan types.OutputData, 1000),
 	}
 	if options.Elastic.Addr != "" {
-		store, err := elastic.New(&elastic.Options{
-			Addr:      options.Elastic.Addr,
-			IndexName: options.Elastic.IndexName,
-		})
+		store, err := elastic.New(options.Elastic)
 		if err != nil {
 			gologger.Warning().Msgf("Error while creating elastic logger: %s", err)
 		} else {
