@@ -44,6 +44,7 @@ type Options struct {
 	DumpResponse                bool
 	Silent                      bool
 	Verbose                     bool
+	VeryVerbose                 bool
 	CertCacheSize               int
 	Directory                   string
 	ListenAddrHTTP              string
@@ -331,7 +332,7 @@ func NewProxy(options *Options) (*Proxy, error) {
 		httpproxy = goproxy.NewProxyHttpServer()
 		if options.Silent {
 			httpproxy.Logger = log.New(ioutil.Discard, "", log.Ltime|log.Lshortfile)
-		} else if options.Verbose {
+		} else if options.Verbose || options.VeryVerbose {
 			httpproxy.Verbose = true
 		} else {
 			httpproxy.Verbose = false
@@ -347,6 +348,7 @@ func NewProxy(options *Options) (*Proxy, error) {
 
 	logger := logger.NewLogger(&logger.OptionsLogger{
 		Verbose:      options.Verbose,
+		VeryVerbose:  options.VeryVerbose,
 		OutputFolder: options.OutputDirectory,
 		DumpRequest:  options.DumpRequest,
 		DumpResponse: options.DumpResponse,

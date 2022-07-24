@@ -106,10 +106,11 @@ CONFIGURATION:
    -deny string          Denied list of IP/CIDR's to be proxied
 
 DEBUG:
-   -silent         Silent
-   -nc, -no-color  No Color (default true)
-   -version        Version
-   -v, -verbose    Verbose
+   -silent              Silent
+   -nc, -no-color       No Color (default true)
+   -version             Version
+   -v, -verbose         Verbose
+   -vv, -very-verbose   Very Verbose
 ```
 
 ### Running Proxify
