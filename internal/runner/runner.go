@@ -20,6 +20,7 @@ func NewRunner(options *Options) (*Runner, error) {
 		Directory:                   options.Directory,
 		CertCacheSize:               options.CertCacheSize,
 		Verbose:                     options.Verbose,
+		VeryVerbose:                 options.VeryVerbose,
 		ListenAddrHTTP:              options.ListenAddrHTTP,
 		ListenAddrSocks5:            options.ListenAddrSocks5,
 		OutputDirectory:             options.OutputDirectory,

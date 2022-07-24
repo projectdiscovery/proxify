@@ -25,6 +25,7 @@ const (
 
 type OptionsLogger struct {
 	Verbose      bool
+	VeryVerbose  bool
 	OutputFolder string
 	DumpRequest  bool
 	DumpResponse bool
@@ -135,7 +136,7 @@ func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
 		l.asyncqueue <- types.OutputData{Data: reqdump, Userdata: userdata}
 	}
 
-	if l.options.Verbose {
+	if l.options.VeryVerbose {
 		contentType := req.Header.Get("Content-Type")
 		b, _ := ioutil.ReadAll(req.Body)
 		if isASCIICheckRequired(contentType) && !govalidator.IsPrintableASCII(string(b)) {
@@ -166,7 +167,7 @@ func (l *Logger) LogResponse(resp *http.Response, userdata types.UserData) error
 	if l.options.OutputFolder != "" || l.options.Kafka.Addr != "" || l.options.Elastic.Addr != "" {
 		l.asyncqueue <- types.OutputData{Data: respdump, Userdata: userdata}
 	}
-	if l.options.Verbose {
+	if l.options.VeryVerbose {
 		contentType := resp.Header.Get("Content-Type")
 		bodyBytes := bytes.TrimPrefix(respdump, respdumpNoBody)
 		if isASCIICheckRequired(contentType) && !govalidator.IsPrintableASCII(string(bodyBytes)) {

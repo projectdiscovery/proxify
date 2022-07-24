@@ -18,6 +18,7 @@ type Options struct {
 	Directory                   string
 	CertCacheSize               int
 	Verbose                     bool
+	VeryVerbose                 bool
 	Silent                      bool
 	Version                     bool
 	ListenAddrHTTP              string
@@ -105,6 +106,7 @@ func ParseOptions() *Options {
 		flagSet.BoolVarP(&options.NoColor, "no-color", "nc", true, "No Color"),
 		flagSet.BoolVar(&options.Version, "version", false, "Version"),
 		flagSet.BoolVarP(&options.Verbose, "verbose", "v", false, "Verbose"),
+		flagSet.BoolVarP(&options.VeryVerbose, "very-verbose", "vv", false, "Very Verbose"),
 	)
 
 	_ = flagSet.Parse()
@@ -125,7 +127,7 @@ func ParseOptions() *Options {
 }
 
 func (options *Options) configureOutput() {
-	if options.Verbose {
+	if options.Verbose || options.VeryVerbose {
 		gologger.DefaultLogger.SetMaxLevel(levels.LevelVerbose)
 	}
 	if options.NoColor {
