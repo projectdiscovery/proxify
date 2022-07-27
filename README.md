@@ -106,9 +106,9 @@ CONFIGURATION:
    -deny string          Denied list of IP/CIDR's to be proxied
 
 DEBUG:
-   -silent              Silent
    -nc, -no-color       No Color (default true)
    -version             Version
+   -silent              Silent
    -v, -verbose         Verbose
    -vv, -very-verbose   Very Verbose
 ```

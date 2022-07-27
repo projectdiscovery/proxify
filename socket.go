@@ -30,8 +30,7 @@ type SocketConn struct {
 	HTTPServer              string
 	sentBytes               uint64
 	receivedBytes           uint64
-	Verbose                 bool
-	VeryVerbose             bool
+	Verbosity               int
 	OutputHex               bool
 	Timeout                 time.Duration
 	RequestMatchReplaceDSL  string
@@ -52,8 +51,7 @@ type SocketProxyOptions struct {
 	TLSClient               bool
 	TLSServerConfig         *tls.Config
 	TLSServer               bool
-	Verbose                 bool
-	VeryVerbose             bool
+	Verbosity               int
 	OutputHex               bool
 	Timeout                 time.Duration
 	RequestMatchReplaceDSL  string
@@ -121,8 +119,7 @@ func (p *SocketProxy) Proxy(conn net.Conn) error {
 	)
 
 	socketConn.Timeout = p.options.Timeout
-	socketConn.Verbose = p.options.Verbose
-	socketConn.VeryVerbose = p.options.VeryVerbose
+	socketConn.Verbosity = p.options.Verbosity
 	socketConn.OutputHex = p.options.OutputHex
 
 	socketConn.lconn = conn

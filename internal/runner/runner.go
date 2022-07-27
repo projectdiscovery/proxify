@@ -16,11 +16,9 @@ type Runner struct {
 // NewRunner instance
 func NewRunner(options *Options) (*Runner, error) {
 	proxy, err := proxify.NewProxy(&proxify.Options{
-		Silent:                      options.Silent,
 		Directory:                   options.Directory,
 		CertCacheSize:               options.CertCacheSize,
-		Verbose:                     options.Verbose,
-		VeryVerbose:                 options.VeryVerbose,
+		Verbosity:                   options.Verbosity,
 		ListenAddrHTTP:              options.ListenAddrHTTP,
 		ListenAddrSocks5:            options.ListenAddrSocks5,
 		OutputDirectory:             options.OutputDirectory,

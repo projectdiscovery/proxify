@@ -17,9 +17,7 @@ type Options struct {
 	OutputDirectory             string
 	Directory                   string
 	CertCacheSize               int
-	Verbose                     bool
-	VeryVerbose                 bool
-	Silent                      bool
+	Verbosity                   int // 0: silent, 1: default, 2: verbose, 3: very verbose
 	Version                     bool
 	ListenAddrHTTP              string
 	ListenAddrSocks5            string
@@ -101,18 +99,20 @@ func ParseOptions() *Options {
 		flagSet.FileNormalizedStringSliceVarP(&options.Deny, "deny", "d", []string{}, "Denied list of IP/CIDR's to be proxied"),
 	)
 
+	silent, verbose, veryVerbose := false, false, false
 	createGroup(flagSet, "debug", "debug",
-		flagSet.BoolVar(&options.Silent, "silent", false, "Silent"),
 		flagSet.BoolVarP(&options.NoColor, "no-color", "nc", true, "No Color"),
 		flagSet.BoolVar(&options.Version, "version", false, "Version"),
-		flagSet.BoolVarP(&options.Verbose, "verbose", "v", false, "Verbose"),
-		flagSet.BoolVarP(&options.VeryVerbose, "very-verbose", "vv", false, "Very Verbose"),
+		flagSet.BoolVar(&silent, "silent", false, "Silent"),
+		flagSet.BoolVarP(&verbose, "verbose", "v", false, "Verbose"),
+		flagSet.BoolVarP(&veryVerbose, "very-verbose", "vv", false, "Very Verbose"),
 	)
 
 	_ = flagSet.Parse()
 	os.MkdirAll(options.Directory, os.ModePerm) //nolint
 
 	// Read the inputs and configure the logging
+	options.configureVerbosity(silent, verbose, veryVerbose)
 	options.configureOutput()
 
 	if options.Version {
@@ -126,15 +126,31 @@ func ParseOptions() *Options {
 	return options
 }
 
+func (options *Options) configureVerbosity(silent, verbose, veryVerbose bool) {
+	if silent && (verbose || veryVerbose) {
+		gologger.Error().Msgf("The -silent flag and -v/-vv flags cannot be set together\n")
+		os.Exit(1)
+	}
+
+	if silent {
+		options.Verbosity = 0
+	} else if veryVerbose {
+		options.Verbosity = 3
+	} else if verbose {
+		options.Verbosity = 2
+	} else {
+		options.Verbosity = 1
+	}
+}
+
 func (options *Options) configureOutput() {
-	if options.Verbose || options.VeryVerbose {
+	if options.Verbosity <= 0 {
+		gologger.DefaultLogger.SetMaxLevel(levels.LevelSilent)
+	} else if options.Verbosity >= 2 {
 		gologger.DefaultLogger.SetMaxLevel(levels.LevelVerbose)
 	}
 	if options.NoColor {
 		gologger.DefaultLogger.SetFormatter(formatter.NewCLI(true))
-	}
-	if options.Silent {
-		gologger.DefaultLogger.SetMaxLevel(levels.LevelSilent)
 	}
 }
 
