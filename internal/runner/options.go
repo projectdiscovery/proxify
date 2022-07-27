@@ -10,6 +10,7 @@ import (
 	"github.com/projectdiscovery/gologger/levels"
 	"github.com/projectdiscovery/proxify/pkg/logger/elastic"
 	"github.com/projectdiscovery/proxify/pkg/logger/kafka"
+	"github.com/projectdiscovery/proxify/pkg/types"
 )
 
 // Options of the runner
@@ -17,7 +18,7 @@ type Options struct {
 	OutputDirectory             string
 	Directory                   string
 	CertCacheSize               int
-	Verbosity                   int // 0: silent, 1: default, 2: verbose, 3: very verbose
+	Verbosity                   types.Verbosity
 	Version                     bool
 	ListenAddrHTTP              string
 	ListenAddrSocks5            string
@@ -133,20 +134,20 @@ func (options *Options) configureVerbosity(silent, verbose, veryVerbose bool) {
 	}
 
 	if silent {
-		options.Verbosity = 0
+		options.Verbosity = types.VerbositySilent
 	} else if veryVerbose {
-		options.Verbosity = 3
+		options.Verbosity = types.VerbosityVeryVerbose
 	} else if verbose {
-		options.Verbosity = 2
+		options.Verbosity = types.VerbosityVerbose
 	} else {
-		options.Verbosity = 1
+		options.Verbosity = types.VerbosityDefault
 	}
 }
 
 func (options *Options) configureOutput() {
-	if options.Verbosity <= 0 {
+	if options.Verbosity <= types.VerbositySilent {
 		gologger.DefaultLogger.SetMaxLevel(levels.LevelSilent)
-	} else if options.Verbosity >= 2 {
+	} else if options.Verbosity >= types.VerbosityVerbose {
 		gologger.DefaultLogger.SetMaxLevel(levels.LevelVerbose)
 	}
 	if options.NoColor {
