@@ -107,10 +107,10 @@ func (p *Proxy) OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Reque
 
 	// perform match and replace
 	if p.options.RequestMatchReplaceDSL != "" {
-		req = p.MatchReplaceRequest(req)
+		_ = p.MatchReplaceRequest(req)
 	}
 
-	p.logger.LogRequest(req, userdata) //nolint
+	_ = p.logger.LogRequest(req, userdata)
 	ctx.UserData = userdata
 
 	return req, nil
@@ -130,10 +130,10 @@ func (p *Proxy) OnResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Res
 
 	// perform match and replace
 	if p.options.ResponseMatchReplaceDSL != "" {
-		resp = p.MatchReplaceResponse(resp)
+		_ = p.MatchReplaceResponse(resp)
 	}
 
-	p.logger.LogResponse(resp, userdata) //nolint
+	_ = p.logger.LogResponse(resp, userdata)
 	ctx.UserData = userdata
 	return resp
 }
@@ -149,61 +149,69 @@ func (p *Proxy) OnConnectHTTPS(host string, ctx *goproxy.ProxyCtx) (*goproxy.Con
 }
 
 // MatchReplaceRequest strings or regex
-func (p *Proxy) MatchReplaceRequest(req *http.Request) *http.Request {
+func (p *Proxy) MatchReplaceRequest(req *http.Request) error {
 	// lazy mode - dump request
 	reqdump, err := httputil.DumpRequest(req, true)
 	if err != nil {
-		return req
+		return err
 	}
 
 	// lazy mode - ninja level - elaborate
 	m := make(map[string]interface{})
 	m["request"] = string(reqdump)
 	if v, err := dsl.EvalExpr(p.options.RequestMatchReplaceDSL, m); err != nil {
-		return req
+		return err
 	} else {
 		reqbuffer := fmt.Sprint(v)
 		// lazy mode - epic level - rebuild
 		bf := bufio.NewReader(strings.NewReader(reqbuffer))
 		requestNew, err := http.ReadRequest(bf)
 		if err != nil {
-			return req
+			return err
 		}
 		// closes old body to allow memory reuse
 		req.Body.Close()
-		return requestNew
+
+		// override original properties
+		req.Method = requestNew.Method
+		req.Header = requestNew.Header
+		req.Body = requestNew.Body
+		req.URL = requestNew.URL
+		return nil
 	}
 }
 
 // MatchReplaceRequest strings or regex
-func (p *Proxy) MatchReplaceResponse(resp *http.Response) *http.Response {
+func (p *Proxy) MatchReplaceResponse(resp *http.Response) error {
 	// Set Content-Length to zero to allow automatic calculation
 	resp.ContentLength = 0
 
 	// lazy mode - dump request
 	respdump, err := httputil.DumpResponse(resp, true)
 	if err != nil {
-		return resp
+		return err
 	}
 
 	// lazy mode - ninja level - elaborate
 	m := make(map[string]interface{})
 	m["response"] = string(respdump)
 	if v, err := dsl.EvalExpr(p.options.ResponseMatchReplaceDSL, m); err != nil {
-		return resp
+		return err
 	} else {
 		respbuffer := fmt.Sprint(v)
 		// lazy mode - epic level - rebuild
 		bf := bufio.NewReader(strings.NewReader(respbuffer))
 		responseNew, err := http.ReadResponse(bf, nil)
 		if err != nil {
-			return resp
+			return err
 		}
 
-		// swap responses
 		// closes old body to allow memory reuse
 		resp.Body.Close()
-		return responseNew
+		resp.Header = responseNew.Header
+		resp.Body = responseNew.Body
+		resp.ContentLength = responseNew.ContentLength
+		return nil
 	}
 }
 
