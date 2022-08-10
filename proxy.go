@@ -42,9 +42,7 @@ type OnConnectFunc func(string, *goproxy.ProxyCtx) (*goproxy.ConnectAction, stri
 type Options struct {
 	DumpRequest                 bool
 	DumpResponse                bool
-	Silent                      bool
-	Verbose                     bool
-	VeryVerbose                 bool
+	Verbosity                   types.Verbosity
 	CertCacheSize               int
 	Directory                   string
 	ListenAddrHTTP              string
@@ -338,9 +336,9 @@ func NewProxy(options *Options) (*Proxy, error) {
 	var httpproxy *goproxy.ProxyHttpServer
 	if options.ListenAddrHTTP != "" {
 		httpproxy = goproxy.NewProxyHttpServer()
-		if options.Silent {
+		if options.Verbosity <= types.VerbositySilent {
 			httpproxy.Logger = log.New(ioutil.Discard, "", log.Ltime|log.Lshortfile)
-		} else if options.Verbose || options.VeryVerbose {
+		} else if options.Verbosity >= types.VerbosityVerbose {
 			httpproxy.Verbose = true
 		} else {
 			httpproxy.Verbose = false
@@ -355,8 +353,7 @@ func NewProxy(options *Options) (*Proxy, error) {
 	goproxy.RejectConnect = &goproxy.ConnectAction{Action: goproxy.ConnectReject, TLSConfig: certs.TLSConfigFromCA()}
 
 	logger := logger.NewLogger(&logger.OptionsLogger{
-		Verbose:      options.Verbose,
-		VeryVerbose:  options.VeryVerbose,
+		Verbosity:    options.Verbosity,
 		OutputFolder: options.OutputDirectory,
 		DumpRequest:  options.DumpRequest,
 		DumpResponse: options.DumpResponse,
@@ -422,7 +419,7 @@ func NewProxy(options *Options) (*Proxy, error) {
 		socks5Config := &socks5.Config{
 			Dial: proxy.httpTunnelDialer,
 		}
-		if options.Silent {
+		if options.Verbosity <= types.VerbositySilent {
 			socks5Config.Logger = log.New(ioutil.Discard, "", log.Ltime|log.Lshortfile)
 		}
 		socks5proxy, err = socks5.New(socks5Config)
