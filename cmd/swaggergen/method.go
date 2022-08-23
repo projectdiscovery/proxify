@@ -9,10 +9,26 @@ type Method struct {
 
 // NewMethod creates a new method
 func NewMethod(reqRes RequestResponse) *Method {
-	return &Method{
-		Responses: map[int]*Response{
-			reqRes.Response.StatusCode: NewResponse(reqRes),
-		},
-		Parameters: NewParameters(reqRes),
+	method := &Method{
+		Responses:  map[int]*Response{},
+		Parameters: NewParameters(reqRes.Request),
 	}
+	if reqRes.Response != nil {
+		method.Responses = map[int]*Response{
+			reqRes.Response.StatusCode: NewResponse(reqRes.Response),
+		}
+	}
+	return method
+}
+
+// UpdateMethod updates a method
+func (m *Method) UpdateMethod(reqRes RequestResponse) {
+	if reqRes.Response != nil {
+		if _, ok := m.Responses[reqRes.Response.StatusCode]; !ok {
+			m.Responses[reqRes.Response.StatusCode] = NewResponse(reqRes.Response)
+		} else {
+			m.Responses[reqRes.Response.StatusCode].UpdateResponse(reqRes.Response)
+		}
+	}
+	m.Parameters = NewParameters(reqRes.Request)
 }

@@ -23,5 +23,7 @@ func (s *Spec) AddPath(reqRes RequestResponse) {
 	path := reqRes.Request.URL.Path
 	if _, ok := s.Paths[path]; !ok {
 		s.Paths[path] = NewPath(reqRes)
+	} else {
+		s.Paths[path].UpdatePath(reqRes)
 	}
 }

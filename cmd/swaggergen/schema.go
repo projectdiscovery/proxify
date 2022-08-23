@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"io"
 	"io/ioutil"
 )
 
@@ -12,8 +13,8 @@ type Schema struct {
 	Description string             `json:"description" yaml:"description,omitempty"`
 }
 
-func NewSchema(reqRes RequestResponse) *Schema {
-	body, err := ioutil.ReadAll(reqRes.Response.Body)
+func NewSchema(reader io.Reader) *Schema {
+	body, err := ioutil.ReadAll(reader)
 	if err != nil {
 		return nil
 	}

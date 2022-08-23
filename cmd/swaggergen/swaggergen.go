@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"flag"
+	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
@@ -17,9 +18,9 @@ import (
 
 func main() {
 	var logDir, outputSpec, api string
-	flag.StringVar(&logDir, "log-dir", "", "log directory")
-	flag.StringVar(&outputSpec, "spec", "", "output spec file")
-	flag.StringVar(&api, "api", "", "api base url")
+	flag.StringVar(&logDir, "log-dir", "", "proxify output log directory")
+	flag.StringVar(&api, "api", "", "api host (example: https://example.com)")
+	flag.StringVar(&outputSpec, "spec", "", "output spec file(example: swagger.yaml)")
 	flag.Parse()
 	if logDir == "" || outputSpec == "" || api == "" {
 		flag.Usage()
@@ -28,13 +29,13 @@ func main() {
 	generator := NewGenerator()
 
 	if err := generator.ReadLog(logDir); err != nil {
-		log.Fatal(err)
+		log.Fatal("Error reading logs: ", err)
 	}
-	if err := generator.CreateSpec(logDir, api); err != nil {
-		log.Fatal(err)
+	if err := generator.CreateSpec(outputSpec, logDir, api); err != nil {
+		log.Fatal("Error generating swagger specification: ", err)
 	}
 	if err := generator.WriteSpec(outputSpec); err != nil {
-		log.Fatal(err)
+		log.Fatal("Error writing data: ", err)
 	}
 }
 
@@ -71,7 +72,7 @@ func (r *Generator) WriteSpec(outputSpecFile string) error {
 }
 
 // CreateSpec crseate the swagger spec from the generator's RequestResponse
-func (r *Generator) CreateSpec(logDir, api string) error {
+func (r *Generator) CreateSpec(spec, logDir, api string) error {
 	r.Spec = NewSpec(logDir, api)
 	for _, reqRes := range r.RequestResponseList {
 		// filter out unrelated requests
@@ -115,16 +116,14 @@ func (r *Generator) ReadLog(logDir string) error {
 		result := responseRegex.FindString(requestResponseString)
 		result = strings.TrimPrefix(result, "\n")
 		var requestResponse RequestResponse
-
+		var requestError, responseError error
 		// parse http request from string
-		requestResponse.Request, err = http.ReadRequest(bufio.NewReader(bytes.NewReader(buf)))
-		if err != nil {
-			return err
-		}
 		// parse http response from string
-		requestResponse.Response, err = http.ReadResponse(bufio.NewReader(bytes.NewReader([]byte(result))), nil)
-		if err != nil {
-			return err
+		requestResponse.Request, requestError = http.ReadRequest(bufio.NewReader(bytes.NewReader(buf)))
+		requestResponse.Response, responseError = http.ReadResponse(bufio.NewReader(bytes.NewReader([]byte(result))), nil)
+
+		if requestError != nil && responseError != nil {
+			return fmt.Errorf("error reading request: %s, response: %s", requestError, responseError)
 		}
 
 		r.RequestResponseList = append(r.RequestResponseList, requestResponse)

@@ -1,8 +1,8 @@
 package main
 
 type Server struct {
-	URL         string `json:"url"`
-	Description string `json:"description"`
+	URL         string `json:"url,omitempty" yaml:"url,omitempty"`
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
 // NewServer creates a new server

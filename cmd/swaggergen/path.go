@@ -13,3 +13,12 @@ func NewPath(reqRes RequestResponse) Path {
 		strings.ToLower(reqRes.Request.Method): NewMethod(reqRes),
 	}
 }
+
+// UpdatePath updates a path
+func (p Path) UpdatePath(reqRes RequestResponse) {
+	if _, ok := p[strings.ToLower(reqRes.Request.Method)]; !ok {
+		p[strings.ToLower(reqRes.Request.Method)] = NewMethod(reqRes)
+	} else {
+		p[strings.ToLower(reqRes.Request.Method)].UpdateMethod(reqRes)
+	}
+}

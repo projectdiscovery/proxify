@@ -1,5 +1,7 @@
 package main
 
+import "net/http"
+
 // Parameter represents a parameter in the spec
 type Parameter struct {
 	Name        string  `json:"name,omitempty" yaml:"name,omitempty"`
@@ -10,10 +12,23 @@ type Parameter struct {
 }
 
 // NewParameters creates a new parameters
-func NewParameters(reqRes RequestResponse) []*Parameter {
-	// get request parameters
-	reqParams := reqRes.Request.URL.Query()
+func NewParameters(req *http.Request) []*Parameter {
 	var params []*Parameter
+	if req.Body != nil {
+		// add body parameter
+		Schema := NewSchema(req.Body)
+		if Schema != nil {
+			params = append(params, &Parameter{
+				Name:     "body",
+				In:       "body",
+				Required: true,
+				Schema:   Schema,
+			})
+		}
+	}
+	// get request query parameters
+	reqParams := req.URL.Query()
+	// add query parameters
 	for key, value := range reqParams {
 		params = append(params, &Parameter{
 			Name:        key,

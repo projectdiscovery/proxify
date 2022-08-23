@@ -1,5 +1,7 @@
 package main
 
+import "net/http"
+
 // Response represents a response in the spec
 type Response struct {
 	Description string              `json:"description,omitempty" yaml:"description,omitempty"`
@@ -7,10 +9,25 @@ type Response struct {
 }
 
 // NewResponse creates a new response
-func NewResponse(reqRes RequestResponse) *Response {
-	return &Response{
-		Content: map[string]*Content{
-			reqRes.Response.Header.Get("Content-Type"): NewContent(reqRes),
-		},
+func NewResponse(res *http.Response) *Response {
+	var response *Response
+	if res.Header != nil {
+		response = &Response{
+			Content: map[string]*Content{
+				res.Header.Get("Content-Type"): NewContent(res),
+			},
+		}
+	}
+	return response
+}
+
+// UpdateResponse updates a response
+func (r *Response) UpdateResponse(res *http.Response) {
+	if res.Header != nil {
+		if _, ok := r.Content[res.Header.Get("Content-Type")]; !ok {
+			r.Content[res.Header.Get("Content-Type")] = NewContent(res)
+		} else {
+			r.Content[res.Header.Get("Content-Type")].UpdateContent(res)
+		}
 	}
 }
