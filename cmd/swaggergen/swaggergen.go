@@ -73,7 +73,23 @@ func (r *Generator) WriteSpec(outputSpecFile string) error {
 
 // CreateSpec crseate the swagger spec from the generator's RequestResponse
 func (r *Generator) CreateSpec(spec, logDir, api string) error {
-	r.Spec = NewSpec(logDir, api)
+	// check if spec file exists
+	if _, err := os.Stat(spec); os.IsExist(err) {
+		// read the spec from the file
+		f, err := os.Open(spec)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		r.Spec = &Spec{}
+		if err := yaml.NewDecoder(f).Decode(r.Spec); err != nil {
+			return err
+		}
+	} else {
+		// create a new spec
+		r.Spec = NewSpec(logDir, api)
+	}
+
 	for _, reqRes := range r.RequestResponseList {
 		// filter out unrelated requests
 		if reqRes.Request.Host == api {
