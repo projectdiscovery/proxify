@@ -1,5 +1,7 @@
 package main
 
+const OpenApiVersion = "3.0.0"
+
 // Spec represents openapi 3 specification
 type Spec struct {
 	OpenApi string          `json:"openapi"`
@@ -11,7 +13,7 @@ type Spec struct {
 // NewSpec creates a new spec
 func NewSpec(logDir, api string) *Spec {
 	return &Spec{
-		OpenApi: "3.0.0",
+		OpenApi: OpenApiVersion,
 		Info:    NewInfo(logDir),
 		Servers: []*Server{NewServer(api, "")},
 		Paths:   map[string]Path{},

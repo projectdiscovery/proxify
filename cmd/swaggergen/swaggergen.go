@@ -3,46 +3,51 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"flag"
 	"fmt"
 	"io/fs"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
+	"github.com/projectdiscovery/fileutil"
+	"github.com/projectdiscovery/goflags"
+	"github.com/projectdiscovery/gologger"
 	"gopkg.in/yaml.v3"
 )
 
-func main() {
-	var logDir, outputSpec, api string
-	flag.StringVar(&logDir, "log-dir", "", "proxify output log directory")
-	flag.StringVar(&api, "api", "", "api host (example: https://example.com)")
-	flag.StringVar(&outputSpec, "spec", "", "output spec file(example: swagger.yaml)")
-	flag.Parse()
-	if logDir == "" || outputSpec == "" || api == "" {
-		flag.Usage()
-		os.Exit(1)
-	}
-	generator := NewGenerator()
+type Options struct {
+	logDir     string
+	outputSpec string
+	api        string
+}
 
-	if err := generator.ReadLog(logDir); err != nil {
-		log.Fatal("Error reading logs: ", err)
+func main() {
+	options := &Options{}
+	flagSet := goflags.NewFlagSet()
+
+	flagSet.SetDescription(`swaggergen generates a swagger specification from a directory of request/response logs`)
+
+	flagSet.StringVar(&options.logDir, "log-dir", "", "proxify output log directory")
+	flagSet.StringVarP(&options.api, "api-host", "api", "", "api host (example: https://example.com)")
+	flagSet.StringVarP(&options.outputSpec, "output-spec", "os", "", "file to store openapi/swagger spec(example: swagger.yaml)")
+	flagSet.Parse()
+	if options.logDir == "" || options.outputSpec == "" || options.api == "" {
+		gologger.Fatal().Msg("Please provide all required flags i.e, log-dir, output-spec, api-host")
 	}
-	if err := generator.CreateSpec(outputSpec, logDir, api); err != nil {
-		log.Fatal("Error generating swagger specification: ", err)
+	generator := NewGenerator(options)
+	if err := generator.Generate(); err != nil {
+		gologger.Fatal().Msg(err.Error())
 	}
-	if err := generator.WriteSpec(outputSpec); err != nil {
-		log.Fatal("Error writing data: ", err)
-	}
+
 }
 
 // Generator is the swagger spec generator
 type Generator struct {
 	RequestResponseList []RequestResponse
 	Spec                *Spec
+	Options             *Options
 }
 
 // RequestResponse represents a request and response
@@ -52,68 +57,81 @@ type RequestResponse struct {
 }
 
 // NewGenerator creates a new generator instance
-func NewGenerator() *Generator {
+func NewGenerator(options *Options) *Generator {
 	return &Generator{
 		RequestResponseList: make([]RequestResponse, 0),
+		Options:             options,
 	}
 }
 
+// Generate generates a swagger specification from a directory of request/response logs
+func (g *Generator) Generate() error {
+	if err := g.ReadLog(); err != nil {
+		return fmt.Errorf("error reading logs: %s", err)
+	}
+	if err := g.CreateSpec(); err != nil {
+		return fmt.Errorf("error generating swagger specification: %s", err)
+	}
+	if err := g.WriteSpec(); err != nil {
+		return fmt.Errorf("error writing data: %s", err)
+	}
+	return nil
+}
+
 // WriteSpec writes the spec to a yaml file
-func (r *Generator) WriteSpec(outputSpecFile string) error {
+func (g *Generator) WriteSpec() error {
 	// create/open openapi specification yaml file
-	f, err := os.OpenFile(outputSpecFile, os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(g.Options.outputSpec, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		f.Close()
 		return err
 	}
 	defer f.Close()
 	// write the spec to the file
-	return yaml.NewEncoder(f).Encode(r.Spec)
+	return yaml.NewEncoder(f).Encode(g.Spec)
 }
 
 // CreateSpec crseate the swagger spec from the generator's RequestResponse
-func (r *Generator) CreateSpec(spec, logDir, api string) error {
+func (g *Generator) CreateSpec() error {
 	// check if spec file exists
-	if _, err := os.Stat(spec); os.IsExist(err) {
+	if fileutil.FileExists(g.Options.outputSpec) {
 		// read the spec from the file
-		f, err := os.Open(spec)
+		f, err := os.Open(g.Options.outputSpec)
 		if err != nil {
 			return err
 		}
 		defer f.Close()
-		r.Spec = &Spec{}
-		if err := yaml.NewDecoder(f).Decode(r.Spec); err != nil {
+		g.Spec = &Spec{}
+		if err := yaml.NewDecoder(f).Decode(g.Spec); err != nil {
 			return err
 		}
 	} else {
 		// create a new spec
-		r.Spec = NewSpec(logDir, api)
+		g.Spec = NewSpec(g.Options.logDir, g.Options.api)
 	}
 
-	for _, reqRes := range r.RequestResponseList {
+	for _, reqRes := range g.RequestResponseList {
 		// filter out unrelated requests
-		if reqRes.Request.Host == api {
-			r.Spec.AddPath(reqRes)
+		if reqRes.Request.Host == g.Options.api {
+			g.Spec.AddPath(reqRes)
 		}
 	}
 	return nil
 }
 
 // ReadLog reads the request/response list from logDir
-func (r *Generator) ReadLog(logDir string) error {
+func (g *Generator) ReadLog() error {
 	// check if log directory exists
-	if _, err := os.Stat(logDir); os.IsNotExist(err) {
-		return err
+	if !fileutil.FolderExists(g.Options.logDir) {
+		return fmt.Errorf("log directory (%s) does not exist", g.Options.logDir)
 	}
 	// read all files in directory
-	return filepath.Walk(logDir, func(path string, info fs.FileInfo, _ error) error {
+	return filepath.Walk(g.Options.logDir, func(path string, info fs.FileInfo, _ error) error {
 		if info.IsDir() {
 			return nil
 		}
 		// open file
 		f, err := os.Open(path)
 		if err != nil {
-			f.Close()
 			return err
 		}
 		defer f.Close()
@@ -142,7 +160,7 @@ func (r *Generator) ReadLog(logDir string) error {
 			return fmt.Errorf("error reading request: %s, response: %s", requestError, responseError)
 		}
 
-		r.RequestResponseList = append(r.RequestResponseList, requestResponse)
+		g.RequestResponseList = append(g.RequestResponseList, requestResponse)
 		return nil
 	})
 }
