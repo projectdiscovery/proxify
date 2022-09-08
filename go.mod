@@ -13,7 +13,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/haxii/fastproxy v0.5.37
 	github.com/pkg/errors v0.9.1
-	github.com/projectdiscovery/dsl v0.0.3-0.20220908104951-08eb813d5beb
+	github.com/projectdiscovery/dsl v0.0.3-0.20220908121847-cb713da09397
 	github.com/projectdiscovery/fastdialer v0.0.15
 	github.com/projectdiscovery/goflags v0.0.8-0.20220304165250-2530b305a4a9
 	github.com/projectdiscovery/gologger v1.1.4
