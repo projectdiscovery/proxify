@@ -1,8 +1,11 @@
 package runner
 
 import (
+	"fmt"
 	"strings"
 
+	"github.com/Knetic/govaluate"
+	"github.com/projectdiscovery/dsl"
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/proxify"
 )
@@ -47,6 +50,43 @@ func NewRunner(options *Options) (*Runner, error) {
 
 // Run polling and notification
 func (r *Runner) Run() error {
+	if r.options.RequestDSL != "" {
+		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.RequestDSL, dsl.DefaultHelperFunctions)
+		if err != nil {
+			gologger.Info().Msgf("error parsing request DSL: %s", err)
+			gologger.Info().Msgf("The available custom DSL functions are:")
+			fmt.Println(dsl.GetPrintableDslFunctionSignatures(false))
+			return err
+		}
+	}
+	if r.options.ResponseDSL != "" {
+		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.ResponseDSL, dsl.DefaultHelperFunctions)
+		if err != nil {
+			gologger.Info().Msgf("error parsing response DSL: %s", err)
+			gologger.Info().Msgf("The available custom DSL functions are:")
+			fmt.Println(dsl.GetPrintableDslFunctionSignatures(false))
+			return err
+		}
+	}
+	if r.options.RequestMatchReplaceDSL != "" {
+		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.RequestMatchReplaceDSL, dsl.DefaultHelperFunctions)
+		if err != nil {
+			gologger.Info().Msgf("error parsing RequestMatchReplaceDSL DSL: %s", err)
+			gologger.Info().Msgf("The available custom DSL functions are:")
+			fmt.Println(dsl.GetPrintableDslFunctionSignatures(false))
+			return err
+		}
+	}
+	if r.options.ResponseMatchReplaceDSL != "" {
+		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.ResponseMatchReplaceDSL, dsl.DefaultHelperFunctions)
+		if err != nil {
+			gologger.Info().Msgf("error parsing ResponseMatchReplaceDSL DSL: %s", err)
+			gologger.Info().Msgf("The available custom DSL functions are:")
+			fmt.Println(dsl.GetPrintableDslFunctionSignatures(false))
+			return err
+		}
+	}
+
 	// configuration summary
 	if r.options.ListenAddrHTTP != "" {
 		gologger.Print().Msgf("HTTP Proxy Listening on %s\n", r.options.ListenAddrHTTP)

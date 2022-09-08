@@ -3,6 +3,7 @@ module github.com/projectdiscovery/proxify
 go 1.17
 
 require (
+	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/Mzack9999/roundrobin v0.0.0-20211108110706-e876335f5ad4
 	github.com/Shopify/sarama v1.36.0
 	github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5
@@ -12,7 +13,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/haxii/fastproxy v0.5.37
 	github.com/pkg/errors v0.9.1
-	github.com/projectdiscovery/dsl v0.0.2
+	github.com/projectdiscovery/dsl v0.0.3-0.20220908104951-08eb813d5beb
 	github.com/projectdiscovery/fastdialer v0.0.15
 	github.com/projectdiscovery/goflags v0.0.8-0.20220304165250-2530b305a4a9
 	github.com/projectdiscovery/gologger v1.1.4
@@ -24,7 +25,6 @@ require (
 )
 
 require (
-	github.com/Knetic/govaluate v3.0.0+incompatible // indirect
 	github.com/akrylysov/pogreb v0.10.1 // indirect
 	github.com/cnf/structhash v0.0.0-20201127153200-e1b16c1ebc08 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
