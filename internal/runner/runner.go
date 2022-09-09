@@ -1,7 +1,6 @@
 package runner
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/Knetic/govaluate"
@@ -53,36 +52,28 @@ func (r *Runner) Run() error {
 	if r.options.RequestDSL != "" {
 		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.RequestDSL, dsl.DefaultHelperFunctions)
 		if err != nil {
-			gologger.Info().Msgf("error parsing request DSL: %s", err)
-			gologger.Info().Msgf("The available custom DSL functions are:")
-			fmt.Println(dsl.GetPrintableDslFunctionSignatures(false))
+			printDslCompileError(err)
 			return err
 		}
 	}
 	if r.options.ResponseDSL != "" {
 		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.ResponseDSL, dsl.DefaultHelperFunctions)
 		if err != nil {
-			gologger.Info().Msgf("error parsing response DSL: %s", err)
-			gologger.Info().Msgf("The available custom DSL functions are:")
-			fmt.Println(dsl.GetPrintableDslFunctionSignatures(false))
+			printDslCompileError(err)
 			return err
 		}
 	}
 	if r.options.RequestMatchReplaceDSL != "" {
 		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.RequestMatchReplaceDSL, dsl.DefaultHelperFunctions)
 		if err != nil {
-			gologger.Info().Msgf("error parsing RequestMatchReplaceDSL DSL: %s", err)
-			gologger.Info().Msgf("The available custom DSL functions are:")
-			fmt.Println(dsl.GetPrintableDslFunctionSignatures(false))
+			printDslCompileError(err)
 			return err
 		}
 	}
 	if r.options.ResponseMatchReplaceDSL != "" {
 		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.ResponseMatchReplaceDSL, dsl.DefaultHelperFunctions)
 		if err != nil {
-			gologger.Info().Msgf("error parsing ResponseMatchReplaceDSL DSL: %s", err)
-			gologger.Info().Msgf("The available custom DSL functions are:")
-			fmt.Println(dsl.GetPrintableDslFunctionSignatures(false))
+			printDslCompileError(err)
 			return err
 		}
 	}
@@ -128,4 +119,11 @@ func (r *Runner) Run() error {
 // Close the runner instance
 func (r *Runner) Close() {
 	r.proxy.Stop()
+}
+
+// printDslCompileError prints the error message for a DSL compilation error
+func printDslCompileError(err error) {
+	gologger.Error().Msgf("error compiling DSL: %s", err)
+	gologger.Info().Msgf("The available custom DSL functions are:")
+	gologger.Info().Label("").Msgf(dsl.GetPrintableDslFunctionSignatures(false))
 }
