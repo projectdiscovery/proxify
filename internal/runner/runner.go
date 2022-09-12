@@ -3,6 +3,8 @@ package runner
 import (
 	"strings"
 
+	"github.com/Knetic/govaluate"
+	"github.com/projectdiscovery/dsl"
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/proxify"
 )
@@ -47,6 +49,35 @@ func NewRunner(options *Options) (*Runner, error) {
 
 // Run polling and notification
 func (r *Runner) Run() error {
+	if r.options.RequestDSL != "" {
+		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.RequestDSL, dsl.DefaultHelperFunctions)
+		if err != nil {
+			printDslCompileError(err)
+			return err
+		}
+	}
+	if r.options.ResponseDSL != "" {
+		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.ResponseDSL, dsl.DefaultHelperFunctions)
+		if err != nil {
+			printDslCompileError(err)
+			return err
+		}
+	}
+	if r.options.RequestMatchReplaceDSL != "" {
+		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.RequestMatchReplaceDSL, dsl.DefaultHelperFunctions)
+		if err != nil {
+			printDslCompileError(err)
+			return err
+		}
+	}
+	if r.options.ResponseMatchReplaceDSL != "" {
+		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.ResponseMatchReplaceDSL, dsl.DefaultHelperFunctions)
+		if err != nil {
+			printDslCompileError(err)
+			return err
+		}
+	}
+
 	// configuration summary
 	if r.options.ListenAddrHTTP != "" {
 		gologger.Print().Msgf("HTTP Proxy Listening on %s\n", r.options.ListenAddrHTTP)
@@ -88,4 +119,11 @@ func (r *Runner) Run() error {
 // Close the runner instance
 func (r *Runner) Close() {
 	r.proxy.Stop()
+}
+
+// printDslCompileError prints the error message for a DSL compilation error
+func printDslCompileError(err error) {
+	gologger.Error().Msgf("error compiling DSL: %s", err)
+	gologger.Info().Msgf("The available custom DSL functions are:")
+	gologger.Info().Label("").Msgf(dsl.GetPrintableDslFunctionSignatures(false))
 }
