@@ -264,10 +264,8 @@ github.com/projectdiscovery/blackrock v0.0.0-20210415162320-b38689ae3a2e h1:7bwa
 github.com/projectdiscovery/blackrock v0.0.0-20210415162320-b38689ae3a2e/go.mod h1:/IsapnEYiWG+yEDPXp0e8NWj3npzB9Ccy9lXEUJwMZs=
 github.com/projectdiscovery/cryptoutil v0.0.0-20210805184155-b5d2512f9345 h1:jT6f/cdOpLkp9GAfRrxk57BUjYfIrR8E+AjMv5H5U4U=
 github.com/projectdiscovery/cryptoutil v0.0.0-20210805184155-b5d2512f9345/go.mod h1:clhQmPnt35ziJW1AhJRKyu8aygXCSoyWj6dtmZBRjjc=
-github.com/projectdiscovery/dsl v0.0.3-0.20220908104951-08eb813d5beb h1:dxikZ+HOVD4OsYR2nRFdRg/Dc8kxt0QQKCULX7BqIYw=
-github.com/projectdiscovery/dsl v0.0.3-0.20220908104951-08eb813d5beb/go.mod h1:ST66slxtp7fsFqTOq3k6+1TDV7RH1Moz3sPBqUGn4Fg=
-github.com/projectdiscovery/dsl v0.0.3-0.20220908121847-cb713da09397 h1:PfeMiXNznP0AAcAnHldSfToW1Cp5Sblapq2xmRIpWtM=
-github.com/projectdiscovery/dsl v0.0.3-0.20220908121847-cb713da09397/go.mod h1:ST66slxtp7fsFqTOq3k6+1TDV7RH1Moz3sPBqUGn4Fg=
+github.com/projectdiscovery/dsl v0.0.3 h1:oWlZZaSADqoyfJdUHWqAzpB65NpvLukZQGFv1uTtU3g=
+github.com/projectdiscovery/dsl v0.0.3/go.mod h1:ST66slxtp7fsFqTOq3k6+1TDV7RH1Moz3sPBqUGn4Fg=
 github.com/projectdiscovery/fastdialer v0.0.15 h1:vOLk8jty+1H9osPRzUT6acD0XBSaglyLS3MlIQaYczk=
 github.com/projectdiscovery/fastdialer v0.0.15/go.mod h1:Q28lw9oTpiZHq09uFG6YYYLUsUjsOypZ7PXWwQGBB80=
 github.com/projectdiscovery/fileutil v0.0.0-20210928100737-cab279c5d4b5/go.mod h1:U+QCpQnX8o2N2w0VUGyAzjM3yBAe4BKedVElxiImsx0=
