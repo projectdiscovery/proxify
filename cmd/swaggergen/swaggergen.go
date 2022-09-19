@@ -32,7 +32,10 @@ func main() {
 	flagSet.StringVar(&options.logDir, "log-dir", "", "proxify output log directory")
 	flagSet.StringVarP(&options.api, "api-host", "api", "", "api host (example: https://example.com)")
 	flagSet.StringVarP(&options.outputSpec, "output-spec", "os", "", "file to store openapi/swagger spec(example: swagger.yaml)")
-	flagSet.Parse()
+	err := flagSet.Parse()
+	if err != nil {
+		gologger.Fatal().Msgf("Could not parse flags: %s", err)
+	}
 	if options.logDir == "" || options.outputSpec == "" || options.api == "" {
 		gologger.Fatal().Msg("Please provide all required flags i.e, log-dir, output-spec, api-host")
 	}

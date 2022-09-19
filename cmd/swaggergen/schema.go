@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"io"
-	"io/ioutil"
 )
 
 // Schema represents a schema in the spec
@@ -14,7 +13,7 @@ type Schema struct {
 }
 
 func NewSchema(reader io.Reader) *Schema {
-	body, err := ioutil.ReadAll(reader)
+	body, err := io.ReadAll(reader)
 	if err != nil {
 		return nil
 	}
