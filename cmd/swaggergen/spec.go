@@ -20,7 +20,19 @@ func NewSpec(logDir, api string) *Spec {
 	}
 }
 
-// AddRequest adds a request to the spec
+// UpdateSpec updates a spec
+func (s *Spec) UpdateSpec(logDir, api string) {
+	s.Info.UpdateInfo(logDir)
+	newServer := NewServer(api, "")
+	for _, server := range s.Servers {
+		if server.URL == newServer.URL {
+			return
+		}
+	}
+	s.Servers = append(s.Servers, newServer)
+}
+
+// AddPath adds a path to the spec
 func (s *Spec) AddPath(reqRes RequestResponse) {
 	path := reqRes.Request.URL.Path
 	if _, ok := s.Paths[path]; !ok {

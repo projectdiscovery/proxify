@@ -13,3 +13,8 @@ func NewInfo(title string) *Info {
 		Version: "1.0.0",
 	}
 }
+
+// UpdateInfo updates a info
+func (i *Info) UpdateInfo(title string) {
+	i.Title = i.Title + "," + title
+}

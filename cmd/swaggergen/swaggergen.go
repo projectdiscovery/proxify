@@ -30,7 +30,7 @@ func main() {
 	flagSet.SetDescription(`swaggergen generates a swagger specification from a directory of request/response logs`)
 
 	flagSet.StringVar(&options.logDir, "log-dir", "", "proxify output log directory")
-	flagSet.StringVarP(&options.api, "api-host", "api", "", "api host (example: https://example.com)")
+	flagSet.StringVarP(&options.api, "api-host", "api", "", "api host (example: api.example.com)")
 	flagSet.StringVarP(&options.outputSpec, "output-spec", "os", "", "file to store openapi/swagger spec(example: swagger.yaml)")
 	err := flagSet.Parse()
 	if err != nil {
@@ -107,6 +107,7 @@ func (g *Generator) CreateSpec() error {
 		if err := yaml.NewDecoder(f).Decode(g.Spec); err != nil {
 			return err
 		}
+		g.Spec.UpdateSpec(g.Options.logDir, g.Options.api)
 	} else {
 		// create a new spec
 		g.Spec = NewSpec(g.Options.logDir, g.Options.api)
