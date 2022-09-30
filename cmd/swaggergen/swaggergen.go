@@ -11,10 +11,11 @@ import (
 	"regexp"
 	"strings"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/projectdiscovery/fileutil"
 	"github.com/projectdiscovery/goflags"
 	"github.com/projectdiscovery/gologger"
-	"gopkg.in/yaml.v3"
 )
 
 type Options struct {
@@ -27,11 +28,11 @@ func main() {
 	options := &Options{}
 	flagSet := goflags.NewFlagSet()
 
-	flagSet.SetDescription(`swaggergen generates a swagger specification from a directory of request/response logs`)
+	flagSet.SetDescription(`SwaggerGen generates Swagger/OpenAPI specification using request and response files from a log directory`)
 
-	flagSet.StringVar(&options.logDir, "log-dir", "", "proxify output log directory")
-	flagSet.StringVarP(&options.api, "api-host", "api", "", "api host (example: api.example.com)")
-	flagSet.StringVarP(&options.outputSpec, "output-spec", "os", "", "file to store openapi/swagger spec(example: swagger.yaml)")
+	flagSet.StringVar(&options.logDir, "log-dir", "", "path to proxify's output log directory")
+	flagSet.StringVarP(&options.api, "api-host", "api", "", "API host (example: api.example.com)")
+	flagSet.StringVarP(&options.outputSpec, "output-spec", "os", "", "file to store Swagger/OpenAPI specification (example: OpenAPI.yaml)")
 	err := flagSet.Parse()
 	if err != nil {
 		gologger.Fatal().Msgf("Could not parse flags: %s", err)
