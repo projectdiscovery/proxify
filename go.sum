@@ -38,8 +38,8 @@ github.com/Knetic/govaluate v3.0.0+incompatible h1:7o6+MAPhYTCF0+fdvoz1xDedhRb4f
 github.com/Knetic/govaluate v3.0.0+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
 github.com/Mzack9999/roundrobin v0.0.0-20211108110706-e876335f5ad4 h1:cwC6b8AEqAsM+bvX/hmrQ+UNQq2seG9FyYvriLVAcEo=
 github.com/Mzack9999/roundrobin v0.0.0-20211108110706-e876335f5ad4/go.mod h1:jaPtvFne4154rQDj6lyDdPnvHc9II1X/3uXfJtjGKBQ=
-github.com/Shopify/sarama v1.37.0 h1:WmHgUY/omLM9SCr9nhRwVhL7Kln+4RmVujW1ffZUDjs=
-github.com/Shopify/sarama v1.37.0/go.mod h1:smFYoF2zzSNsxF2V9MXRew2PrMfBGAJUJOA0Edd+v4s=
+github.com/Shopify/sarama v1.37.1 h1:T1WU59mQa3sQ3C9PNd2IbOqvK5vqy/N9mTnEzMMnk7c=
+github.com/Shopify/sarama v1.37.1/go.mod h1:smFYoF2zzSNsxF2V9MXRew2PrMfBGAJUJOA0Edd+v4s=
 github.com/Shopify/toxiproxy/v2 v2.5.0 h1:i4LPT+qrSlKNtQf5QliVjdP08GyAH8+BUIc9gT0eahc=
 github.com/Shopify/toxiproxy/v2 v2.5.0/go.mod h1:yhM2epWtAmel9CB8r2+L+PCmhH6yH2pITaPAo7jxJl0=
 github.com/akrylysov/pogreb v0.10.0/go.mod h1:pNs6QmpQ1UlTJKDezuRWmaqkgUE2TuU0YTWyqJZ7+lI=
