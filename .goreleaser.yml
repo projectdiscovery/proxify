@@ -14,6 +14,11 @@ builds:
         - 386
         - arm
         - arm64
+      ignore:
+        - goos: windows
+          goarch: 'arm'
+        - goos: windows
+          goarch: 'arm64'
       id: proxify
 
     - binary: replay
@@ -27,6 +32,11 @@ builds:
         - 386
         - arm
         - arm64
+      ignore:
+        - goos: windows
+          goarch: 'arm'
+        - goos: windows
+          goarch: 'arm64'
       id: replay
 
     - binary: mitmrelay
@@ -40,6 +50,11 @@ builds:
         - 386
         - arm
         - arm64
+      ignore:
+        - goos: windows
+          goarch: 'arm'
+        - goos: windows
+          goarch: 'arm64'
       id: mitmrelay
 
 archives:
