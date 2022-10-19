@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/projectdiscovery/dsl"
+	"github.com/projectdiscovery/proxify/pkg/types"
 )
 
 // SocketProxy - connect two sockets with TLS inspection
@@ -30,7 +31,7 @@ type SocketConn struct {
 	HTTPServer              string
 	sentBytes               uint64
 	receivedBytes           uint64
-	Verbose                 bool
+	Verbosity               types.Verbosity
 	OutputHex               bool
 	Timeout                 time.Duration
 	RequestMatchReplaceDSL  string
@@ -51,7 +52,7 @@ type SocketProxyOptions struct {
 	TLSClient               bool
 	TLSServerConfig         *tls.Config
 	TLSServer               bool
-	Verbose                 bool
+	Verbosity               types.Verbosity
 	OutputHex               bool
 	Timeout                 time.Duration
 	RequestMatchReplaceDSL  string
@@ -108,7 +109,7 @@ func (p *SocketProxy) Run() error {
 			log.Println(err)
 			return err
 		}
-		go p.Proxy(conn)  //nolint
+		go p.Proxy(conn) //nolint
 	}
 }
 
@@ -119,7 +120,7 @@ func (p *SocketProxy) Proxy(conn net.Conn) error {
 	)
 
 	socketConn.Timeout = p.options.Timeout
-	socketConn.Verbose = p.options.Verbose
+	socketConn.Verbosity = p.options.Verbosity
 	socketConn.OutputHex = p.options.OutputHex
 
 	socketConn.lconn = conn

@@ -10,6 +10,7 @@ import (
 	"github.com/projectdiscovery/gologger/levels"
 	"github.com/projectdiscovery/proxify/pkg/logger/elastic"
 	"github.com/projectdiscovery/proxify/pkg/logger/kafka"
+	"github.com/projectdiscovery/proxify/pkg/types"
 )
 
 // Options of the runner
@@ -17,8 +18,7 @@ type Options struct {
 	OutputDirectory             string
 	Directory                   string
 	CertCacheSize               int
-	Verbose                     bool
-	Silent                      bool
+	Verbosity                   types.Verbosity
 	Version                     bool
 	ListenAddrHTTP              string
 	ListenAddrSocks5            string
@@ -100,17 +100,20 @@ func ParseOptions() *Options {
 		flagSet.FileNormalizedStringSliceVarP(&options.Deny, "deny", "d", []string{}, "Denied list of IP/CIDR's to be proxied"),
 	)
 
+	silent, verbose, veryVerbose := false, false, false
 	createGroup(flagSet, "debug", "debug",
-		flagSet.BoolVar(&options.Silent, "silent", false, "Silent"),
 		flagSet.BoolVarP(&options.NoColor, "no-color", "nc", true, "No Color"),
 		flagSet.BoolVar(&options.Version, "version", false, "Version"),
-		flagSet.BoolVarP(&options.Verbose, "verbose", "v", false, "Verbose"),
+		flagSet.BoolVar(&silent, "silent", false, "Silent"),
+		flagSet.BoolVarP(&verbose, "verbose", "v", false, "Verbose"),
+		flagSet.BoolVarP(&veryVerbose, "very-verbose", "vv", false, "Very Verbose"),
 	)
 
 	_ = flagSet.Parse()
 	os.MkdirAll(options.Directory, os.ModePerm) //nolint
 
 	// Read the inputs and configure the logging
+	options.configureVerbosity(silent, verbose, veryVerbose)
 	options.configureOutput()
 
 	if options.Version {
@@ -124,15 +127,31 @@ func ParseOptions() *Options {
 	return options
 }
 
+func (options *Options) configureVerbosity(silent, verbose, veryVerbose bool) {
+	if silent && (verbose || veryVerbose) {
+		gologger.Error().Msgf("The -silent flag and -v/-vv flags cannot be set together\n")
+		os.Exit(1)
+	}
+
+	if silent {
+		options.Verbosity = types.VerbositySilent
+	} else if veryVerbose {
+		options.Verbosity = types.VerbosityVeryVerbose
+	} else if verbose {
+		options.Verbosity = types.VerbosityVerbose
+	} else {
+		options.Verbosity = types.VerbosityDefault
+	}
+}
+
 func (options *Options) configureOutput() {
-	if options.Verbose {
+	if options.Verbosity <= types.VerbositySilent {
+		gologger.DefaultLogger.SetMaxLevel(levels.LevelSilent)
+	} else if options.Verbosity >= types.VerbosityVerbose {
 		gologger.DefaultLogger.SetMaxLevel(levels.LevelVerbose)
 	}
 	if options.NoColor {
 		gologger.DefaultLogger.SetFormatter(formatter.NewCLI(true))
-	}
-	if options.Silent {
-		gologger.DefaultLogger.SetMaxLevel(levels.LevelSilent)
 	}
 }
 
