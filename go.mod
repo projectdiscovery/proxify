@@ -15,13 +15,13 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/projectdiscovery/dsl v0.0.3
 	github.com/projectdiscovery/fastdialer v0.0.17
-	github.com/projectdiscovery/goflags v0.0.8
+	github.com/projectdiscovery/goflags v0.1.1
 	github.com/projectdiscovery/gologger v1.1.4
 	github.com/projectdiscovery/mapsutil v0.0.2-0.20220531112119-e205a582729c
-	github.com/projectdiscovery/stringsutil v0.0.0-20220731064040-4b67f194751e
+	github.com/projectdiscovery/stringsutil v0.0.1
 	github.com/projectdiscovery/tinydns v0.0.1
 	github.com/rs/xid v1.4.0
-	golang.org/x/net v0.0.0-20220927171203-f486391704dc
+	golang.org/x/net v0.1.0
 )
 
 require (
@@ -47,14 +47,14 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.15.11 // indirect
 	github.com/logrusorgru/aurora v2.0.3+incompatible // indirect
-	github.com/microcosm-cc/bluemonday v1.0.19 // indirect
+	github.com/microcosm-cc/bluemonday v1.0.21 // indirect
 	github.com/miekg/dns v1.1.50 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pierrec/lz4/v4 v4.1.17 // indirect
 	github.com/projectdiscovery/blackrock v0.0.0-20220628111055-35616c71b2dc // indirect
 	github.com/projectdiscovery/cryptoutil v0.0.0-20210805184155-b5d2512f9345 // indirect
-	github.com/projectdiscovery/fileutil v0.0.0-20220705195237-01becc2a8963 // indirect
+	github.com/projectdiscovery/fileutil v0.0.1 // indirect
 	github.com/projectdiscovery/hmap v0.0.2-0.20210917080408-0fd7bd286bfa // indirect
 	github.com/projectdiscovery/iputil v0.0.0-20220712175312-b9406f31cdd8 // indirect
 	github.com/projectdiscovery/mapcidr v1.0.1 // indirect
@@ -76,8 +76,8 @@ require (
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/sys v0.0.0-20220909162455-aba9fc2a8ff2 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/sys v0.1.0 // indirect
+	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
