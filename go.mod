@@ -18,7 +18,7 @@ require (
 	github.com/projectdiscovery/goflags v0.1.1
 	github.com/projectdiscovery/gologger v1.1.4
 	github.com/projectdiscovery/mapsutil v0.0.2-0.20220531112119-e205a582729c
-	github.com/projectdiscovery/stringsutil v0.0.1
+	github.com/projectdiscovery/stringsutil v0.0.2
 	github.com/projectdiscovery/tinydns v0.0.1
 	github.com/rs/xid v1.4.0
 	golang.org/x/net v0.1.0
