@@ -23,20 +23,20 @@ type Options struct {
 	ListenAddrHTTP              string
 	ListenAddrSocks5            string
 	ListenDNSAddr               string
-	DNSMapping                  string                            // DNSMapping contains user provided hosts
-	DNSFallbackResolver         string                            // Listen DNS Ip and port (ip:port)
-	NoColor                     bool                              // No Color
-	RequestDSL                  string                            // Request Filter DSL
-	RequestMatchReplaceDSL      string                            // Request Match-Replace DSL
-	ResponseDSL                 string                            // Response Filter DSL
-	ResponseMatchReplaceDSL     string                            // Request Match-Replace DSL
-	UpstreamHTTPProxies         goflags.NormalizedStringSlice     // Upstream HTTP comma separated Proxies (e.g. http://proxyip:proxyport)
-	UpstreamSocks5Proxies       goflags.NormalizedStringSlice     // Upstream SOCKS5 comma separated Proxies (e.g. socks5://proxyip:proxyport)
-	UpstreamProxyRequestsNumber int                               // Number of requests before switching upstream proxy
-	DumpRequest                 bool                              // Dump requests in separate files
-	DumpResponse                bool                              // Dump responses in separate files
-	Deny                        goflags.FileNormalizedStringSlice // Deny ip/cidr
-	Allow                       goflags.FileNormalizedStringSlice // Allow ip/cidr
+	DNSMapping                  string              // DNSMapping contains user provided hosts
+	DNSFallbackResolver         string              // Listen DNS Ip and port (ip:port)
+	NoColor                     bool                // No Color
+	RequestDSL                  string              // Request Filter DSL
+	RequestMatchReplaceDSL      string              // Request Match-Replace DSL
+	ResponseDSL                 string              // Response Filter DSL
+	ResponseMatchReplaceDSL     string              // Request Match-Replace DSL
+	UpstreamHTTPProxies         goflags.StringSlice // Upstream HTTP comma separated Proxies (e.g. http://proxyip:proxyport)
+	UpstreamSocks5Proxies       goflags.StringSlice // Upstream SOCKS5 comma separated Proxies (e.g. socks5://proxyip:proxyport)
+	UpstreamProxyRequestsNumber int                 // Number of requests before switching upstream proxy
+	DumpRequest                 bool                // Dump requests in separate files
+	DumpResponse                bool                // Dump responses in separate files
+	Deny                        goflags.StringSlice // Deny ip/cidr
+	Allow                       goflags.StringSlice // Allow ip/cidr
 	Elastic                     elastic.Options
 	Kafka                       kafka.Options
 }
@@ -76,8 +76,8 @@ func ParseOptions() *Options {
 	)
 
 	createGroup(flagSet, "proxy", "Proxy",
-		flagSet.NormalizedStringSliceVarP(&options.UpstreamHTTPProxies, "http-proxy", "hp", []string{}, "Upstream HTTP Proxies (eg http://proxy-ip:proxy-port)"),
-		flagSet.NormalizedStringSliceVarP(&options.UpstreamSocks5Proxies, "socks5-proxy", "sp", []string{}, "Upstream SOCKS5 Proxies (eg socks5://proxy-ip:proxy-port)"),
+		flagSet.StringSliceVarP(&options.UpstreamHTTPProxies, "http-proxy", "hp", nil, "Upstream HTTP Proxies (eg http://proxy-ip:proxy-port)", goflags.NormalizedStringSliceOptions),
+		flagSet.StringSliceVarP(&options.UpstreamSocks5Proxies, "socks5-proxy", "sp", nil, "Upstream SOCKS5 Proxies (eg socks5://proxy-ip:proxy-port)", goflags.NormalizedStringSliceOptions),
 		flagSet.IntVar(&options.UpstreamProxyRequestsNumber, "c", 1, "Number of requests before switching to the next upstream proxy"),
 	)
 
@@ -96,8 +96,8 @@ func ParseOptions() *Options {
 		// Todo: default config file support (homeDir/.config/proxify/config.yaml)
 		flagSet.StringVar(&options.Directory, "config", path.Join(homeDir, ".config", "proxify"), "Directory for storing program information"),
 		flagSet.IntVar(&options.CertCacheSize, "cert-cache-size", 256, "Number of certificates to cache"),
-		flagSet.FileNormalizedStringSliceVarP(&options.Allow, "allow", "a", []string{}, "Allowed list of IP/CIDR's to be proxied"),
-		flagSet.FileNormalizedStringSliceVarP(&options.Deny, "deny", "d", []string{}, "Denied list of IP/CIDR's to be proxied"),
+		flagSet.StringSliceVarP(&options.Allow, "allow", "a", nil, "Allowed list of IP/CIDR's to be proxied", goflags.FileNormalizedStringSliceOptions),
+		flagSet.StringSliceVarP(&options.Deny, "deny", "d", nil, "Denied list of IP/CIDR's to be proxied", goflags.FileNormalizedStringSliceOptions),
 	)
 
 	silent, verbose, veryVerbose := false, false, false
