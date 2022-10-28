@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io/fs"
 	"net/http"
@@ -42,13 +41,10 @@ func main() {
 	if options.logDir == "" || options.outputSpec == "" || options.api == "" {
 		gologger.Fatal().Msg("Please provide all required flags i.e, log-dir, output-spec, api-host")
 	}
-	parsed, err := url.Parse(options.api)
+	_, err = url.Parse(options.api)
 	if err != nil {
 		gologger.Fatal().Msgf("Invalid API host: %s", err)
 	}
-	en := json.NewEncoder(os.Stdout)
-	en.SetIndent(" ", " ")
-	en.Encode(parsed)
 
 	generator := NewGenerator(options)
 	if err := generator.Generate(); err != nil {
@@ -159,9 +155,9 @@ func (g *Generator) ReadLog() error {
 		}
 
 		requestResponseString := string(buf)
-
+		
 		// split requestResponseString into request and response parts
-		responseRegex := regexp.MustCompile("\n(HTTP/1.1(.|\n)*)")
+		responseRegex := regexp.MustCompile("\n(HTTP\\/1\\.[0-1] (.|\n)*)")
 		result := responseRegex.FindString(requestResponseString)
 		result = strings.TrimPrefix(result, "\n")
 		var requestResponse RequestResponse
