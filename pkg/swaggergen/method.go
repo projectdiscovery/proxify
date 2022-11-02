@@ -1,4 +1,4 @@
-package main
+package swaggergen
 
 // Operation represents an operation in the spec
 type Method struct {

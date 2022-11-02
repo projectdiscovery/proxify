@@ -1,4 +1,4 @@
-package main
+package swaggergen
 
 import (
 	"encoding/json"

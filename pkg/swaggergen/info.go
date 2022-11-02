@@ -1,4 +1,4 @@
-package main
+package swaggergen
 
 type Info struct {
 	Title       string `json:"title,omitempty" yaml:"title,omitempty"`

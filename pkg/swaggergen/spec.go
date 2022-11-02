@@ -1,4 +1,4 @@
-package main
+package swaggergen
 
 const OpenApiVersion = "3.0.0"
 

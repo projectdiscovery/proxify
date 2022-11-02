@@ -17,6 +17,7 @@ import (
 	"github.com/projectdiscovery/fileutil"
 	"github.com/projectdiscovery/goflags"
 	"github.com/projectdiscovery/gologger"
+	"github.com/projectdiscovery/proxify/pkg/swaggergen"
 )
 
 type Options struct {
@@ -55,21 +56,15 @@ func main() {
 
 // Generator is the swagger spec generator
 type Generator struct {
-	RequestResponseList []RequestResponse
-	Spec                *Spec
+	RequestResponseList []swaggergen.RequestResponse
+	Spec                *swaggergen.Spec
 	Options             *Options
-}
-
-// RequestResponse represents a request and response
-type RequestResponse struct {
-	Request  *http.Request
-	Response *http.Response
 }
 
 // NewGenerator creates a new generator instance
 func NewGenerator(options *Options) *Generator {
 	return &Generator{
-		RequestResponseList: make([]RequestResponse, 0),
+		RequestResponseList: make([]swaggergen.RequestResponse, 0),
 		Options:             options,
 	}
 }
@@ -110,14 +105,14 @@ func (g *Generator) CreateSpec() error {
 			return err
 		}
 		defer f.Close()
-		g.Spec = &Spec{}
+		g.Spec = &swaggergen.Spec{}
 		if err := yaml.NewDecoder(f).Decode(g.Spec); err != nil {
 			return err
 		}
 		g.Spec.UpdateSpec(g.Options.logDir, g.Options.api)
 	} else {
 		// create a new spec
-		g.Spec = NewSpec(g.Options.logDir, g.Options.api)
+		g.Spec = swaggergen.NewSpec(g.Options.logDir, g.Options.api)
 	}
 
 	for _, reqRes := range g.RequestResponseList {
@@ -155,12 +150,12 @@ func (g *Generator) ReadLog() error {
 		}
 
 		requestResponseString := string(buf)
-		
+
 		// split requestResponseString into request and response parts
 		responseRegex := regexp.MustCompile("\n(HTTP\\/1\\.[0-1] (.|\n)*)")
 		result := responseRegex.FindString(requestResponseString)
 		result = strings.TrimPrefix(result, "\n")
-		var requestResponse RequestResponse
+		var requestResponse swaggergen.RequestResponse
 		var requestError, responseError error
 		requestResponse.Request, requestError = http.ReadRequest(bufio.NewReader(bytes.NewReader(buf)))
 		requestResponse.Response, responseError = http.ReadResponse(bufio.NewReader(bytes.NewReader([]byte(result))), nil)

@@ -1,4 +1,4 @@
-package main
+package swaggergen
 
 type Server struct {
 	URL         string `json:"url,omitempty" yaml:"url,omitempty"`
