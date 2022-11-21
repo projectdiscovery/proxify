@@ -6,7 +6,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -288,7 +288,7 @@ func (p *Proxy) Run() error {
 					StatusCode:       200,
 					Status:           http.StatusText(200),
 					ContentLength:    int64(reader.Len()),
-					Body:             ioutil.NopCloser(reader),
+					Body:             io.NopCloser(reader),
 				}
 				return r, resp
 			},
@@ -337,7 +337,7 @@ func NewProxy(options *Options) (*Proxy, error) {
 	if options.ListenAddrHTTP != "" {
 		httpproxy = goproxy.NewProxyHttpServer()
 		if options.Verbosity <= types.VerbositySilent {
-			httpproxy.Logger = log.New(ioutil.Discard, "", log.Ltime|log.Lshortfile)
+			httpproxy.Logger = log.New(io.Discard, "", log.Ltime|log.Lshortfile)
 		} else if options.Verbosity >= types.VerbosityVerbose {
 			httpproxy.Verbose = true
 		} else {
@@ -420,7 +420,7 @@ func NewProxy(options *Options) (*Proxy, error) {
 			Dial: proxy.httpTunnelDialer,
 		}
 		if options.Verbosity <= types.VerbositySilent {
-			socks5Config.Logger = log.New(ioutil.Discard, "", log.Ltime|log.Lshortfile)
+			socks5Config.Logger = log.New(io.Discard, "", log.Ltime|log.Lshortfile)
 		}
 		socks5proxy, err = socks5.New(socks5Config)
 		if err != nil {
