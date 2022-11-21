@@ -3,7 +3,7 @@ package logger
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"strings"
@@ -134,7 +134,7 @@ func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
 
 	if l.options.Verbosity >= types.VerbosityVeryVerbose {
 		contentType := req.Header.Get("Content-Type")
-		b, _ := ioutil.ReadAll(req.Body)
+		b, _ := io.ReadAll(req.Body)
 		if isASCIICheckRequired(contentType) && !govalidator.IsPrintableASCII(string(b)) {
 			reqdump, _ = httputil.DumpRequest(req, false)
 		}

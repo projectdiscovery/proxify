@@ -1,6 +1,6 @@
 module github.com/projectdiscovery/proxify
 
-go 1.17
+go 1.18
 
 require (
 	github.com/Knetic/govaluate v3.0.0+incompatible
@@ -15,6 +15,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/projectdiscovery/dsl v0.0.3
 	github.com/projectdiscovery/fastdialer v0.0.18
+	github.com/projectdiscovery/fileutil v0.0.3
 	github.com/projectdiscovery/goflags v0.1.4
 	github.com/projectdiscovery/gologger v1.1.5
 	github.com/projectdiscovery/mapsutil v0.0.2-0.20220531112119-e205a582729c
@@ -22,6 +23,7 @@ require (
 	github.com/projectdiscovery/tinydns v0.0.1
 	github.com/rs/xid v1.4.0
 	golang.org/x/net v0.2.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -56,7 +58,6 @@ require (
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/pierrec/lz4 v2.6.0+incompatible // indirect
 	github.com/pierrec/lz4/v4 v4.1.17 // indirect
-	github.com/projectdiscovery/fileutil v0.0.3 // indirect
 	github.com/projectdiscovery/hmap v0.0.2-0.20210917080408-0fd7bd286bfa // indirect
 	github.com/projectdiscovery/iputil v0.0.2 // indirect
 	github.com/projectdiscovery/networkpolicy v0.0.1 // indirect
@@ -84,5 +85,4 @@ require (
 	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/tools v0.2.0 // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

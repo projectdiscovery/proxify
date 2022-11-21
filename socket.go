@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"io"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -275,7 +274,7 @@ func (p *SocketConn) pipe(src, dst io.ReadWriter) {
 			if err != nil {
 				log.Println(err)
 			} else {
-				b, _ = ioutil.ReadAll(resp.Body)
+				b, _ = io.ReadAll(resp.Body)
 				resp.Body.Close()
 			}
 		}
