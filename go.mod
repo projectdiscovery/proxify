@@ -16,7 +16,7 @@ require (
 	github.com/projectdiscovery/dsl v0.0.3
 	github.com/projectdiscovery/fastdialer v0.0.18
 	github.com/projectdiscovery/fileutil v0.0.3
-	github.com/projectdiscovery/goflags v0.1.4
+	github.com/projectdiscovery/goflags v0.1.5
 	github.com/projectdiscovery/gologger v1.1.5
 	github.com/projectdiscovery/mapsutil v0.0.2-0.20220531112119-e205a582729c
 	github.com/projectdiscovery/stringsutil v0.0.2
