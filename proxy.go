@@ -24,12 +24,12 @@ import (
 	"github.com/projectdiscovery/dsl"
 	"github.com/projectdiscovery/fastdialer/fastdialer"
 	"github.com/projectdiscovery/gologger"
-	"github.com/projectdiscovery/mapsutil"
 	"github.com/projectdiscovery/proxify/pkg/certs"
 	"github.com/projectdiscovery/proxify/pkg/logger"
 	"github.com/projectdiscovery/proxify/pkg/logger/elastic"
 	"github.com/projectdiscovery/proxify/pkg/logger/kafka"
 	"github.com/projectdiscovery/proxify/pkg/types"
+	"github.com/projectdiscovery/proxify/pkg/util"
 	"github.com/projectdiscovery/tinydns"
 	"github.com/rs/xid"
 	"golang.org/x/net/proxy"
@@ -92,7 +92,7 @@ func (p *Proxy) OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Reque
 
 	// check dsl
 	if p.options.RequestDSL != "" {
-		m, _ := mapsutil.HTTPRequesToMap(req)
+		m, _ := util.HTTPRequesToMap(req)
 		v, err := dsl.EvalExpr(p.options.RequestDSL, m)
 		if err != nil {
 			gologger.Warning().Msgf("Could not evaluate request dsl: %s\n", err)
@@ -118,7 +118,7 @@ func (p *Proxy) OnResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Res
 	userdata := ctx.UserData.(types.UserData)
 	userdata.HasResponse = true
 	if p.options.ResponseDSL != "" && !userdata.Match {
-		m, _ := mapsutil.HTTPResponseToMap(resp)
+		m, _ := util.HTTPResponseToMap(resp)
 		v, err := dsl.EvalExpr(p.options.ResponseDSL, m)
 		if err != nil {
 			gologger.Warning().Msgf("Could not evaluate response dsl: %s\n", err)
