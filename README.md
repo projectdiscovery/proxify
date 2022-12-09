@@ -1,4 +1,4 @@
-<h1 align="center">
+<h1 align="center">read
   <img src="static/proxify-logo.png" alt="proxify" width="200px">
   <br>
 </h1>
@@ -134,7 +134,7 @@ proxify -http-proxy http://127.0.0.1:8080
 
 Runs an HTTP proxy on port 8888 and forward the traffic to the TOR network:
 ```shell
-proxify -socks5-proxy socks5://127.0.0.1:9050
+proxify -socks5-proxy 127.0.0.1:9050
 ```
 
 
