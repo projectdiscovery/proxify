@@ -85,7 +85,7 @@ func main() {
 		io.Copy(w, response.Body) //nolint
 	})
 	go func() {
-		if err := http.ListenAndServe(":80", nil); err != nil {
+		if err := http.ListenAndServe(options.HTTPListenerAddress, nil); err != nil {
 			gologger.Fatal().Msgf("Could not listen and serve: %s\n", err)
 		}
 	}()
