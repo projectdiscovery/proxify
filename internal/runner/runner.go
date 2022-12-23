@@ -63,15 +63,15 @@ func (r *Runner) Run() error {
 			return err
 		}
 	}
-	if r.options.RequestMatchReplaceDSL != "" {
-		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.RequestMatchReplaceDSL, dsl.DefaultHelperFunctions)
+	for i := 0; i < len(r.options.RequestMatchReplaceDSL); i++ {
+		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.RequestMatchReplaceDSL[i], dsl.DefaultHelperFunctions)
 		if err != nil {
 			printDslCompileError(err)
 			return err
 		}
 	}
-	if r.options.ResponseMatchReplaceDSL != "" {
-		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.ResponseMatchReplaceDSL, dsl.DefaultHelperFunctions)
+	for i := 0; i < len(r.options.ResponseMatchReplaceDSL); i++ {
+		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.ResponseMatchReplaceDSL[i], dsl.DefaultHelperFunctions)
 		if err != nil {
 			printDslCompileError(err)
 			return err

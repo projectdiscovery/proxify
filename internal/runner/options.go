@@ -27,9 +27,9 @@ type Options struct {
 	DNSFallbackResolver         string              // Listen DNS Ip and port (ip:port)
 	NoColor                     bool                // No Color
 	RequestDSL                  goflags.StringSlice // Request Filter DSL
-	RequestMatchReplaceDSL      string              // Request Match-Replace DSL
+	RequestMatchReplaceDSL      goflags.StringSlice // Request Match-Replace DSL
 	ResponseDSL                 goflags.StringSlice // Response Filter DSL
-	ResponseMatchReplaceDSL     string              // Request Match-Replace DSL
+	ResponseMatchReplaceDSL     goflags.StringSlice // Request Match-Replace DSL
 	UpstreamHTTPProxies         goflags.StringSlice // Upstream HTTP comma separated Proxies (e.g. http://proxyip:proxyport)
 	UpstreamSocks5Proxies       goflags.StringSlice // Upstream SOCKS5 comma separated Proxies (e.g. socks5://proxyip:proxyport)
 	UpstreamProxyRequestsNumber int                 // Number of requests before switching upstream proxy
@@ -63,8 +63,8 @@ func ParseOptions() *Options {
 	createGroup(flagSet, "filter", "Filter",
 		flagSet.StringSliceVarP(&options.RequestDSL, "request-dsl", "req-fd", nil, "Request Filter DSL", goflags.StringSliceOptions),
 		flagSet.StringSliceVarP(&options.ResponseDSL, "response-dsl", "resp-fd", nil, "Response Filter DSL", goflags.StringSliceOptions),
-		flagSet.StringVarP(&options.RequestMatchReplaceDSL, "request-match-replace-dsl", "req-mrd", "", "Request Match-Replace DSL"),
-		flagSet.StringVarP(&options.ResponseMatchReplaceDSL, "response-match-replace-dsl", "resp-mrd", "", "Response Match-Replace DSL"),
+		flagSet.StringSliceVarP(&options.RequestMatchReplaceDSL, "request-match-replace-dsl", "req-mrd", nil, "Request Match-Replace DSL", goflags.StringSliceOptions),
+		flagSet.StringSliceVarP(&options.ResponseMatchReplaceDSL, "response-match-replace-dsl", "resp-mrd", nil, "Response Match-Replace DSL", goflags.StringSliceOptions),
 	)
 
 	createGroup(flagSet, "network", "Network",
