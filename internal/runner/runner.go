@@ -49,15 +49,15 @@ func NewRunner(options *Options) (*Runner, error) {
 
 // Run polling and notification
 func (r *Runner) Run() error {
-	if r.options.RequestDSL != "" {
-		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.RequestDSL, dsl.DefaultHelperFunctions)
+	for i := 0; i < len(r.options.RequestDSL); i++ {
+		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.RequestDSL[i], dsl.DefaultHelperFunctions)
 		if err != nil {
 			printDslCompileError(err)
 			return err
 		}
 	}
-	if r.options.ResponseDSL != "" {
-		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.ResponseDSL, dsl.DefaultHelperFunctions)
+	for i := 0; i < len(r.options.ResponseDSL); i++ {
+		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.ResponseDSL[i], dsl.DefaultHelperFunctions)
 		if err != nil {
 			printDslCompileError(err)
 			return err

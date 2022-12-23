@@ -48,8 +48,8 @@ type Options struct {
 	ListenAddrHTTP              string
 	ListenAddrSocks5            string
 	OutputDirectory             string
-	RequestDSL                  string
-	ResponseDSL                 string
+	RequestDSL                  []string
+	ResponseDSL                 []string
 	UpstreamHTTPProxies         []string
 	UpstreamSock5Proxies        []string
 	ListenDNSAddr               string
@@ -91,13 +91,15 @@ func (p *Proxy) OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Reque
 	}
 
 	// check dsl
-	if p.options.RequestDSL != "" {
-		m, _ := util.HTTPRequesToMap(req)
-		v, err := dsl.EvalExpr(p.options.RequestDSL, m)
-		if err != nil {
-			gologger.Warning().Msgf("Could not evaluate request dsl: %s\n", err)
+	for i := 0; i < len(p.options.RequestDSL); i++ {
+		if !userdata.Match {
+			m, _ := util.HTTPRequesToMap(req)
+			v, err := dsl.EvalExpr(p.options.RequestDSL[i], m)
+			if err != nil {
+				gologger.Warning().Msgf("Could not evaluate request dsl: %s\n", err)
+			}
+			userdata.Match = err == nil && v.(bool)
 		}
-		userdata.Match = err == nil && v.(bool)
 	}
 
 	id := xid.New().String()
@@ -117,13 +119,15 @@ func (p *Proxy) OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Reque
 func (p *Proxy) OnResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
 	userdata := ctx.UserData.(types.UserData)
 	userdata.HasResponse = true
-	if p.options.ResponseDSL != "" && !userdata.Match {
-		m, _ := util.HTTPResponseToMap(resp)
-		v, err := dsl.EvalExpr(p.options.ResponseDSL, m)
-		if err != nil {
-			gologger.Warning().Msgf("Could not evaluate response dsl: %s\n", err)
+	for i := 0; i < len(p.options.ResponseDSL); i++ {
+		if !userdata.Match {
+			m, _ := util.HTTPResponseToMap(resp)
+			v, err := dsl.EvalExpr(p.options.ResponseDSL[i], m)
+			if err != nil {
+				gologger.Warning().Msgf("Could not evaluate response dsl: %s\n", err)
+			}
+			userdata.Match = err == nil && v.(bool)
 		}
-		userdata.Match = err == nil && v.(bool)
 	}
 
 	// perform match and replace
