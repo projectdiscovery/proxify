@@ -47,35 +47,22 @@ func NewRunner(options *Options) (*Runner, error) {
 	return &Runner{options: options, proxy: proxy}, nil
 }
 
+func (r *Runner) validateExpressions(expressionsGroups ...[]string) error {
+	for _, expressionsGroup := range expressionsGroups {
+		for _, expression := range expressionsGroup {
+			if _, err := govaluate.NewEvaluableExpressionWithFunctions(expression, dsl.DefaultHelperFunctions); err != nil {
+				printDslCompileError(err)
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // Run polling and notification
 func (r *Runner) Run() error {
-	for i := 0; i < len(r.options.RequestDSL); i++ {
-		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.RequestDSL[i], dsl.DefaultHelperFunctions)
-		if err != nil {
-			printDslCompileError(err)
-			return err
-		}
-	}
-	for i := 0; i < len(r.options.ResponseDSL); i++ {
-		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.ResponseDSL[i], dsl.DefaultHelperFunctions)
-		if err != nil {
-			printDslCompileError(err)
-			return err
-		}
-	}
-	for i := 0; i < len(r.options.RequestMatchReplaceDSL); i++ {
-		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.RequestMatchReplaceDSL[i], dsl.DefaultHelperFunctions)
-		if err != nil {
-			printDslCompileError(err)
-			return err
-		}
-	}
-	for i := 0; i < len(r.options.ResponseMatchReplaceDSL); i++ {
-		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.ResponseMatchReplaceDSL[i], dsl.DefaultHelperFunctions)
-		if err != nil {
-			printDslCompileError(err)
-			return err
-		}
+	if err := r.validateExpressions(r.options.RequestDSL, r.options.ResponseDSL, r.options.RequestMatchReplaceDSL, r.options.ResponseMatchReplaceDSL); err != nil {
+		return err
 	}
 
 	// configuration summary

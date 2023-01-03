@@ -222,10 +222,10 @@ func (p *SocketConn) pipe(src, dst io.ReadWriter) {
 		// Client => Proxy => Destination
 		if islocal {
 			// DSL
-			for i := 0; i < len(p.RequestMatchReplaceDSL); i++ {
+			for _, expr := range p.RequestMatchReplaceDSL {
 				args := make(map[string]interface{})
 				args["data"] = b
-				newB, err := dsl.EvalExpr(p.RequestMatchReplaceDSL[i], args)
+				newB, err := dsl.EvalExpr(expr, args)
 				// In case of error use the original value
 				if err != nil {
 					log.Printf("%s\n", err)
@@ -241,10 +241,10 @@ func (p *SocketConn) pipe(src, dst io.ReadWriter) {
 			}
 		} else { // Destination => Proxy => Client
 			// DSL
-			for i := 0; i < len(p.ResponseMatchReplaceDSL); i++ {
+			for _, expr := range p.ResponseMatchReplaceDSL {
 				args := make(map[string]interface{})
 				args["data"] = b
-				newB, err := dsl.EvalExpr(p.ResponseMatchReplaceDSL[i], args)
+				newB, err := dsl.EvalExpr(expr, args)
 				// In case of error use the original value
 				if err != nil {
 					log.Printf("%s\n", err)

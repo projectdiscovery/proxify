@@ -91,10 +91,10 @@ func (p *Proxy) OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Reque
 	}
 
 	// check dsl
-	for i := 0; i < len(p.options.RequestDSL); i++ {
+	for _, expr := range p.options.RequestDSL {
 		if !userdata.Match {
 			m, _ := util.HTTPRequesToMap(req)
-			v, err := dsl.EvalExpr(p.options.RequestDSL[i], m)
+			v, err := dsl.EvalExpr(expr, m)
 			if err != nil {
 				gologger.Warning().Msgf("Could not evaluate request dsl: %s\n", err)
 			}
@@ -119,10 +119,10 @@ func (p *Proxy) OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Reque
 func (p *Proxy) OnResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
 	userdata := ctx.UserData.(types.UserData)
 	userdata.HasResponse = true
-	for i := 0; i < len(p.options.ResponseDSL); i++ {
+	for _, expr := range p.options.ResponseDSL {
 		if !userdata.Match {
 			m, _ := util.HTTPResponseToMap(resp)
-			v, err := dsl.EvalExpr(p.options.ResponseDSL[i], m)
+			v, err := dsl.EvalExpr(expr, m)
 			if err != nil {
 				gologger.Warning().Msgf("Could not evaluate response dsl: %s\n", err)
 			}
@@ -161,8 +161,8 @@ func (p *Proxy) MatchReplaceRequest(req *http.Request) error {
 	// lazy mode - ninja level - elaborate
 	m := make(map[string]interface{})
 	m["request"] = string(reqdump)
-	for i := 0; i < len(p.options.RequestMatchReplaceDSL); i++ {
-		v, err := dsl.EvalExpr(string(p.options.RequestMatchReplaceDSL[i]), m)
+	for _, expr := range p.options.RequestMatchReplaceDSL {
+		v, err := dsl.EvalExpr(expr, m)
 		if err != nil {
 			return err
 		}
@@ -201,8 +201,8 @@ func (p *Proxy) MatchReplaceResponse(resp *http.Response) error {
 	// lazy mode - ninja level - elaborate
 	m := make(map[string]interface{})
 	m["response"] = string(respdump)
-	for i := 0; i < len(p.options.ResponseMatchReplaceDSL); i++ {
-		v, err := dsl.EvalExpr(string(p.options.ResponseMatchReplaceDSL[i]), m)
+	for _, expr := range p.options.ResponseMatchReplaceDSL {
+		v, err := dsl.EvalExpr(expr, m)
 
 		if err != nil {
 			return err
