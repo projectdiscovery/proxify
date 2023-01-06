@@ -110,8 +110,8 @@ func main() {
 	}
 	proxyOpts.Protocol = options.Protocol
 	proxyOpts.HTTPProxy = options.HTTPProxy
-	proxyOpts.RequestMatchReplaceDSL = options.RequestMatchReplaceDSL
-	proxyOpts.ResponseMatchReplaceDSL = options.ResponseMatchReplaceDSL
+	proxyOpts.RequestMatchReplaceDSL = []string{options.RequestMatchReplaceDSL}
+	proxyOpts.ResponseMatchReplaceDSL = []string{options.ResponseMatchReplaceDSL}
 
 	if options.Timeout >= 0 {
 		proxyOpts.Timeout = time.Duration(options.Timeout) * time.Second

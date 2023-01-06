@@ -48,15 +48,15 @@ type Options struct {
 	ListenAddrHTTP              string
 	ListenAddrSocks5            string
 	OutputDirectory             string
-	RequestDSL                  string
-	ResponseDSL                 string
+	RequestDSL                  []string
+	ResponseDSL                 []string
 	UpstreamHTTPProxies         []string
 	UpstreamSock5Proxies        []string
 	ListenDNSAddr               string
 	DNSMapping                  string
 	DNSFallbackResolver         string
-	RequestMatchReplaceDSL      string
-	ResponseMatchReplaceDSL     string
+	RequestMatchReplaceDSL      []string
+	ResponseMatchReplaceDSL     []string
 	OnConnectHTTPCallback       OnConnectFunc
 	OnConnectHTTPSCallback      OnConnectFunc
 	OnRequestCallback           OnRequestFunc
@@ -91,20 +91,22 @@ func (p *Proxy) OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Reque
 	}
 
 	// check dsl
-	if p.options.RequestDSL != "" {
-		m, _ := util.HTTPRequesToMap(req)
-		v, err := dsl.EvalExpr(p.options.RequestDSL, m)
-		if err != nil {
-			gologger.Warning().Msgf("Could not evaluate request dsl: %s\n", err)
+	for _, expr := range p.options.RequestDSL {
+		if !userdata.Match {
+			m, _ := util.HTTPRequesToMap(req)
+			v, err := dsl.EvalExpr(expr, m)
+			if err != nil {
+				gologger.Warning().Msgf("Could not evaluate request dsl: %s\n", err)
+			}
+			userdata.Match = err == nil && v.(bool)
 		}
-		userdata.Match = err == nil && v.(bool)
 	}
 
 	id := xid.New().String()
 	userdata.ID = id
 
 	// perform match and replace
-	if p.options.RequestMatchReplaceDSL != "" {
+	if len(p.options.RequestMatchReplaceDSL) != 0 {
 		_ = p.MatchReplaceRequest(req)
 	}
 
@@ -117,17 +119,19 @@ func (p *Proxy) OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Reque
 func (p *Proxy) OnResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
 	userdata := ctx.UserData.(types.UserData)
 	userdata.HasResponse = true
-	if p.options.ResponseDSL != "" && !userdata.Match {
-		m, _ := util.HTTPResponseToMap(resp)
-		v, err := dsl.EvalExpr(p.options.ResponseDSL, m)
-		if err != nil {
-			gologger.Warning().Msgf("Could not evaluate response dsl: %s\n", err)
+	for _, expr := range p.options.ResponseDSL {
+		if !userdata.Match {
+			m, _ := util.HTTPResponseToMap(resp)
+			v, err := dsl.EvalExpr(expr, m)
+			if err != nil {
+				gologger.Warning().Msgf("Could not evaluate response dsl: %s\n", err)
+			}
+			userdata.Match = err == nil && v.(bool)
 		}
-		userdata.Match = err == nil && v.(bool)
 	}
 
 	// perform match and replace
-	if p.options.ResponseMatchReplaceDSL != "" {
+	if len(p.options.ResponseMatchReplaceDSL) != 0 {
 		_ = p.MatchReplaceResponse(resp)
 	}
 
@@ -157,26 +161,30 @@ func (p *Proxy) MatchReplaceRequest(req *http.Request) error {
 	// lazy mode - ninja level - elaborate
 	m := make(map[string]interface{})
 	m["request"] = string(reqdump)
-	if v, err := dsl.EvalExpr(p.options.RequestMatchReplaceDSL, m); err != nil {
-		return err
-	} else {
-		reqbuffer := fmt.Sprint(v)
-		// lazy mode - epic level - rebuild
-		bf := bufio.NewReader(strings.NewReader(reqbuffer))
-		requestNew, err := http.ReadRequest(bf)
+	for _, expr := range p.options.RequestMatchReplaceDSL {
+		v, err := dsl.EvalExpr(expr, m)
 		if err != nil {
 			return err
 		}
-		// closes old body to allow memory reuse
-		req.Body.Close()
-
-		// override original properties
-		req.Method = requestNew.Method
-		req.Header = requestNew.Header
-		req.Body = requestNew.Body
-		req.URL = requestNew.URL
-		return nil
+		m["request"] = fmt.Sprint(v)
 	}
+
+	reqbuffer := fmt.Sprint(m["request"])
+	// lazy mode - epic level - rebuild
+	bf := bufio.NewReader(strings.NewReader(reqbuffer))
+	requestNew, err := http.ReadRequest(bf)
+	if err != nil {
+		return err
+	}
+	// closes old body to allow memory reuse
+	req.Body.Close()
+
+	// override original properties
+	req.Method = requestNew.Method
+	req.Header = requestNew.Header
+	req.Body = requestNew.Body
+	req.URL = requestNew.URL
+	return nil
 }
 
 // MatchReplaceRequest strings or regex
@@ -193,24 +201,29 @@ func (p *Proxy) MatchReplaceResponse(resp *http.Response) error {
 	// lazy mode - ninja level - elaborate
 	m := make(map[string]interface{})
 	m["response"] = string(respdump)
-	if v, err := dsl.EvalExpr(p.options.ResponseMatchReplaceDSL, m); err != nil {
-		return err
-	} else {
-		respbuffer := fmt.Sprint(v)
-		// lazy mode - epic level - rebuild
-		bf := bufio.NewReader(strings.NewReader(respbuffer))
-		responseNew, err := http.ReadResponse(bf, nil)
+	for _, expr := range p.options.ResponseMatchReplaceDSL {
+		v, err := dsl.EvalExpr(expr, m)
+
 		if err != nil {
 			return err
 		}
-
-		// closes old body to allow memory reuse
-		resp.Body.Close()
-		resp.Header = responseNew.Header
-		resp.Body = responseNew.Body
-		resp.ContentLength = responseNew.ContentLength
-		return nil
+		m["response"] = fmt.Sprint(v)
 	}
+
+	respbuffer := fmt.Sprint(m["response"])
+	// lazy mode - epic level - rebuild
+	bf := bufio.NewReader(strings.NewReader(respbuffer))
+	responseNew, err := http.ReadResponse(bf, nil)
+	if err != nil {
+		return err
+	}
+
+	// closes old body to allow memory reuse
+	resp.Body.Close()
+	resp.Header = responseNew.Header
+	resp.Body = responseNew.Body
+	resp.ContentLength = responseNew.ContentLength
+	return nil
 }
 
 func (p *Proxy) Run() error {
