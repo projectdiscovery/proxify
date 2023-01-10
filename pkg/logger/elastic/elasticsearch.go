@@ -91,7 +91,16 @@ func (c *Client) Save(data types.OutputData) error {
 		Body:       bytes.NewReader(body),
 	}
 	res, err := updateRequest.Do(context.Background(), c.esClient)
+	
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			println(err)
+		}
+	}(res.Body)
 
+	io.Copy(ioutil.Discard, res.Body)
+	
 	if err != nil {
 		return errors.New("error thrown by elasticsearch: " + err.Error())
 	}
