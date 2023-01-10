@@ -6,6 +6,8 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"net/http"
+	"io"
+	"io/ioutil"
 	"time"
 
 	elasticsearch "github.com/elastic/go-elasticsearch/v7"
