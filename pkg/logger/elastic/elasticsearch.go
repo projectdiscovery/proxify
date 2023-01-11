@@ -5,9 +5,8 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
-	"net/http"
 	"io"
-	"io/ioutil"
+	"net/http"
 	"time"
 
 	elasticsearch "github.com/elastic/go-elasticsearch/v7"
@@ -93,21 +92,14 @@ func (c *Client) Save(data types.OutputData) error {
 		Body:       bytes.NewReader(body),
 	}
 	res, err := updateRequest.Do(context.Background(), c.esClient)
-	
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			println(err)
-		}
-	}(res.Body)
-
-	io.Copy(ioutil.Discard, res.Body)
-	
-	if err != nil {
+	if err != nil || res == nil {
 		return errors.New("error thrown by elasticsearch: " + err.Error())
 	}
 	if res.StatusCode >= 300 {
 		return errors.New("elasticsearch responded with an error: " + string(res.String()))
 	}
-	return nil
+	// Drain response to reuse connection
+	_, er := io.Copy(io.Discard, res.Body)
+	res.Body.Close()
+	return er
 }
