@@ -419,8 +419,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/projectdiscovery/dsl v0.0.3 h1:oWlZZaSADqoyfJdUHWqAzpB65NpvLukZQGFv1uTtU3g=
 github.com/projectdiscovery/dsl v0.0.3/go.mod h1:ST66slxtp7fsFqTOq3k6+1TDV7RH1Moz3sPBqUGn4Fg=
-github.com/projectdiscovery/fastdialer v0.0.21 h1:KMUNcGtncvgaChm+YkcTzuQEId3OBAVOviwHofNZCXU=
-github.com/projectdiscovery/fastdialer v0.0.21/go.mod h1:RqBOi1z+HlU+U+6Tqqh/SNFNl3/ue0sVmVlWiLA8gN0=
+github.com/projectdiscovery/fastdialer v0.0.22 h1:uiTgIfGcZAGrPzmCI8kZJtaJRWdiB6uUz5iTbUBNu4w=
+github.com/projectdiscovery/fastdialer v0.0.22/go.mod h1:voh0atf8ulFu99jRVCXIpEwgClD2aHBT6R3RH6zojmU=
 github.com/projectdiscovery/goflags v0.1.6 h1:EXigzX4lJmn/fLMnULdc03O7WW+DjiYZhNgdGvfg+Z4=
 github.com/projectdiscovery/goflags v0.1.6/go.mod h1:yILgA7gbrHuTpIvMfikbivzoxkyxBD1Y5/PRHiGTIFk=
 github.com/projectdiscovery/gologger v1.1.7 h1:QeByO4NR8vlZ5ZM2XIOJARRj5WOOU5Ix35FBQ1iH5Rk=
@@ -431,10 +431,10 @@ github.com/projectdiscovery/iputil v0.0.2 h1:f6IGnZF4RImJLysPSPG3D84jyTH34q3lihC
 github.com/projectdiscovery/iputil v0.0.2/go.mod h1:J3Pcz1q51pi4/JL871mQztg0KOzyWDPxnPLOYJm2pVQ=
 github.com/projectdiscovery/networkpolicy v0.0.3 h1:OZFPkMVY6SJxc1ncuRXB2VlT6xlzJl5eWDkvpWn/GMM=
 github.com/projectdiscovery/networkpolicy v0.0.3/go.mod h1:DIXwKs3sQyfCoWHKRLQiRrEorSQW4Zrh4ftu7oDVK6w=
-github.com/projectdiscovery/retryabledns v1.0.19 h1:FJZtfchquXJNMkTgDyVtIRiw0PtD0obSUfE7f9GtpR8=
-github.com/projectdiscovery/retryabledns v1.0.19/go.mod h1:YcJDUCz8vXaUGl6Agm3bFZezQZe7zVlm1JoKY5ZQODg=
-github.com/projectdiscovery/retryablehttp-go v1.0.7 h1:4Nd87QN+3yUMxYwQQgG/v+BLQt1fYqXu9PjEoar8LGs=
-github.com/projectdiscovery/retryablehttp-go v1.0.7/go.mod h1:ODXs70i/PgqfqFvycLfQG6QCqWqZMLoX8X68wu6Bg8M=
+github.com/projectdiscovery/retryabledns v1.0.20 h1:grRyh4EzuyqsaK07iNkJKgrGLu/qDJwfDJ+83SBo6yo=
+github.com/projectdiscovery/retryabledns v1.0.20/go.mod h1:97Et22Kw2iPyvz/Vn41/i3dSbhLMHfeWP/S7EaLgmtg=
+github.com/projectdiscovery/retryablehttp-go v1.0.8 h1:F4UZ+3NkIPDj+tobHZY+sgvDVmiVCX/CUUh/jrKq7Oc=
+github.com/projectdiscovery/retryablehttp-go v1.0.8/go.mod h1:tD5TNOXKNuvqrUHHGoP6xJmVZTjSkLGsqcyD7gCsc3I=
 github.com/projectdiscovery/stringsutil v0.0.2 h1:uzmw3IVLJSMW1kEg8eCStG/cGbYYZAja8BH3LqqJXMA=
 github.com/projectdiscovery/stringsutil v0.0.2/go.mod h1:EJ3w6bC5fBYjVou6ryzodQq37D5c6qbAYQpGmAy+DC0=
 github.com/projectdiscovery/tinydns v0.0.1 h1:Ls5TAlMJoCfEObpsC7S+Hg4WLyF5wiN+O1xNgEIjnEc=
