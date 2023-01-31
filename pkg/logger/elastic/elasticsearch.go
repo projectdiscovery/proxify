@@ -29,11 +29,14 @@ type Options struct {
 	Password string `yaml:"password"`
 	// IndexName is the name of the elasticsearch index
 	IndexName string `yaml:"index-name"`
+	// MaxFieldSize sets a maximum limit to the field length
+	MaxFieldSize int `yaml:"max-field-size"`
 }
 
 // Client type for elasticsearch
 type Client struct {
 	index    string
+	options  *Options
 	esClient *elasticsearch.Client
 }
 
@@ -57,10 +60,12 @@ func New(option *Options) (*Client, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "error creating elasticsearch client")
 	}
-	return &Client{
+	client := &Client{
 		esClient: elasticsearchClient,
 		index:    option.IndexName,
-	}, nil
+		options:  option,
+	}
+	return client, nil
 
 }
 
@@ -69,12 +74,12 @@ func (c *Client) Save(data types.OutputData) error {
 	var doc map[string]interface{}
 	if data.Userdata.HasResponse {
 		doc = map[string]interface{}{
-			"response":  data.DataString,
+			"response":  truncate(data.DataString, c.options.MaxFieldSize),
 			"timestamp": time.Now().Format(time.RFC3339),
 		}
 	} else {
 		doc = map[string]interface{}{
-			"request":   data.DataString,
+			"request":   truncate(data.DataString, c.options.MaxFieldSize),
 			"timestamp": time.Now().Format(time.RFC3339),
 		}
 	}
@@ -102,4 +107,11 @@ func (c *Client) Save(data types.OutputData) error {
 	_, er := io.Copy(io.Discard, res.Body)
 	res.Body.Close()
 	return er
+}
+
+func truncate(data string, maxSize int) string {
+	if maxSize > 0 && len(data) > maxSize {
+		return data[:maxSize]
+	}
+	return data
 }

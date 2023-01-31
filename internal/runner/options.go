@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"math"
 	"os"
 	"path"
 
@@ -87,6 +88,7 @@ func ParseOptions() *Options {
 		flagSet.BoolVar(&options.Elastic.SSLVerification, "elastic-ssl-verification", false, "enable elasticsearch ssl verification"),
 		flagSet.StringVar(&options.Elastic.Username, "elastic-username", "", "elasticsearch username"),
 		flagSet.StringVar(&options.Elastic.Password, "elastic-password", "", "elasticsearch password"),
+		flagSet.IntVar(&options.Elastic.MaxFieldSize, "elastic-max-field-size", math.MaxInt, "elasticsearch max field size"),
 		flagSet.StringVar(&options.Elastic.IndexName, "elastic-index", "proxify", "elasticsearch index name"),
 		flagSet.StringVar(&options.Kafka.Addr, "kafka-address", "", "address of kafka broker (ip:port)"),
 		flagSet.StringVar(&options.Kafka.Topic, "kafka-topic", "proxify", "kafka topic to publish messages on"),
