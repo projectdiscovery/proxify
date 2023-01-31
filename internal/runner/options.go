@@ -53,21 +53,21 @@ func ParseOptions() *Options {
 	flagSet := goflags.NewFlagSet()
 	flagSet.SetDescription(`Swiss Army Knife Proxy for rapid deployments. Supports multiple operations such as request/response dump,filtering and manipulation via DSL language, upstream HTTP/Socks5 proxy`)
 
-	createGroup(flagSet, "output", "Output",
+	flagSet.CreateGroup("output", "Output",
 		// Todo:	flagSet.BoolVar(&options.Dump, "dump", true, "Dump HTTP requests/response to output file"),
 		flagSet.StringVarP(&options.OutputDirectory, "output", "o", "logs", "Output Directory to store HTTP proxy logs"),
 		flagSet.BoolVar(&options.DumpRequest, "dump-req", false, "Dump only HTTP requests to output file"),
 		flagSet.BoolVar(&options.DumpResponse, "dump-resp", false, "Dump only HTTP responses to output file"),
 	)
 
-	createGroup(flagSet, "filter", "Filter",
+	flagSet.CreateGroup("filter", "Filter",
 		flagSet.StringSliceVarP(&options.RequestDSL, "request-dsl", "req-fd", nil, "Request Filter DSL", goflags.StringSliceOptions),
 		flagSet.StringSliceVarP(&options.ResponseDSL, "response-dsl", "resp-fd", nil, "Response Filter DSL", goflags.StringSliceOptions),
 		flagSet.StringSliceVarP(&options.RequestMatchReplaceDSL, "request-match-replace-dsl", "req-mrd", nil, "Request Match-Replace DSL", goflags.StringSliceOptions),
 		flagSet.StringSliceVarP(&options.ResponseMatchReplaceDSL, "response-match-replace-dsl", "resp-mrd", nil, "Response Match-Replace DSL", goflags.StringSliceOptions),
 	)
 
-	createGroup(flagSet, "network", "Network",
+	flagSet.CreateGroup("network", "Network",
 		flagSet.StringVarP(&options.ListenAddrHTTP, "http-addr", "ha", "127.0.0.1:8888", "Listening HTTP IP and Port address (ip:port)"),
 		flagSet.StringVarP(&options.ListenAddrSocks5, "socks-addr", "sa", "127.0.0.1:10080", "Listening SOCKS IP and Port address (ip:port)"),
 		flagSet.StringVarP(&options.ListenDNSAddr, "dns-addr", "da", "", "Listening DNS IP and Port address (ip:port)"),
@@ -75,13 +75,13 @@ func ParseOptions() *Options {
 		flagSet.StringVarP(&options.DNSFallbackResolver, "resolver", "r", "", "Custom DNS resolvers to use (ip:port)"),
 	)
 
-	createGroup(flagSet, "proxy", "Proxy",
+	flagSet.CreateGroup("proxy", "Proxy",
 		flagSet.StringSliceVarP(&options.UpstreamHTTPProxies, "http-proxy", "hp", nil, "Upstream HTTP Proxies (eg http://proxy-ip:proxy-port)", goflags.NormalizedStringSliceOptions),
 		flagSet.StringSliceVarP(&options.UpstreamSocks5Proxies, "socks5-proxy", "sp", nil, "Upstream SOCKS5 Proxies (eg socks5://proxy-ip:proxy-port)", goflags.NormalizedStringSliceOptions),
 		flagSet.IntVar(&options.UpstreamProxyRequestsNumber, "c", 1, "Number of requests before switching to the next upstream proxy"),
 	)
 
-	createGroup(flagSet, "export", "Export",
+	flagSet.CreateGroup("export", "Export",
 		flagSet.StringVar(&options.Elastic.Addr, "elastic-address", "", "elasticsearch address (ip:port)"),
 		flagSet.BoolVar(&options.Elastic.SSL, "elastic-ssl", false, "enable elasticsearch ssl"),
 		flagSet.BoolVar(&options.Elastic.SSLVerification, "elastic-ssl-verification", false, "enable elasticsearch ssl verification"),
@@ -92,7 +92,7 @@ func ParseOptions() *Options {
 		flagSet.StringVar(&options.Kafka.Topic, "kafka-topic", "proxify", "kafka topic to publish messages on"),
 	)
 
-	createGroup(flagSet, "configuration", "Configuration",
+	flagSet.CreateGroup("configuration", "Configuration",
 		// Todo: default config file support (homeDir/.config/proxify/config.yaml)
 		flagSet.StringVar(&options.Directory, "config", path.Join(homeDir, ".config", "proxify"), "Directory for storing program information"),
 		flagSet.IntVar(&options.CertCacheSize, "cert-cache-size", 256, "Number of certificates to cache"),
@@ -101,7 +101,7 @@ func ParseOptions() *Options {
 	)
 
 	silent, verbose, veryVerbose := false, false, false
-	createGroup(flagSet, "debug", "debug",
+	flagSet.CreateGroup("debug", "debug",
 		flagSet.BoolVarP(&options.NoColor, "no-color", "nc", true, "No Color"),
 		flagSet.BoolVar(&options.Version, "version", false, "Version"),
 		flagSet.BoolVar(&silent, "silent", false, "Silent"),
@@ -152,12 +152,5 @@ func (options *Options) configureOutput() {
 	}
 	if options.NoColor {
 		gologger.DefaultLogger.SetFormatter(formatter.NewCLI(true))
-	}
-}
-
-func createGroup(flagSet *goflags.FlagSet, groupName, description string, flags ...*goflags.FlagData) {
-	flagSet.SetGroup(groupName, description)
-	for _, currentFlag := range flags {
-		currentFlag.Group(groupName)
 	}
 }
