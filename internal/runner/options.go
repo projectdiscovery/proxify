@@ -3,7 +3,7 @@ package runner
 import (
 	"math"
 	"os"
-	"path"
+	"path/filepath"
 
 	"github.com/projectdiscovery/goflags"
 	"github.com/projectdiscovery/gologger"
@@ -96,7 +96,7 @@ func ParseOptions() *Options {
 
 	flagSet.CreateGroup("configuration", "Configuration",
 		// Todo: default config file support (homeDir/.config/proxify/config.yaml)
-		flagSet.StringVar(&options.Directory, "config", path.Join(homeDir, ".config", "proxify"), "Directory for storing program information"),
+		flagSet.StringVar(&options.Directory, "config", filepath.Join(homeDir, ".config", "proxify"), "Directory for storing program information"),
 		flagSet.IntVar(&options.CertCacheSize, "cert-cache-size", 256, "Number of certificates to cache"),
 		flagSet.StringSliceVarP(&options.Allow, "allow", "a", nil, "Allowed list of IP/CIDR's to be proxied", goflags.FileNormalizedStringSliceOptions),
 		flagSet.StringSliceVarP(&options.Deny, "deny", "d", nil, "Denied list of IP/CIDR's to be proxied", goflags.FileNormalizedStringSliceOptions),
