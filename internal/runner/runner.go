@@ -40,6 +40,7 @@ func NewRunner(options *Options) (*Runner, error) {
 		Kafka:                       &options.Kafka,
 		Allow:                       options.Allow,
 		Deny:                        options.Deny,
+		PassThrough:                 options.PassThrough,
 	})
 	if err != nil {
 		return nil, err
