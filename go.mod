@@ -14,13 +14,13 @@ require (
 	github.com/haxii/fastproxy v0.5.37
 	github.com/pkg/errors v0.9.1
 	github.com/projectdiscovery/dsl v0.0.3
-	github.com/projectdiscovery/fastdialer v0.0.22
+	github.com/projectdiscovery/fastdialer v0.0.23
 	github.com/projectdiscovery/goflags v0.1.6
-	github.com/projectdiscovery/gologger v1.1.7
+	github.com/projectdiscovery/gologger v1.1.8
 	github.com/projectdiscovery/tinydns v0.0.1
 	github.com/projectdiscovery/utils v0.0.4-0.20221214110533-9f95ee986a54
 	github.com/rs/xid v1.4.0
-	golang.org/x/net v0.5.0
+	golang.org/x/net v0.6.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -106,8 +106,8 @@ require (
 	golang.org/x/crypto v0.3.0 // indirect
 	golang.org/x/exp v0.0.0-20221114191408-850992195362 // indirect
 	golang.org/x/mod v0.7.0 // indirect
-	golang.org/x/sys v0.4.0 // indirect
-	golang.org/x/text v0.6.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/tools v0.3.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
