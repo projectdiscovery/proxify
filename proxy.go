@@ -31,7 +31,6 @@ import (
 	"github.com/projectdiscovery/proxify/pkg/types"
 	"github.com/projectdiscovery/proxify/pkg/util"
 	"github.com/projectdiscovery/tinydns"
-	sliceutil "github.com/projectdiscovery/utils/slice"
 	"github.com/rs/xid"
 	"golang.org/x/net/proxy"
 )
@@ -143,7 +142,7 @@ func (p *Proxy) OnResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Res
 }
 
 func (p *Proxy) OnConnectHTTP(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
-	if sliceutil.Contains(p.options.PassThrough, host) {
+	if util.MatchAnyRegex(p.options.PassThrough, host) {
 		return goproxy.OkConnect, host
 	}
 	ctx.UserData = types.UserData{Host: host}
@@ -151,7 +150,7 @@ func (p *Proxy) OnConnectHTTP(host string, ctx *goproxy.ProxyCtx) (*goproxy.Conn
 }
 
 func (p *Proxy) OnConnectHTTPS(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
-	if sliceutil.Contains(p.options.PassThrough, host) {
+	if util.MatchAnyRegex(p.options.PassThrough, host) {
 		return goproxy.OkConnect, host
 	}
 	ctx.UserData = types.UserData{Host: host}
