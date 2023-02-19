@@ -72,10 +72,10 @@ OUTPUT:
    -dump-resp          Dump only HTTP responses to output file
 
 FILTER:
-   -req-fd, -request-dsl string                   Request Filter DSL
-   -resp-fd, -response-dsl string                 Response Filter DSL
-   -req-mrd, -request-match-replace-dsl string    Request Match-Replace DSL
-   -resp-mrd, -response-match-replace-dsl string  Response Match-Replace DSL
+   -req-fd, -request-dsl string[]                   Request Filter DSL
+   -resp-fd, -response-dsl string[]                 Response Filter DSL
+   -req-mrd, -request-match-replace-dsl string[]    Request Match-Replace DSL
+   -resp-mrd, -response-match-replace-dsl string[]  Response Match-Replace DSL
 
 NETWORK:
    -ha, -http-addr string    Listening HTTP IP and Port address (ip:port) (default "127.0.0.1:8888")
@@ -85,32 +85,33 @@ NETWORK:
    -r, -resolver string      Custom DNS resolvers to use (ip:port)
 
 PROXY:
-   -hp, -http-proxy string    Upstream HTTP Proxies (eg http://proxy-ip:proxy-port
-   -sp, -socks5-proxy string  Upstream SOCKS5 Proxies (eg socks5://proxy-ip:proxy-port)
-   -c int                     Number of requests before switching to the next upstream proxy (default 1)
+   -hp, -http-proxy string[]    Upstream HTTP Proxies (eg http://proxy-ip:proxy-port)
+   -sp, -socks5-proxy string[]  Upstream SOCKS5 Proxies (eg socks5://proxy-ip:proxy-port)
+   -c int                       Number of requests before switching to the next upstream proxy (default 1)
 
 EXPORT:
-   -elastic-address string    elasticsearch address (ip:port)
-   -elastic-ssl               enable elasticsearch ssl
-   -elastic-ssl-verification  enable elasticsearch ssl verification
-   -elastic-username string   elasticsearch username
-   -elastic-password string   elasticsearch password
-   -elastic-index string      elasticsearch index name (default "proxify")
-   -kafka-address string      address of kafka broker (ip:port)
-   -kafka-topic string        kafka topic to publish messages on (default "proxify")
+   -elastic-address string      elasticsearch address (ip:port)
+   -elastic-ssl                 enable elasticsearch ssl
+   -elastic-ssl-verification    enable elasticsearch ssl verification
+   -elastic-username string     elasticsearch username
+   -elastic-password string     elasticsearch password
+   -elastic-max-field-size int  elasticsearch max field size (default 9223372036854775807)
+   -elastic-index string        elasticsearch index name (default "proxify")
+   -kafka-address string        address of kafka broker (ip:port)
+   -kafka-topic string          kafka topic to publish messages on (default "proxify")
 
 CONFIGURATION:
-   -config string        Directory for storing program information (default "/Users/geekboy/.config/proxify")
+   -config string        Directory for storing program information (default "$HOME/.config/proxify")
    -cert-cache-size int  Number of certificates to cache (default 256)
-   -allow string         Allowed list of IP/CIDR's to be proxied
-   -deny string          Denied list of IP/CIDR's to be proxied
+   -a, -allow string[]   Allowed list of IP/CIDR's to be proxied
+   -d, -deny string[]    Denied list of IP/CIDR's to be proxied
 
 DEBUG:
-   -nc, -no-color       No Color (default true)
-   -version             Version
-   -silent              Silent
-   -v, -verbose         Verbose
-   -vv, -very-verbose   Very Verbose
+   -nc, -no-color      No Color (default true)
+   -version            Version
+   -silent             Silent
+   -v, -verbose        Verbose
+   -vv, -very-verbose  Very Verbose
 ```
 
 ### Running Proxify
