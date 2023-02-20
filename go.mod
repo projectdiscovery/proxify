@@ -14,11 +14,11 @@ require (
 	github.com/haxii/fastproxy v0.5.37
 	github.com/pkg/errors v0.9.1
 	github.com/projectdiscovery/dsl v0.0.3
-	github.com/projectdiscovery/fastdialer v0.0.23
+	github.com/projectdiscovery/fastdialer v0.0.24
 	github.com/projectdiscovery/goflags v0.1.6
 	github.com/projectdiscovery/gologger v1.1.8
 	github.com/projectdiscovery/tinydns v0.0.1
-	github.com/projectdiscovery/utils v0.0.4-0.20221214110533-9f95ee986a54
+	github.com/projectdiscovery/utils v0.0.4-0.20230117135930-7371ae6a739d
 	github.com/rs/xid v1.4.0
 	golang.org/x/net v0.6.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -72,9 +72,9 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.17 // indirect
 	github.com/projectdiscovery/hmap v0.0.3 // indirect
 	github.com/projectdiscovery/iputil v0.0.2 // indirect
-	github.com/projectdiscovery/networkpolicy v0.0.3 // indirect
-	github.com/projectdiscovery/retryabledns v1.0.20 // indirect
-	github.com/projectdiscovery/retryablehttp-go v1.0.8 // indirect
+	github.com/projectdiscovery/networkpolicy v0.0.4 // indirect
+	github.com/projectdiscovery/retryabledns v1.0.21 // indirect
+	github.com/projectdiscovery/retryablehttp-go v1.0.10 // indirect
 	github.com/projectdiscovery/stringsutil v0.0.2 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
