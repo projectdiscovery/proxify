@@ -105,7 +105,7 @@ func (m *Manager) TLSConfigFromCA() func(host string, ctx *goproxy.ProxyCtx) (*t
 			m.cache.Add(host, certificate)
 		}
 
-		return &tls.Config{InsecureSkipVerify: true, Certificates: []tls.Certificate{*value.(*tls.Certificate)}}, nil
+		return &tls.Config{InsecureSkipVerify: true, ServerName: hostname, Certificates: []tls.Certificate{*value.(*tls.Certificate)}}, nil
 	}
 }
 

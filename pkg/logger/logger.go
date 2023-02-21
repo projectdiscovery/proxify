@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"github.com/projectdiscovery/proxify/pkg/logger/elastic"
 	"github.com/projectdiscovery/proxify/pkg/logger/file"
 	"github.com/projectdiscovery/proxify/pkg/logger/kafka"
+	"github.com/projectdiscovery/utils/reader"
 	stringsutil "github.com/projectdiscovery/utils/strings"
 
 	"github.com/projectdiscovery/proxify/pkg/types"
@@ -124,6 +126,12 @@ func (l *Logger) AsyncWrite() {
 
 // LogRequest and user data
 func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
+	resued, err := reader.NewReusableReadCloser(req.Body)
+	if err != nil {
+		log.Printf("failed to create resuable reader")
+		return err
+	}
+	req.Body = resued
 	reqdump, err := httputil.DumpRequest(req, true)
 	if err != nil {
 		return err
@@ -152,11 +160,13 @@ func (l *Logger) LogResponse(resp *http.Response, userdata types.UserData) error
 	if resp == nil {
 		return nil
 	}
-	respdump, err := httputil.DumpResponse(resp, true)
+	resued, err := reader.NewReusableReadCloser(resp.Body)
 	if err != nil {
+		log.Printf("failed to create resuable reader")
 		return err
 	}
-	respdumpNoBody, err := httputil.DumpResponse(resp, false)
+	resp.Body = resued
+	respdump, err := httputil.DumpResponse(resp, true)
 	if err != nil {
 		return err
 	}
@@ -164,6 +174,10 @@ func (l *Logger) LogResponse(resp *http.Response, userdata types.UserData) error
 		l.asyncqueue <- types.OutputData{Data: respdump, Userdata: userdata}
 	}
 	if l.options.Verbosity >= types.VerbosityVeryVerbose {
+		respdumpNoBody, err := httputil.DumpResponse(resp, false)
+		if err != nil {
+			return err
+		}
 		contentType := resp.Header.Get("Content-Type")
 		bodyBytes := bytes.TrimPrefix(respdump, respdumpNoBody)
 		if isASCIICheckRequired(contentType) && !govalidator.IsPrintableASCII(string(bodyBytes)) {

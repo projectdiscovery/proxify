@@ -40,6 +40,8 @@ func NewRunner(options *Options) (*Runner, error) {
 		Kafka:                       &options.Kafka,
 		Allow:                       options.Allow,
 		Deny:                        options.Deny,
+		InScopeRegex:                options.InScope,
+		OutOfScopeRegex:             options.OutOfScope,
 	})
 	if err != nil {
 		return nil, err
@@ -64,6 +66,9 @@ func (r *Runner) Run() error {
 	if err := r.validateExpressions(r.options.RequestDSL, r.options.ResponseDSL, r.options.RequestMatchReplaceDSL, r.options.ResponseMatchReplaceDSL); err != nil {
 		return err
 	}
+
+	// setup regex
+	proxify.SetupRegex(r.options.InScope, r.options.OutOfScope)
 
 	// configuration summary
 	if r.options.ListenAddrHTTP != "" {

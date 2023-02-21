@@ -441,6 +441,8 @@ github.com/projectdiscovery/tinydns v0.0.1 h1:Ls5TAlMJoCfEObpsC7S+Hg4WLyF5wiN+O1
 github.com/projectdiscovery/tinydns v0.0.1/go.mod h1:xPZcaMje/MWozKc5Sdln3XWptINYoWqCBXgLeSrNB1Q=
 github.com/projectdiscovery/utils v0.0.4-0.20221214110533-9f95ee986a54 h1:/fZvw6gT1fzdmMLMBBw75OrJ0Z6g7dulQrxM9FRp1qU=
 github.com/projectdiscovery/utils v0.0.4-0.20221214110533-9f95ee986a54/go.mod h1:PCwA5YuCYWPgHaGiZmr53/SA9iGQmAnw7DSHuhr8VPQ=
+github.com/projectdiscovery/utils v0.0.9 h1:+bmjtRU1IWt5dKg9+9TbIaRkw/kN05myCXDOhCQRX7g=
+github.com/projectdiscovery/utils v0.0.9/go.mod h1:dZqlayNwgCGn2HgYfKrI71RjBEyKsEPovrU+UDfpQWw=
 github.com/prometheus/client_golang v0.9.1/go.mod h1:7SWBe2y4D6OKWSNQJUaRYU/AaXPKyh/dDVn+NZz0KFw=
 github.com/prometheus/client_golang v1.0.0/go.mod h1:db9x61etRT2tGnBNRi70OPL5FsnadC4Ky3P0J6CfImo=
 github.com/prometheus/client_golang v1.7.1/go.mod h1:PY5Wy2awLA44sXw4AOSfFBetzPP4j5+D6mVACh+pe2M=

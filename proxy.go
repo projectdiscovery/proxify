@@ -52,6 +52,8 @@ type Options struct {
 	ResponseDSL                 []string
 	UpstreamHTTPProxies         []string
 	UpstreamSock5Proxies        []string
+	InScopeRegex                []string
+	OutOfScopeRegex             []string
 	ListenDNSAddr               string
 	DNSMapping                  string
 	DNSFallbackResolver         string
@@ -90,6 +92,13 @@ func (p *Proxy) OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Reque
 		userdata.Host = req.URL.Host
 	}
 
+	// check scope
+	if !isIntercepted(req.URL.Host) {
+		ctx.UserData = userdata
+		return req, nil
+	}
+	// change status to intercept
+	userdata.Intercept = true
 	// check dsl
 	for _, expr := range p.options.RequestDSL {
 		if !userdata.Match {
@@ -118,6 +127,9 @@ func (p *Proxy) OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Reque
 
 func (p *Proxy) OnResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
 	userdata := ctx.UserData.(types.UserData)
+	if !userdata.Intercept {
+		return resp
+	}
 	userdata.HasResponse = true
 	for _, expr := range p.options.ResponseDSL {
 		if !userdata.Match {
@@ -282,6 +294,8 @@ func (p *Proxy) Run() error {
 		p.httpproxy.OnRequest().DoFunc(onRequest)
 		p.httpproxy.OnResponse().DoFunc(onResponse)
 
+		p.httpproxy.Tr.TLSClientConfig.InsecureSkipVerify = true
+
 		// Serve the certificate when the user makes requests to /proxify
 		p.httpproxy.OnRequest(goproxy.DstHostIs("proxify")).DoFunc(
 			func(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
@@ -306,7 +320,9 @@ func (p *Proxy) Run() error {
 				return r, resp
 			},
 		)
-		go http.ListenAndServe(p.options.ListenAddrHTTP, p.httpproxy) // nolint
+		go func() {
+			log.Fatal(http.ListenAndServe(p.options.ListenAddrHTTP, p.httpproxy))
+		}()
 	}
 
 	// socks5 proxy

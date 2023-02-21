@@ -39,6 +39,8 @@ type Options struct {
 	Allow                       goflags.StringSlice // Allow ip/cidr
 	Elastic                     elastic.Options
 	Kafka                       kafka.Options
+	InScope                     goflags.StringSlice // Inscope regex
+	OutOfScope                  goflags.StringSlice // OutofScope regex
 }
 
 func ParseOptions() *Options {
@@ -75,10 +77,15 @@ func ParseOptions() *Options {
 		flagSet.StringVarP(&options.DNSFallbackResolver, "resolver", "r", "", "Custom DNS resolvers to use (ip:port)"),
 	)
 
-	createGroup(flagSet, "proxy", "Proxy",
+	createGroup(flagSet, "upstream", "Upstream",
 		flagSet.StringSliceVarP(&options.UpstreamHTTPProxies, "http-proxy", "hp", nil, "Upstream HTTP Proxies (eg http://proxy-ip:proxy-port)", goflags.NormalizedStringSliceOptions),
 		flagSet.StringSliceVarP(&options.UpstreamSocks5Proxies, "socks5-proxy", "sp", nil, "Upstream SOCKS5 Proxies (eg socks5://proxy-ip:proxy-port)", goflags.NormalizedStringSliceOptions),
 		flagSet.IntVar(&options.UpstreamProxyRequestsNumber, "c", 1, "Number of requests before switching to the next upstream proxy"),
+	)
+
+	createGroup(flagSet, "proxy", "Proxy",
+		flagSet.StringSliceVarP(&options.InScope, "inscope", "is", []string{}, "Inscope Filter Regex", goflags.NormalizedStringSliceOptions),
+		flagSet.StringSliceVarP(&options.OutOfScope, "outofscope", "os", []string{}, "OutofScope Filter Regex", goflags.NormalizedStringSliceOptions),
 	)
 
 	createGroup(flagSet, "export", "Export",

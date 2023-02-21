@@ -5,6 +5,7 @@ type UserData struct {
 	Match       bool
 	HasResponse bool
 	Host        string
+	Intercept   bool
 }
 
 type OutputData struct {

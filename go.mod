@@ -18,7 +18,7 @@ require (
 	github.com/projectdiscovery/goflags v0.1.6
 	github.com/projectdiscovery/gologger v1.1.7
 	github.com/projectdiscovery/tinydns v0.0.1
-	github.com/projectdiscovery/utils v0.0.4-0.20221214110533-9f95ee986a54
+	github.com/projectdiscovery/utils v0.0.9
 	github.com/rs/xid v1.4.0
 	golang.org/x/net v0.6.0
 	gopkg.in/yaml.v3 v3.0.1
