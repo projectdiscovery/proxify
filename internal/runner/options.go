@@ -40,6 +40,7 @@ type Options struct {
 	Allow                       goflags.StringSlice // Allow ip/cidr
 	Elastic                     elastic.Options
 	Kafka                       kafka.Options
+	PassThrough                 goflags.StringSlice // Passthrough items list
 }
 
 func ParseOptions() *Options {
@@ -100,6 +101,7 @@ func ParseOptions() *Options {
 		flagSet.IntVar(&options.CertCacheSize, "cert-cache-size", 256, "Number of certificates to cache"),
 		flagSet.StringSliceVarP(&options.Allow, "allow", "a", nil, "Allowed list of IP/CIDR's to be proxied", goflags.FileNormalizedStringSliceOptions),
 		flagSet.StringSliceVarP(&options.Deny, "deny", "d", nil, "Denied list of IP/CIDR's to be proxied", goflags.FileNormalizedStringSliceOptions),
+		flagSet.StringSliceVarP(&options.PassThrough, "passthrough", "pt", nil, "List of passthrough domains", goflags.NormalizedStringSliceOptions),
 	)
 
 	silent, verbose, veryVerbose := false, false, false

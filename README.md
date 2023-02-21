@@ -101,10 +101,11 @@ EXPORT:
    -kafka-topic string          kafka topic to publish messages on (default "proxify")
 
 CONFIGURATION:
-   -config string        Directory for storing program information (default "$HOME/.config/proxify")
-   -cert-cache-size int  Number of certificates to cache (default 256)
-   -a, -allow string[]   Allowed list of IP/CIDR's to be proxied
-   -d, -deny string[]    Denied list of IP/CIDR's to be proxied
+   -config string              Directory for storing program information (default "$HOME/.config/proxify")
+   -cert-cache-size int        Number of certificates to cache (default 256)
+   -a, -allow string[]         Allowed list of IP/CIDR's to be proxied
+   -d, -deny string[]          Denied list of IP/CIDR's to be proxied
+   -pt, -passthrough string[]  List of passthrough domains
 
 DEBUG:
    -nc, -no-color      No Color (default true)
@@ -126,7 +127,17 @@ Runs an HTTP proxy on custom port **1111**:
 proxify -http-addr ":1111"
 ```
 
+### TLS pass through
+
+The -pt flag can be used pass through (skip) encrypted traffic without attempting to terminate the TLS connection.
+
+
+```bash
+proxify -pt '(.*\.)?google\.co.in.*'
+```
+
 ### Proxify with upstream proxy
+
 
 Runs an HTTP proxy on port 8888 and forward the traffic to burp on port **8080**:
 ```shell
