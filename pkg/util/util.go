@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httputil"
+	"regexp"
 	"strings"
 )
 
@@ -70,4 +71,14 @@ func HTTPResponseToMap(resp *http.Response) (map[string]interface{}, error) {
 	}
 
 	return m, nil
+}
+
+// MatchAnyRegex checks if data matches any pattern
+func MatchAnyRegex(regexes []string, data string) bool {
+	for _, regex := range regexes {
+		if ok, err := regexp.MatchString(regex, data); err == nil && ok {
+			return true
+		}
+	}
+	return false
 }

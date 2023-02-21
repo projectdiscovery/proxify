@@ -63,6 +63,7 @@ type Options struct {
 	OnResponseCallback          OnResponseFunc
 	Deny                        []string
 	Allow                       []string
+	PassThrough                 []string
 	UpstreamProxyRequestsNumber int
 	Elastic                     *elastic.Options
 	Kafka                       *kafka.Options
@@ -141,11 +142,17 @@ func (p *Proxy) OnResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Res
 }
 
 func (p *Proxy) OnConnectHTTP(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
+	if util.MatchAnyRegex(p.options.PassThrough, host) {
+		return goproxy.OkConnect, host
+	}
 	ctx.UserData = types.UserData{Host: host}
 	return goproxy.HTTPMitmConnect, host
 }
 
 func (p *Proxy) OnConnectHTTPS(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
+	if util.MatchAnyRegex(p.options.PassThrough, host) {
+		return goproxy.OkConnect, host
+	}
 	ctx.UserData = types.UserData{Host: host}
 	return goproxy.MitmConnect, host
 }
