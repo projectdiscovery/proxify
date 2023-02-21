@@ -4,12 +4,12 @@ go 1.18
 
 require (
 	github.com/Knetic/govaluate v3.0.0+incompatible
-	github.com/Mzack9999/roundrobin v0.0.0-20211108110706-e876335f5ad4
 	github.com/Shopify/sarama v1.38.1
 	github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/elastic/go-elasticsearch/v7 v7.17.7
 	github.com/elazarl/goproxy v0.0.0-20221015165544-a0805db90819
+	github.com/google/martian/v3 v3.3.2
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/haxii/fastproxy v0.5.37
 	github.com/pkg/errors v0.9.1
@@ -17,10 +17,10 @@ require (
 	github.com/projectdiscovery/fastdialer v0.0.23
 	github.com/projectdiscovery/goflags v0.1.6
 	github.com/projectdiscovery/gologger v1.1.8
+	github.com/projectdiscovery/roundrobin v0.0.6
 	github.com/projectdiscovery/tinydns v0.0.1
-	github.com/projectdiscovery/utils v0.0.4-0.20221214110533-9f95ee986a54
-	github.com/rs/xid v1.4.0
-	golang.org/x/net v0.6.0
+	github.com/projectdiscovery/utils v0.0.10
+	golang.org/x/net v0.7.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 

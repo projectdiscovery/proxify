@@ -3,7 +3,6 @@ package logger
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httputil"
 	"strings"
@@ -132,14 +131,14 @@ func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
 		l.asyncqueue <- types.OutputData{Data: reqdump, Userdata: userdata}
 	}
 
-	if l.options.Verbosity >= types.VerbosityVeryVerbose {
-		contentType := req.Header.Get("Content-Type")
-		b, _ := io.ReadAll(req.Body)
-		if isASCIICheckRequired(contentType) && !govalidator.IsPrintableASCII(string(b)) {
-			reqdump, _ = httputil.DumpRequest(req, false)
-		}
-		gologger.Silent().Msgf("%s", string(reqdump))
-	}
+	// if l.options.Verbosity >= types.VerbosityVeryVerbose {
+	// 	contentType := req.Header.Get("Content-Type")
+	// 	b, _ := io.ReadAll(req.Body)
+	// 	if isASCIICheckRequired(contentType) && !govalidator.IsPrintableASCII(string(b)) {
+	// 		reqdump, _ = httputil.DumpRequest(req, false)
+	// 	}
+	// 	gologger.Silent().Msgf("%s", string(reqdump))
+	// }
 	return nil
 }
 
