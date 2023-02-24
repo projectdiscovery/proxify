@@ -41,6 +41,7 @@ type Options struct {
 	Elastic                     elastic.Options
 	Kafka                       kafka.Options
 	PassThrough                 goflags.StringSlice // Passthrough items list
+	MaxSize                     int
 }
 
 func ParseOptions() *Options {
@@ -84,12 +85,12 @@ func ParseOptions() *Options {
 	)
 
 	flagSet.CreateGroup("export", "Export",
+		flagSet.IntVar(&options.MaxSize, "max-size", math.MaxInt, "Max export data size (request/responses will be truncated)"),
 		flagSet.StringVar(&options.Elastic.Addr, "elastic-address", "", "elasticsearch address (ip:port)"),
 		flagSet.BoolVar(&options.Elastic.SSL, "elastic-ssl", false, "enable elasticsearch ssl"),
 		flagSet.BoolVar(&options.Elastic.SSLVerification, "elastic-ssl-verification", false, "enable elasticsearch ssl verification"),
 		flagSet.StringVar(&options.Elastic.Username, "elastic-username", "", "elasticsearch username"),
 		flagSet.StringVar(&options.Elastic.Password, "elastic-password", "", "elasticsearch password"),
-		flagSet.IntVar(&options.Elastic.MaxFieldSize, "elastic-max-field-size", math.MaxInt, "elasticsearch max field size"),
 		flagSet.StringVar(&options.Elastic.IndexName, "elastic-index", "proxify", "elasticsearch index name"),
 		flagSet.StringVar(&options.Kafka.Addr, "kafka-address", "", "address of kafka broker (ip:port)"),
 		flagSet.StringVar(&options.Kafka.Topic, "kafka-topic", "proxify", "kafka topic to publish messages on"),

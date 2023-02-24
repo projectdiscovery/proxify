@@ -29,8 +29,6 @@ type Options struct {
 	Password string `yaml:"password"`
 	// IndexName is the name of the elasticsearch index
 	IndexName string `yaml:"index-name"`
-	// MaxFieldSize sets a maximum limit to the field length
-	MaxFieldSize int `yaml:"max-field-size"`
 }
 
 // Client type for elasticsearch
@@ -74,12 +72,12 @@ func (c *Client) Save(data types.OutputData) error {
 	var doc map[string]interface{}
 	if data.Userdata.HasResponse {
 		doc = map[string]interface{}{
-			"response":  truncate(data.DataString, c.options.MaxFieldSize),
+			"response":  data.DataString,
 			"timestamp": time.Now().Format(time.RFC3339),
 		}
 	} else {
 		doc = map[string]interface{}{
-			"request":   truncate(data.DataString, c.options.MaxFieldSize),
+			"request":   data.DataString,
 			"timestamp": time.Now().Format(time.RFC3339),
 		}
 	}
@@ -107,11 +105,4 @@ func (c *Client) Save(data types.OutputData) error {
 	_, er := io.Copy(io.Discard, res.Body)
 	res.Body.Close()
 	return er
-}
-
-func truncate(data string, maxSize int) string {
-	if maxSize > 0 && len(data) > maxSize {
-		return data[:maxSize]
-	}
-	return data
 }
