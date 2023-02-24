@@ -90,15 +90,15 @@ PROXY:
    -c int                       Number of requests before switching to the next upstream proxy (default 1)
 
 EXPORT:
-   -elastic-address string      elasticsearch address (ip:port)
-   -elastic-ssl                 enable elasticsearch ssl
-   -elastic-ssl-verification    enable elasticsearch ssl verification
-   -elastic-username string     elasticsearch username
-   -elastic-password string     elasticsearch password
-   -elastic-max-field-size int  elasticsearch max field size (default 9223372036854775807)
-   -elastic-index string        elasticsearch index name (default "proxify")
-   -kafka-address string        address of kafka broker (ip:port)
-   -kafka-topic string          kafka topic to publish messages on (default "proxify")
+   -max-size int              Max export data size (request/responses will be truncated) (default 9223372036854775807)
+   -elastic-address string    elasticsearch address (ip:port)
+   -elastic-ssl               enable elasticsearch ssl
+   -elastic-ssl-verification  enable elasticsearch ssl verification
+   -elastic-username string   elasticsearch username
+   -elastic-password string   elasticsearch password
+   -elastic-index string      elasticsearch index name (default "proxify")
+   -kafka-address string      address of kafka broker (ip:port)
+   -kafka-topic string        kafka topic to publish messages on (default "proxify")
 
 CONFIGURATION:
    -config string              Directory for storing program information (default "$HOME/.config/proxify")
