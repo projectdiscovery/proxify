@@ -42,6 +42,7 @@ type OnConnectFunc func(string, *goproxy.ProxyCtx) (*goproxy.ConnectAction, stri
 type Options struct {
 	DumpRequest                 bool
 	DumpResponse                bool
+	MaxSize                     int
 	Verbosity                   types.Verbosity
 	CertCacheSize               int
 	Directory                   string
@@ -377,6 +378,7 @@ func NewProxy(options *Options) (*Proxy, error) {
 		OutputFolder: options.OutputDirectory,
 		DumpRequest:  options.DumpRequest,
 		DumpResponse: options.DumpResponse,
+		MaxSize:      options.MaxSize,
 		Elastic:      options.Elastic,
 		Kafka:        options.Kafka,
 	})

@@ -90,6 +90,7 @@ PROXY:
    -c int                       Number of requests before switching to the next upstream proxy (default 1)
 
 EXPORT:
+   -max-size int              Max export data size (request/responses will be truncated) (default 9223372036854775807)
    -elastic-address string    elasticsearch address (ip:port)
    -elastic-ssl               enable elasticsearch ssl
    -elastic-ssl-verification  enable elasticsearch ssl verification

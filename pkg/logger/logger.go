@@ -28,6 +28,7 @@ type OptionsLogger struct {
 	OutputFolder string
 	DumpRequest  bool
 	DumpResponse bool
+	MaxSize      int
 	Elastic      *elastic.Options
 	Kafka        *kafka.Options
 }
@@ -111,6 +112,10 @@ func (l *Logger) AsyncWrite() {
 			}
 
 			outputdata.DataString = fmt.Sprintf(outputdata.Format, outputdata.Data)
+
+			if l.options.MaxSize > 0 {
+				outputdata.DataString = stringsutil.Truncate(outputdata.DataString, l.options.MaxSize)
+			}
 
 			for _, store := range l.Store {
 				err := store.Save(outputdata)

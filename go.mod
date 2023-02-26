@@ -1,6 +1,6 @@
 module github.com/projectdiscovery/proxify
 
-go 1.18
+go 1.19
 
 require (
 	github.com/Knetic/govaluate v3.0.0+incompatible
@@ -18,7 +18,7 @@ require (
 	github.com/projectdiscovery/goflags v0.1.7
 	github.com/projectdiscovery/gologger v1.1.8
 	github.com/projectdiscovery/tinydns v0.0.1
-	github.com/projectdiscovery/utils v0.0.4-0.20230117135930-7371ae6a739d
+	github.com/projectdiscovery/utils v0.0.11
 	github.com/rs/xid v1.4.0
 	golang.org/x/net v0.7.0
 	gopkg.in/yaml.v3 v3.0.1
