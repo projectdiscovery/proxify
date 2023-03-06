@@ -439,8 +439,8 @@ github.com/projectdiscovery/stringsutil v0.0.2 h1:uzmw3IVLJSMW1kEg8eCStG/cGbYYZA
 github.com/projectdiscovery/stringsutil v0.0.2/go.mod h1:EJ3w6bC5fBYjVou6ryzodQq37D5c6qbAYQpGmAy+DC0=
 github.com/projectdiscovery/tinydns v0.0.1 h1:Ls5TAlMJoCfEObpsC7S+Hg4WLyF5wiN+O1xNgEIjnEc=
 github.com/projectdiscovery/tinydns v0.0.1/go.mod h1:xPZcaMje/MWozKc5Sdln3XWptINYoWqCBXgLeSrNB1Q=
-github.com/projectdiscovery/utils v0.0.13 h1:Bvguo7avXN+Zs9tHL+8+Qld65nwIE8Kr9qddErDDqmw=
-github.com/projectdiscovery/utils v0.0.13/go.mod h1:2CyxZXcx62NUiGJZZam23CpphqXy3kaomE9uvgHgkEo=
+github.com/projectdiscovery/utils v0.0.14 h1:ZtyZu0stPQ/qQSw8hsB0pQll2mLOkuB4d08J3ZdbZPw=
+github.com/projectdiscovery/utils v0.0.14/go.mod h1:2CyxZXcx62NUiGJZZam23CpphqXy3kaomE9uvgHgkEo=
 github.com/prometheus/client_golang v0.9.1/go.mod h1:7SWBe2y4D6OKWSNQJUaRYU/AaXPKyh/dDVn+NZz0KFw=
 github.com/prometheus/client_golang v1.0.0/go.mod h1:db9x61etRT2tGnBNRi70OPL5FsnadC4Ky3P0J6CfImo=
 github.com/prometheus/client_golang v1.7.1/go.mod h1:PY5Wy2awLA44sXw4AOSfFBetzPP4j5+D6mVACh+pe2M=
