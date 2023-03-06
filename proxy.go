@@ -2,7 +2,6 @@ package proxify
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -112,19 +111,19 @@ func (p *Proxy) ModifyRequest(req *http.Request) error {
 		_ = p.MatchReplaceRequest(req)
 	}
 
-	var tempBody io.ReadCloser = nil
-	if req.ContentLength > 0 {
-		bin, err := io.ReadAll(req.Body)
-		if err == nil {
-			tempBody = io.NopCloser(bytes.NewReader(bin))
-		}
-	}
+	// var tempBody io.ReadCloser = nil
+	// if req.ContentLength > 0 {
+	// 	bin, err := io.ReadAll(req.Body)
+	// 	if err == nil {
+	// 		tempBody = io.NopCloser(bytes.NewReader(bin))
+	// 	}
+	// }
 
 	_ = p.logger.LogRequest(req, userData)
 
-	if tempBody != nil {
-		req.Body = tempBody
-	}
+	// if tempBody != nil {
+	// 	req.Body = tempBody
+	// }
 
 	return nil
 }
@@ -164,82 +163,20 @@ func (p *Proxy) ModifyResponse(resp *http.Response) error {
 		_ = p.MatchReplaceResponse(resp)
 	}
 	_ = p.logger.LogResponse(resp, *userData)
-	// TODO: check if we need to remove context map
 	if resp.StatusCode == 301 || resp.StatusCode == 302 {
 		// set connection close header
+		// close connection if redirected to different host
+		if loc, err := resp.Location(); err == nil {
+			if loc.Host == resp.Request.Host {
+				// if same host redirect do not close connection
+				return nil
+			}
+		}
 		resp.Close = true
 		gologger.Info().Msg("change resp connection to close")
 	}
 	return nil
 }
-
-// func (p *Proxy) OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-// 	var userdata types.UserData
-// 	if ctx.UserData != nil {
-// 		userdata = ctx.UserData.(types.UserData)
-// 	} else {
-// 		userdata.Host = req.URL.Host
-// 	}
-
-// 	// check dsl
-// 	for _, expr := range p.options.RequestDSL {
-// 		if !userdata.Match {
-// 			m, _ := util.HTTPRequesToMap(req)
-// 			v, err := dsl.EvalExpr(expr, m)
-// 			if err != nil {
-// 				gologger.Warning().Msgf("Could not evaluate request dsl: %s\n", err)
-// 			}
-// 			userdata.Match = err == nil && v.(bool)
-// 		}
-// 	}
-
-// 	id := xid.New().String()
-// 	userdata.ID = id
-
-// 	// perform match and replace
-// 	if len(p.options.RequestMatchReplaceDSL) != 0 {
-// 		_ = p.MatchReplaceRequest(req)
-// 	}
-
-// 	_ = p.logger.LogRequest(req, userdata)
-// 	ctx.UserData = userdata
-
-// 	return req, nil
-// }
-
-// func (p *Proxy) OnResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
-// 	userdata := ctx.UserData.(types.UserData)
-// 	userdata.HasResponse = true
-// 	for _, expr := range p.options.ResponseDSL {
-// 		if !userdata.Match {
-// 			m, _ := util.HTTPResponseToMap(resp)
-// 			v, err := dsl.EvalExpr(expr, m)
-// 			if err != nil {
-// 				gologger.Warning().Msgf("Could not evaluate response dsl: %s\n", err)
-// 			}
-// 			userdata.Match = err == nil && v.(bool)
-// 		}
-// 	}
-
-// 	// perform match and replace
-// 	if len(p.options.ResponseMatchReplaceDSL) != 0 {
-// 		_ = p.MatchReplaceResponse(resp)
-// 	}
-
-// 	_ = p.logger.LogResponse(resp, userdata)
-// 	ctx.UserData = userdata
-// 	return resp
-// }
-
-// func (p *Proxy) OnConnectHTTP(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
-// 	ctx.UserData = types.UserData{Host: host}
-// 	return goproxy.HTTPMitmConnect, host
-// }
-
-// func (p *Proxy) OnConnectHTTPS(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
-// 	ctx.UserData = types.UserData{Host: host}
-// 	return goproxy.MitmConnect, host
-// }
 
 // MatchReplaceRequest strings or regex
 func (p *Proxy) MatchReplaceRequest(req *http.Request) error {
@@ -324,6 +261,13 @@ func (p *Proxy) Run() error {
 
 	// http proxy
 	if p.httpProxy != nil {
+		p.httpProxy.TLSPassthroughFunc = func(req *http.Request) bool {
+			// if !stringsutil.ContainsAny(req.URL.Host, "avatars") {
+			// 	log.Printf("Skipped MITM for %v", req.URL.Host)
+			// 	return true
+			// }
+			return false
+		}
 
 		p.httpProxy.SetRequestModifier(p)
 		p.httpProxy.SetResponseModifier(p)
@@ -406,6 +350,9 @@ func (p *Proxy) setupHTTPProxy() error {
 // getRoundTripper returns RoundTripper configured with options
 func (p *Proxy) getRoundTripper() (http.RoundTripper, error) {
 	roundtrip := &http.Transport{
+		MaxIdleConnsPerHost: -1,
+		MaxIdleConns:        0,
+		MaxConnsPerHost:     0,
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
 		},
@@ -437,7 +384,7 @@ func (p *Proxy) getRoundTripper() (http.RoundTripper, error) {
 }
 
 func (p *Proxy) Stop() {
-	p.httpProxy.Close()
+	// p.httpProxy.Close()
 }
 
 func NewProxy(options *Options) (*Proxy, error) {

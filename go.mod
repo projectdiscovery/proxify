@@ -112,3 +112,5 @@ require (
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
 )
+
+replace github.com/google/martian/v3 => /Users/tarun/Codebase/martian
