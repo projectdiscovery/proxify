@@ -62,13 +62,13 @@ func main() {
 	}()
 
 	// dns server
-	var domainsToAddresses map[string]string = map[string]string{
-		"*": "127.0.0.1",
+	var domainsToAddresses map[string]*tinydns.DnsRecord = map[string]*tinydns.DnsRecord{
+		"*": {A: []string{"127.0.0.1"}},
 	}
-	tinydns := tinydns.NewTinyDNS(&tinydns.OptionsTinyDNS{
-		ListenAddress:   options.DNSListenerAddress,
-		Net:             "udp",
-		DomainToAddress: domainsToAddresses,
+	tinydns, _ := tinydns.New(&tinydns.Options{
+		ListenAddress: options.DNSListenerAddress,
+		Net:           "udp",
+		DnsRecords:    domainsToAddresses,
 	})
 	go tinydns.Run()
 

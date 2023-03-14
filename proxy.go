@@ -390,20 +390,23 @@ func NewProxy(options *Options) (*Proxy, error) {
 	fastdialerOptions.Deny = options.Deny
 	fastdialerOptions.Allow = options.Allow
 	if options.ListenDNSAddr != "" {
-		dnsmapping := make(map[string]string)
+		dnsmapping := make(map[string]*tinydns.DnsRecord)
 		for _, record := range strings.Split(options.DNSMapping, ",") {
 			data := strings.Split(record, ":")
 			if len(data) != 2 {
 				continue
 			}
-			dnsmapping[data[0]] = data[1]
+			dnsmapping[data[0]] = &tinydns.DnsRecord{A: []string{data[1]}}
 		}
-		tdns = tinydns.NewTinyDNS(&tinydns.OptionsTinyDNS{
-			ListenAddress:       options.ListenDNSAddr,
-			Net:                 "udp",
-			FallbackDNSResolver: options.DNSFallbackResolver,
-			DomainToAddress:     dnsmapping,
+		tdns, err = tinydns.New(&tinydns.Options{
+			ListenAddress:   options.ListenDNSAddr,
+			Net:             "udp",
+			UpstreamServers: []string{options.DNSFallbackResolver},
+			DnsRecords:      dnsmapping,
 		})
+		if err != nil {
+			return nil, err
+		}
 		fastdialerOptions.BaseResolvers = []string{"127.0.0.1" + options.ListenDNSAddr}
 	}
 	dialer, err := fastdialer.NewDialer(fastdialerOptions)

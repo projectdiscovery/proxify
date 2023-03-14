@@ -45,19 +45,19 @@ func httpserver(addr string) error {
 }
 
 func dnsserver(listenAddr, resolverAddr, dnsMap string) {
-	domainsToAddresses := make(map[string]string)
+	domainsToAddresses := make(map[string]*tinydns.DnsRecord)
 	for _, dnsitem := range strings.Split(dnsMap, ",") {
 		tokens := strings.Split(dnsitem, ":")
 		if len(tokens) != 2 {
 			continue
 		}
-		domainsToAddresses[tokens[0]] = tokens[1]
+		domainsToAddresses[tokens[0]] = &tinydns.DnsRecord{A: []string{tokens[1]}}
 	}
-	tinydns := tinydns.NewTinyDNS(&tinydns.OptionsTinyDNS{
-		ListenAddress:       listenAddr,
-		FallbackDNSResolver: resolverAddr,
-		Net:                 "udp",
-		DomainToAddress:     domainsToAddresses,
+	tinydns, _ := tinydns.New(&tinydns.Options{
+		ListenAddress:   listenAddr,
+		UpstreamServers: []string{resolverAddr},
+		Net:             "udp",
+		DnsRecords:      domainsToAddresses,
 	})
 	tinydns.Run()
 }
