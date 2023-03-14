@@ -59,11 +59,14 @@ func dnsserver(listenAddr, resolverAddr, dnsMap string) {
 		Net:             "udp",
 		DnsRecords:      domainsToAddresses,
 	})
-	tinydns.Run()
+	go func() {
+		if err := tinydns.Run(); err != nil {
+			gologger.Fatal().Msgf("%s\n", err)
+		}
+	}()
 }
 
 func main() {
-
 	options := &Options{}
 	flag.StringVar(&options.OutputFolder, "output", "logs/", "Output Folder")
 	flag.StringVar(&options.HTTPListenerAddress, "http-addr", "127.0.0.1:49999", "HTTP Server Listen Address")

@@ -70,7 +70,11 @@ func main() {
 		Net:           "udp",
 		DnsRecords:    domainsToAddresses,
 	})
-	go tinydns.Run()
+	go func() {
+		if err := tinydns.Run(); err != nil {
+			gologger.Fatal().Msgf("Could not serve dns: %s\n", err)
+		}
+	}()
 
 	// http server
 	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {

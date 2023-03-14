@@ -236,7 +236,11 @@ func (p *Proxy) MatchReplaceResponse(resp *http.Response) error {
 
 func (p *Proxy) Run() error {
 	if p.tinydns != nil {
-		go p.tinydns.Run()
+		go func() {
+			if err := p.tinydns.Run(); err != nil {
+				gologger.Warning().Msgf("Could not start dns server: %s\n", err)
+			}
+		}()
 	}
 
 	// http proxy
