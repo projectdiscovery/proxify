@@ -45,25 +45,28 @@ func httpserver(addr string) error {
 }
 
 func dnsserver(listenAddr, resolverAddr, dnsMap string) {
-	domainsToAddresses := make(map[string]string)
+	domainsToAddresses := make(map[string]*tinydns.DnsRecord)
 	for _, dnsitem := range strings.Split(dnsMap, ",") {
 		tokens := strings.Split(dnsitem, ":")
 		if len(tokens) != 2 {
 			continue
 		}
-		domainsToAddresses[tokens[0]] = tokens[1]
+		domainsToAddresses[tokens[0]] = &tinydns.DnsRecord{A: []string{tokens[1]}}
 	}
-	tinydns := tinydns.NewTinyDNS(&tinydns.OptionsTinyDNS{
-		ListenAddress:       listenAddr,
-		FallbackDNSResolver: resolverAddr,
-		Net:                 "udp",
-		DomainToAddress:     domainsToAddresses,
+	tinydns, _ := tinydns.New(&tinydns.Options{
+		ListenAddress:   listenAddr,
+		UpstreamServers: []string{resolverAddr},
+		Net:             "udp",
+		DnsRecords:      domainsToAddresses,
 	})
-	tinydns.Run()
+	go func() {
+		if err := tinydns.Run(); err != nil {
+			gologger.Fatal().Msgf("%s\n", err)
+		}
+	}()
 }
 
 func main() {
-
 	options := &Options{}
 	flag.StringVar(&options.OutputFolder, "output", "logs/", "Output Folder")
 	flag.StringVar(&options.HTTPListenerAddress, "http-addr", "127.0.0.1:49999", "HTTP Server Listen Address")
