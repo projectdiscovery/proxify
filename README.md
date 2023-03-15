@@ -71,6 +71,10 @@ OUTPUT:
    -dump-req           Dump only HTTP requests to output file
    -dump-resp          Dump only HTTP responses to output file
 
+UPDATE:
+   -up, -update                 update proxify to latest version
+   -duc, -disable-update-check  disable automatic proxify update check
+
 FILTER:
    -req-fd, -request-dsl string[]                   Request Filter DSL
    -resp-fd, -response-dsl string[]                 Response Filter DSL
