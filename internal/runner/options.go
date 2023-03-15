@@ -12,6 +12,7 @@ import (
 	"github.com/projectdiscovery/proxify/pkg/logger/elastic"
 	"github.com/projectdiscovery/proxify/pkg/logger/kafka"
 	"github.com/projectdiscovery/proxify/pkg/types"
+	updateutils "github.com/projectdiscovery/utils/update"
 )
 
 // Options of the runner
@@ -42,6 +43,7 @@ type Options struct {
 	Kafka                       kafka.Options
 	PassThrough                 goflags.StringSlice // Passthrough items list
 	MaxSize                     int
+	DisableUpdateCheck          bool // DisableUpdateCheck disables automatic update check
 }
 
 func ParseOptions() *Options {
@@ -61,6 +63,11 @@ func ParseOptions() *Options {
 		flagSet.StringVarP(&options.OutputDirectory, "output", "o", "logs", "Output Directory to store HTTP proxy logs"),
 		flagSet.BoolVar(&options.DumpRequest, "dump-req", false, "Dump only HTTP requests to output file"),
 		flagSet.BoolVar(&options.DumpResponse, "dump-resp", false, "Dump only HTTP responses to output file"),
+	)
+
+	flagSet.CreateGroup("update", "Update",
+		flagSet.CallbackVarP(GetUpdateCallback(), "update", "up", "update proxify to latest version"),
+		flagSet.BoolVarP(&options.DisableUpdateCheck, "disable-update-check", "duc", false, "disable automatic proxify update check"),
 	)
 
 	flagSet.CreateGroup("filter", "Filter",
@@ -122,12 +129,23 @@ func ParseOptions() *Options {
 	options.configureOutput()
 
 	if options.Version {
-		gologger.Info().Msgf("Current Version: %s\n", Version)
+		gologger.Info().Msgf("Current Version: %s\n", version)
 		os.Exit(0)
 	}
 
 	// Show the user the banner
 	showBanner()
+
+	if !options.DisableUpdateCheck {
+		latestVersion, err := updateutils.GetVersionCheckCallback("proxify")()
+		if err != nil {
+			if verbose {
+				gologger.Error().Msgf("proxify version check failed: %v", err.Error())
+			}
+		} else {
+			gologger.Info().Msgf("Current proxify version %v %v", version, updateutils.GetVersionDescription(version, latestVersion))
+		}
+	}
 
 	return options
 }
