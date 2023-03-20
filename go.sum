@@ -347,12 +347,10 @@ github.com/projectdiscovery/retryabledns v1.0.21 h1:vOpPQR1q8Z824uoA8JXCI/RyvDAs
 github.com/projectdiscovery/retryabledns v1.0.21/go.mod h1:6oTPKMRlKZ7lIIEzTH723K6RvNRjmm6fe9br4Dom3UI=
 github.com/projectdiscovery/retryablehttp-go v1.0.10 h1:A8tsJZhzpijgnvHT41JNrhiXtn8F8s7TWMC5ZxLV/Cg=
 github.com/projectdiscovery/retryablehttp-go v1.0.10/go.mod h1:a5bmSbaxgHvC0P80csOymMOwKaJirMnsS6otRUH/vcU=
-github.com/projectdiscovery/sliceutil v0.0.0-20220426000009-1d2b7c02f65c h1:bdZ81T+C9W5b12RL2ndggctrTaOk1bveFG6UfuOck94=
-github.com/projectdiscovery/sliceutil v0.0.0-20220426000009-1d2b7c02f65c/go.mod h1:QHXvznfPfA5f0AZUIBkbLapoUJJlsIDgUlkKva6dOr4=
 github.com/projectdiscovery/stringsutil v0.0.2 h1:uzmw3IVLJSMW1kEg8eCStG/cGbYYZAja8BH3LqqJXMA=
 github.com/projectdiscovery/stringsutil v0.0.2/go.mod h1:EJ3w6bC5fBYjVou6ryzodQq37D5c6qbAYQpGmAy+DC0=
-github.com/projectdiscovery/tinydns v0.0.2 h1:OBqLYr+B7r0sx/CC6Pd2Q7JUyJW1Wm4tObkQTkQ+51g=
-github.com/projectdiscovery/tinydns v0.0.2/go.mod h1:+XM/wipZEAs9CWoSrq6JWuH9eFRCX1LGjX/3IfipWWY=
+github.com/projectdiscovery/tinydns v0.0.3 h1:2ld565znZWEIYLKAL57uh141Hx6Df5tkPzQ5sdQWm8I=
+github.com/projectdiscovery/tinydns v0.0.3/go.mod h1:e/VD4DHbQG7KeP44f7tRdO9cp01JfPDe8BdEADKLq0I=
 github.com/projectdiscovery/utils v0.0.16 h1:7vmi3haCyM3vk0yXSLjoid4p2/7bo042rcmG4Dtk+Sk=
 github.com/projectdiscovery/utils v0.0.16/go.mod h1:Cu216AlQ7rAYa8aDBqB2OgNfu5p24Uj+tG9RxV8Wbfs=
 github.com/prometheus/client_golang v1.14.0 h1:nJdhIvne2eSX/XRAFV9PcvFFRbrjbcTUj0VP62TMhnw=

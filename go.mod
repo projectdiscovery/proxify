@@ -17,7 +17,7 @@ require (
 	github.com/projectdiscovery/fastdialer v0.0.24
 	github.com/projectdiscovery/goflags v0.1.8
 	github.com/projectdiscovery/gologger v1.1.8
-	github.com/projectdiscovery/tinydns v0.0.2
+	github.com/projectdiscovery/tinydns v0.0.3
 	github.com/projectdiscovery/utils v0.0.16
 	github.com/rs/xid v1.4.0
 	golang.org/x/net v0.8.0
@@ -94,7 +94,6 @@ require (
 	github.com/projectdiscovery/networkpolicy v0.0.4 // indirect
 	github.com/projectdiscovery/retryabledns v1.0.21 // indirect
 	github.com/projectdiscovery/retryablehttp-go v1.0.10 // indirect
-	github.com/projectdiscovery/sliceutil v0.0.0-20220426000009-1d2b7c02f65c // indirect
 	github.com/projectdiscovery/stringsutil v0.0.2 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
