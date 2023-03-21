@@ -2,8 +2,10 @@ name: 🚨 CodeQL Analysis
 
 on:
   workflow_dispatch:
-  push:
   pull_request:
+    paths:
+      - '**.go'
+      - '**.mod'
     branches:
       - dev
 
