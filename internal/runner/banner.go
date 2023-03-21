@@ -10,11 +10,11 @@ const banner = `
    ___  _______ __ __ (_) _/_ __
   / _ \/ __/ _ \\ \ // / _/ // /
  / .__/_/  \___/_\_\/_/_/ \_, / 
-/_/                      /___/	v0.0.8
+/_/                      /___/
 `
 
 // Version is the current version
-const version = `0.0.8`
+const version = `0.0.9`
 
 // showBanner is used to show the banner to the user
 func showBanner() {
