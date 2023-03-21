@@ -3,7 +3,7 @@ package logger
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"strings"
@@ -13,7 +13,7 @@ import (
 	"github.com/projectdiscovery/proxify/pkg/logger/elastic"
 	"github.com/projectdiscovery/proxify/pkg/logger/file"
 	"github.com/projectdiscovery/proxify/pkg/logger/kafka"
-	"github.com/projectdiscovery/stringsutil"
+	stringsutil "github.com/projectdiscovery/utils/strings"
 
 	"github.com/projectdiscovery/proxify/pkg/types"
 )
@@ -28,6 +28,7 @@ type OptionsLogger struct {
 	OutputFolder string
 	DumpRequest  bool
 	DumpResponse bool
+	MaxSize      int
 	Elastic      *elastic.Options
 	Kafka        *kafka.Options
 }
@@ -112,6 +113,10 @@ func (l *Logger) AsyncWrite() {
 
 			outputdata.DataString = fmt.Sprintf(outputdata.Format, outputdata.Data)
 
+			if l.options.MaxSize > 0 {
+				outputdata.DataString = stringsutil.Truncate(outputdata.DataString, l.options.MaxSize)
+			}
+
 			for _, store := range l.Store {
 				err := store.Save(outputdata)
 				if err != nil {
@@ -134,7 +139,7 @@ func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
 
 	if l.options.Verbosity >= types.VerbosityVeryVerbose {
 		contentType := req.Header.Get("Content-Type")
-		b, _ := ioutil.ReadAll(req.Body)
+		b, _ := io.ReadAll(req.Body)
 		if isASCIICheckRequired(contentType) && !govalidator.IsPrintableASCII(string(b)) {
 			reqdump, _ = httputil.DumpRequest(req, false)
 		}

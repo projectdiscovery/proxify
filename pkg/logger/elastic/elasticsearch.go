@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"io"
 	"net/http"
 	"time"
 
@@ -33,6 +34,7 @@ type Options struct {
 // Client type for elasticsearch
 type Client struct {
 	index    string
+	options  *Options
 	esClient *elasticsearch.Client
 }
 
@@ -56,10 +58,12 @@ func New(option *Options) (*Client, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "error creating elasticsearch client")
 	}
-	return &Client{
+	client := &Client{
 		esClient: elasticsearchClient,
 		index:    option.IndexName,
-	}, nil
+		options:  option,
+	}
+	return client, nil
 
 }
 
@@ -91,12 +95,14 @@ func (c *Client) Save(data types.OutputData) error {
 		Body:       bytes.NewReader(body),
 	}
 	res, err := updateRequest.Do(context.Background(), c.esClient)
-
-	if err != nil {
+	if err != nil || res == nil {
 		return errors.New("error thrown by elasticsearch: " + err.Error())
 	}
 	if res.StatusCode >= 300 {
 		return errors.New("elasticsearch responded with an error: " + string(res.String()))
 	}
-	return nil
+	// Drain response to reuse connection
+	_, er := io.Copy(io.Discard, res.Body)
+	res.Body.Close()
+	return er
 }

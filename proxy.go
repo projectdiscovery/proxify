@@ -6,7 +6,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -24,12 +24,12 @@ import (
 	"github.com/projectdiscovery/dsl"
 	"github.com/projectdiscovery/fastdialer/fastdialer"
 	"github.com/projectdiscovery/gologger"
-	"github.com/projectdiscovery/mapsutil"
 	"github.com/projectdiscovery/proxify/pkg/certs"
 	"github.com/projectdiscovery/proxify/pkg/logger"
 	"github.com/projectdiscovery/proxify/pkg/logger/elastic"
 	"github.com/projectdiscovery/proxify/pkg/logger/kafka"
 	"github.com/projectdiscovery/proxify/pkg/types"
+	"github.com/projectdiscovery/proxify/pkg/util"
 	"github.com/projectdiscovery/tinydns"
 	"github.com/rs/xid"
 	"golang.org/x/net/proxy"
@@ -42,27 +42,29 @@ type OnConnectFunc func(string, *goproxy.ProxyCtx) (*goproxy.ConnectAction, stri
 type Options struct {
 	DumpRequest                 bool
 	DumpResponse                bool
+	MaxSize                     int
 	Verbosity                   types.Verbosity
 	CertCacheSize               int
 	Directory                   string
 	ListenAddrHTTP              string
 	ListenAddrSocks5            string
 	OutputDirectory             string
-	RequestDSL                  string
-	ResponseDSL                 string
+	RequestDSL                  []string
+	ResponseDSL                 []string
 	UpstreamHTTPProxies         []string
 	UpstreamSock5Proxies        []string
 	ListenDNSAddr               string
 	DNSMapping                  string
 	DNSFallbackResolver         string
-	RequestMatchReplaceDSL      string
-	ResponseMatchReplaceDSL     string
+	RequestMatchReplaceDSL      []string
+	ResponseMatchReplaceDSL     []string
 	OnConnectHTTPCallback       OnConnectFunc
 	OnConnectHTTPSCallback      OnConnectFunc
 	OnRequestCallback           OnRequestFunc
 	OnResponseCallback          OnResponseFunc
 	Deny                        []string
 	Allow                       []string
+	PassThrough                 []string
 	UpstreamProxyRequestsNumber int
 	Elastic                     *elastic.Options
 	Kafka                       *kafka.Options
@@ -91,20 +93,22 @@ func (p *Proxy) OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Reque
 	}
 
 	// check dsl
-	if p.options.RequestDSL != "" {
-		m, _ := mapsutil.HTTPRequesToMap(req)
-		v, err := dsl.EvalExpr(p.options.RequestDSL, m)
-		if err != nil {
-			gologger.Warning().Msgf("Could not evaluate request dsl: %s\n", err)
+	for _, expr := range p.options.RequestDSL {
+		if !userdata.Match {
+			m, _ := util.HTTPRequesToMap(req)
+			v, err := dsl.EvalExpr(expr, m)
+			if err != nil {
+				gologger.Warning().Msgf("Could not evaluate request dsl: %s\n", err)
+			}
+			userdata.Match = err == nil && v.(bool)
 		}
-		userdata.Match = err == nil && v.(bool)
 	}
 
 	id := xid.New().String()
 	userdata.ID = id
 
 	// perform match and replace
-	if p.options.RequestMatchReplaceDSL != "" {
+	if len(p.options.RequestMatchReplaceDSL) != 0 {
 		_ = p.MatchReplaceRequest(req)
 	}
 
@@ -117,17 +121,19 @@ func (p *Proxy) OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Reque
 func (p *Proxy) OnResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
 	userdata := ctx.UserData.(types.UserData)
 	userdata.HasResponse = true
-	if p.options.ResponseDSL != "" && !userdata.Match {
-		m, _ := mapsutil.HTTPResponseToMap(resp)
-		v, err := dsl.EvalExpr(p.options.ResponseDSL, m)
-		if err != nil {
-			gologger.Warning().Msgf("Could not evaluate response dsl: %s\n", err)
+	for _, expr := range p.options.ResponseDSL {
+		if !userdata.Match {
+			m, _ := util.HTTPResponseToMap(resp)
+			v, err := dsl.EvalExpr(expr, m)
+			if err != nil {
+				gologger.Warning().Msgf("Could not evaluate response dsl: %s\n", err)
+			}
+			userdata.Match = err == nil && v.(bool)
 		}
-		userdata.Match = err == nil && v.(bool)
 	}
 
 	// perform match and replace
-	if p.options.ResponseMatchReplaceDSL != "" {
+	if len(p.options.ResponseMatchReplaceDSL) != 0 {
 		_ = p.MatchReplaceResponse(resp)
 	}
 
@@ -137,11 +143,17 @@ func (p *Proxy) OnResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Res
 }
 
 func (p *Proxy) OnConnectHTTP(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
+	if util.MatchAnyRegex(p.options.PassThrough, host) {
+		return goproxy.OkConnect, host
+	}
 	ctx.UserData = types.UserData{Host: host}
 	return goproxy.HTTPMitmConnect, host
 }
 
 func (p *Proxy) OnConnectHTTPS(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
+	if util.MatchAnyRegex(p.options.PassThrough, host) {
+		return goproxy.OkConnect, host
+	}
 	ctx.UserData = types.UserData{Host: host}
 	return goproxy.MitmConnect, host
 }
@@ -157,26 +169,30 @@ func (p *Proxy) MatchReplaceRequest(req *http.Request) error {
 	// lazy mode - ninja level - elaborate
 	m := make(map[string]interface{})
 	m["request"] = string(reqdump)
-	if v, err := dsl.EvalExpr(p.options.RequestMatchReplaceDSL, m); err != nil {
-		return err
-	} else {
-		reqbuffer := fmt.Sprint(v)
-		// lazy mode - epic level - rebuild
-		bf := bufio.NewReader(strings.NewReader(reqbuffer))
-		requestNew, err := http.ReadRequest(bf)
+	for _, expr := range p.options.RequestMatchReplaceDSL {
+		v, err := dsl.EvalExpr(expr, m)
 		if err != nil {
 			return err
 		}
-		// closes old body to allow memory reuse
-		req.Body.Close()
-
-		// override original properties
-		req.Method = requestNew.Method
-		req.Header = requestNew.Header
-		req.Body = requestNew.Body
-		req.URL = requestNew.URL
-		return nil
+		m["request"] = fmt.Sprint(v)
 	}
+
+	reqbuffer := fmt.Sprint(m["request"])
+	// lazy mode - epic level - rebuild
+	bf := bufio.NewReader(strings.NewReader(reqbuffer))
+	requestNew, err := http.ReadRequest(bf)
+	if err != nil {
+		return err
+	}
+	// closes old body to allow memory reuse
+	req.Body.Close()
+
+	// override original properties
+	req.Method = requestNew.Method
+	req.Header = requestNew.Header
+	req.Body = requestNew.Body
+	req.URL = requestNew.URL
+	return nil
 }
 
 // MatchReplaceRequest strings or regex
@@ -193,29 +209,38 @@ func (p *Proxy) MatchReplaceResponse(resp *http.Response) error {
 	// lazy mode - ninja level - elaborate
 	m := make(map[string]interface{})
 	m["response"] = string(respdump)
-	if v, err := dsl.EvalExpr(p.options.ResponseMatchReplaceDSL, m); err != nil {
-		return err
-	} else {
-		respbuffer := fmt.Sprint(v)
-		// lazy mode - epic level - rebuild
-		bf := bufio.NewReader(strings.NewReader(respbuffer))
-		responseNew, err := http.ReadResponse(bf, nil)
+	for _, expr := range p.options.ResponseMatchReplaceDSL {
+		v, err := dsl.EvalExpr(expr, m)
+
 		if err != nil {
 			return err
 		}
-
-		// closes old body to allow memory reuse
-		resp.Body.Close()
-		resp.Header = responseNew.Header
-		resp.Body = responseNew.Body
-		resp.ContentLength = responseNew.ContentLength
-		return nil
+		m["response"] = fmt.Sprint(v)
 	}
+
+	respbuffer := fmt.Sprint(m["response"])
+	// lazy mode - epic level - rebuild
+	bf := bufio.NewReader(strings.NewReader(respbuffer))
+	responseNew, err := http.ReadResponse(bf, nil)
+	if err != nil {
+		return err
+	}
+
+	// closes old body to allow memory reuse
+	resp.Body.Close()
+	resp.Header = responseNew.Header
+	resp.Body = responseNew.Body
+	resp.ContentLength = responseNew.ContentLength
+	return nil
 }
 
 func (p *Proxy) Run() error {
 	if p.tinydns != nil {
-		go p.tinydns.Run()
+		go func() {
+			if err := p.tinydns.Run(); err != nil {
+				gologger.Warning().Msgf("Could not start dns server: %s\n", err)
+			}
+		}()
 	}
 
 	// http proxy
@@ -288,7 +313,7 @@ func (p *Proxy) Run() error {
 					StatusCode:       200,
 					Status:           http.StatusText(200),
 					ContentLength:    int64(reader.Len()),
-					Body:             ioutil.NopCloser(reader),
+					Body:             io.NopCloser(reader),
 				}
 				return r, resp
 			},
@@ -337,7 +362,7 @@ func NewProxy(options *Options) (*Proxy, error) {
 	if options.ListenAddrHTTP != "" {
 		httpproxy = goproxy.NewProxyHttpServer()
 		if options.Verbosity <= types.VerbositySilent {
-			httpproxy.Logger = log.New(ioutil.Discard, "", log.Ltime|log.Lshortfile)
+			httpproxy.Logger = log.New(io.Discard, "", log.Ltime|log.Lshortfile)
 		} else if options.Verbosity >= types.VerbosityVerbose {
 			httpproxy.Verbose = true
 		} else {
@@ -357,6 +382,7 @@ func NewProxy(options *Options) (*Proxy, error) {
 		OutputFolder: options.OutputDirectory,
 		DumpRequest:  options.DumpRequest,
 		DumpResponse: options.DumpResponse,
+		MaxSize:      options.MaxSize,
 		Elastic:      options.Elastic,
 		Kafka:        options.Kafka,
 	})
@@ -368,20 +394,23 @@ func NewProxy(options *Options) (*Proxy, error) {
 	fastdialerOptions.Deny = options.Deny
 	fastdialerOptions.Allow = options.Allow
 	if options.ListenDNSAddr != "" {
-		dnsmapping := make(map[string]string)
+		dnsmapping := make(map[string]*tinydns.DnsRecord)
 		for _, record := range strings.Split(options.DNSMapping, ",") {
 			data := strings.Split(record, ":")
 			if len(data) != 2 {
 				continue
 			}
-			dnsmapping[data[0]] = data[1]
+			dnsmapping[data[0]] = &tinydns.DnsRecord{A: []string{data[1]}}
 		}
-		tdns = tinydns.NewTinyDNS(&tinydns.OptionsTinyDNS{
-			ListenAddress:       options.ListenDNSAddr,
-			Net:                 "udp",
-			FallbackDNSResolver: options.DNSFallbackResolver,
-			DomainToAddress:     dnsmapping,
+		tdns, err = tinydns.New(&tinydns.Options{
+			ListenAddress:   options.ListenDNSAddr,
+			Net:             "udp",
+			UpstreamServers: []string{options.DNSFallbackResolver},
+			DnsRecords:      dnsmapping,
 		})
+		if err != nil {
+			return nil, err
+		}
 		fastdialerOptions.BaseResolvers = []string{"127.0.0.1" + options.ListenDNSAddr}
 	}
 	dialer, err := fastdialer.NewDialer(fastdialerOptions)
@@ -420,7 +449,7 @@ func NewProxy(options *Options) (*Proxy, error) {
 			Dial: proxy.httpTunnelDialer,
 		}
 		if options.Verbosity <= types.VerbositySilent {
-			socks5Config.Logger = log.New(ioutil.Discard, "", log.Ltime|log.Lshortfile)
+			socks5Config.Logger = log.New(io.Discard, "", log.Ltime|log.Lshortfile)
 		}
 		socks5proxy, err = socks5.New(socks5Config)
 		if err != nil {
