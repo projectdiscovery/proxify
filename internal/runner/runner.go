@@ -35,11 +35,13 @@ func NewRunner(options *Options) (*Runner, error) {
 		ResponseMatchReplaceDSL:     options.ResponseMatchReplaceDSL,
 		DumpRequest:                 options.DumpRequest,
 		DumpResponse:                options.DumpResponse,
+		MaxSize:                     options.MaxSize,
 		UpstreamProxyRequestsNumber: options.UpstreamProxyRequestsNumber,
 		Elastic:                     &options.Elastic,
 		Kafka:                       &options.Kafka,
 		Allow:                       options.Allow,
 		Deny:                        options.Deny,
+		PassThrough:                 options.PassThrough,
 	})
 	if err != nil {
 		return nil, err
@@ -47,35 +49,22 @@ func NewRunner(options *Options) (*Runner, error) {
 	return &Runner{options: options, proxy: proxy}, nil
 }
 
+func (r *Runner) validateExpressions(expressionsGroups ...[]string) error {
+	for _, expressionsGroup := range expressionsGroups {
+		for _, expression := range expressionsGroup {
+			if _, err := govaluate.NewEvaluableExpressionWithFunctions(expression, dsl.DefaultHelperFunctions); err != nil {
+				printDslCompileError(err)
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // Run polling and notification
 func (r *Runner) Run() error {
-	if r.options.RequestDSL != "" {
-		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.RequestDSL, dsl.DefaultHelperFunctions)
-		if err != nil {
-			printDslCompileError(err)
-			return err
-		}
-	}
-	if r.options.ResponseDSL != "" {
-		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.ResponseDSL, dsl.DefaultHelperFunctions)
-		if err != nil {
-			printDslCompileError(err)
-			return err
-		}
-	}
-	if r.options.RequestMatchReplaceDSL != "" {
-		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.RequestMatchReplaceDSL, dsl.DefaultHelperFunctions)
-		if err != nil {
-			printDslCompileError(err)
-			return err
-		}
-	}
-	if r.options.ResponseMatchReplaceDSL != "" {
-		_, err := govaluate.NewEvaluableExpressionWithFunctions(r.options.ResponseMatchReplaceDSL, dsl.DefaultHelperFunctions)
-		if err != nil {
-			printDslCompileError(err)
-			return err
-		}
+	if err := r.validateExpressions(r.options.RequestDSL, r.options.ResponseDSL, r.options.RequestMatchReplaceDSL, r.options.ResponseMatchReplaceDSL); err != nil {
+		return err
 	}
 
 	// configuration summary

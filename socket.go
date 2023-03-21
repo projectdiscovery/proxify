@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"io"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -34,8 +33,8 @@ type SocketConn struct {
 	Verbosity               types.Verbosity
 	OutputHex               bool
 	Timeout                 time.Duration
-	RequestMatchReplaceDSL  string
-	ResponseMatchReplaceDSL string
+	RequestMatchReplaceDSL  []string
+	ResponseMatchReplaceDSL []string
 	OnRequest               func([]byte) []byte
 	OnResponse              func([]byte) []byte
 }
@@ -55,8 +54,8 @@ type SocketProxyOptions struct {
 	Verbosity               types.Verbosity
 	OutputHex               bool
 	Timeout                 time.Duration
-	RequestMatchReplaceDSL  string
-	ResponseMatchReplaceDSL string
+	RequestMatchReplaceDSL  []string
+	ResponseMatchReplaceDSL []string
 	OnRequest               func([]byte) []byte
 	OnResponse              func([]byte) []byte
 }
@@ -223,10 +222,10 @@ func (p *SocketConn) pipe(src, dst io.ReadWriter) {
 		// Client => Proxy => Destination
 		if islocal {
 			// DSL
-			if p.RequestMatchReplaceDSL != "" {
+			for _, expr := range p.RequestMatchReplaceDSL {
 				args := make(map[string]interface{})
 				args["data"] = b
-				newB, err := dsl.EvalExpr(p.RequestMatchReplaceDSL, args)
+				newB, err := dsl.EvalExpr(expr, args)
 				// In case of error use the original value
 				if err != nil {
 					log.Printf("%s\n", err)
@@ -242,10 +241,10 @@ func (p *SocketConn) pipe(src, dst io.ReadWriter) {
 			}
 		} else { // Destination => Proxy => Client
 			// DSL
-			if p.ResponseMatchReplaceDSL != "" {
+			for _, expr := range p.ResponseMatchReplaceDSL {
 				args := make(map[string]interface{})
 				args["data"] = b
-				newB, err := dsl.EvalExpr(p.ResponseMatchReplaceDSL, args)
+				newB, err := dsl.EvalExpr(expr, args)
 				// In case of error use the original value
 				if err != nil {
 					log.Printf("%s\n", err)
@@ -275,7 +274,7 @@ func (p *SocketConn) pipe(src, dst io.ReadWriter) {
 			if err != nil {
 				log.Println(err)
 			} else {
-				b, _ = ioutil.ReadAll(resp.Body)
+				b, _ = io.ReadAll(resp.Body)
 				resp.Body.Close()
 			}
 		}
