@@ -173,7 +173,6 @@ func (p *Proxy) ModifyResponse(resp *http.Response) error {
 			}
 		}
 		resp.Close = true
-		gologger.Info().Msg("change resp connection to close")
 	}
 	return nil
 }
