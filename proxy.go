@@ -42,6 +42,7 @@ type OnConnectFunc func(string, *goproxy.ProxyCtx) (*goproxy.ConnectAction, stri
 type Options struct {
 	DumpRequest                 bool
 	DumpResponse                bool
+	MaxSize                     int
 	Verbosity                   types.Verbosity
 	CertCacheSize               int
 	Directory                   string
@@ -63,6 +64,7 @@ type Options struct {
 	OnResponseCallback          OnResponseFunc
 	Deny                        []string
 	Allow                       []string
+	PassThrough                 []string
 	UpstreamProxyRequestsNumber int
 	Elastic                     *elastic.Options
 	Kafka                       *kafka.Options
@@ -255,7 +257,11 @@ func (p *Proxy) MatchReplaceResponse(resp *http.Response) error {
 
 func (p *Proxy) Run() error {
 	if p.tinydns != nil {
-		go p.tinydns.Run()
+		go func() {
+			if err := p.tinydns.Run(); err != nil {
+				gologger.Warning().Msgf("Could not start dns server: %s\n", err)
+			}
+		}()
 	}
 
 	// http proxy
@@ -407,6 +413,7 @@ func NewProxy(options *Options) (*Proxy, error) {
 		OutputFolder: options.OutputDirectory,
 		DumpRequest:  options.DumpRequest,
 		DumpResponse: options.DumpResponse,
+		MaxSize:      options.MaxSize,
 		Elastic:      options.Elastic,
 		Kafka:        options.Kafka,
 	})
@@ -418,20 +425,24 @@ func NewProxy(options *Options) (*Proxy, error) {
 	fastdialerOptions.Deny = options.Deny
 	fastdialerOptions.Allow = options.Allow
 	if options.ListenDNSAddr != "" {
-		dnsmapping := make(map[string]string)
+		dnsmapping := make(map[string]*tinydns.DnsRecord)
 		for _, record := range strings.Split(options.DNSMapping, ",") {
 			data := strings.Split(record, ":")
 			if len(data) != 2 {
 				continue
 			}
-			dnsmapping[data[0]] = data[1]
+			dnsmapping[data[0]] = &tinydns.DnsRecord{A: []string{data[1]}}
 		}
-		tdns = tinydns.NewTinyDNS(&tinydns.OptionsTinyDNS{
-			ListenAddress:       options.ListenDNSAddr,
-			Net:                 "udp",
-			FallbackDNSResolver: options.DNSFallbackResolver,
-			DomainToAddress:     dnsmapping,
+		var err error
+		tdns, err = tinydns.New(&tinydns.Options{
+			ListenAddress:   options.ListenDNSAddr,
+			Net:             "udp",
+			UpstreamServers: []string{options.DNSFallbackResolver},
+			DnsRecords:      dnsmapping,
 		})
+		if err != nil {
+			return nil, err
+		}
 		fastdialerOptions.BaseResolvers = []string{"127.0.0.1" + options.ListenDNSAddr}
 	}
 	dialer, err := fastdialer.NewDialer(fastdialerOptions)

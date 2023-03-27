@@ -21,19 +21,17 @@ func main() {
 
 	// Setup close handler
 	go func() {
-		c := make(chan os.Signal,1) //added size 1 to channel buffer
+		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-		go func() {
-			<-c
+		for range c {
 			fmt.Println("\r- Ctrl+C pressed in Terminal")
 			proxifyRunner.Close()
 			os.Exit(0)
-		}()
+		}
 	}()
 
 	err = proxifyRunner.Run()
 	if err != nil {
 		gologger.Fatal().Msgf("Could not run proxify: %s\n", err)
 	}
-
 }

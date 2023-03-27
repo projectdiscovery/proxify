@@ -71,11 +71,15 @@ OUTPUT:
    -dump-req           Dump only HTTP requests to output file
    -dump-resp          Dump only HTTP responses to output file
 
+UPDATE:
+   -up, -update                 update proxify to latest version
+   -duc, -disable-update-check  disable automatic proxify update check
+
 FILTER:
-   -req-fd, -request-dsl string                   Request Filter DSL
-   -resp-fd, -response-dsl string                 Response Filter DSL
-   -req-mrd, -request-match-replace-dsl string    Request Match-Replace DSL
-   -resp-mrd, -response-match-replace-dsl string  Response Match-Replace DSL
+   -req-fd, -request-dsl string[]                   Request Filter DSL
+   -resp-fd, -response-dsl string[]                 Response Filter DSL
+   -req-mrd, -request-match-replace-dsl string[]    Request Match-Replace DSL
+   -resp-mrd, -response-match-replace-dsl string[]  Response Match-Replace DSL
 
 NETWORK:
    -ha, -http-addr string    Listening HTTP IP and Port address (ip:port) (default "127.0.0.1:8888")
@@ -85,11 +89,12 @@ NETWORK:
    -r, -resolver string      Custom DNS resolvers to use (ip:port)
 
 PROXY:
-   -hp, -http-proxy string    Upstream HTTP Proxies (eg http://proxy-ip:proxy-port
-   -sp, -socks5-proxy string  Upstream SOCKS5 Proxies (eg socks5://proxy-ip:proxy-port)
-   -c int                     Number of requests before switching to the next upstream proxy (default 1)
+   -hp, -http-proxy string[]    Upstream HTTP Proxies (eg http://proxy-ip:proxy-port)
+   -sp, -socks5-proxy string[]  Upstream SOCKS5 Proxies (eg socks5://proxy-ip:proxy-port)
+   -c int                       Number of requests before switching to the next upstream proxy (default 1)
 
 EXPORT:
+   -max-size int              Max export data size (request/responses will be truncated) (default 9223372036854775807)
    -elastic-address string    elasticsearch address (ip:port)
    -elastic-ssl               enable elasticsearch ssl
    -elastic-ssl-verification  enable elasticsearch ssl verification
@@ -100,17 +105,18 @@ EXPORT:
    -kafka-topic string        kafka topic to publish messages on (default "proxify")
 
 CONFIGURATION:
-   -config string        Directory for storing program information (default "/Users/geekboy/.config/proxify")
-   -cert-cache-size int  Number of certificates to cache (default 256)
-   -allow string         Allowed list of IP/CIDR's to be proxied
-   -deny string          Denied list of IP/CIDR's to be proxied
+   -config string              Directory for storing program information (default "$HOME/.config/proxify")
+   -cert-cache-size int        Number of certificates to cache (default 256)
+   -a, -allow string[]         Allowed list of IP/CIDR's to be proxied
+   -d, -deny string[]          Denied list of IP/CIDR's to be proxied
+   -pt, -passthrough string[]  List of passthrough domains
 
 DEBUG:
-   -nc, -no-color       No Color (default true)
-   -version             Version
-   -silent              Silent
-   -v, -verbose         Verbose
-   -vv, -very-verbose   Very Verbose
+   -nc, -no-color      No Color (default true)
+   -version            Version
+   -silent             Silent
+   -v, -verbose        Verbose
+   -vv, -very-verbose  Very Verbose
 ```
 
 ### Running Proxify
@@ -125,7 +131,17 @@ Runs an HTTP proxy on custom port **1111**:
 proxify -http-addr ":1111"
 ```
 
+### TLS pass through
+
+The -pt flag can be used pass through (skip) encrypted traffic without attempting to terminate the TLS connection.
+
+
+```bash
+proxify -pt '(.*\.)?google\.co.in.*'
+```
+
 ### Proxify with upstream proxy
+
 
 Runs an HTTP proxy on port 8888 and forward the traffic to burp on port **8080**:
 ```shell

@@ -34,6 +34,7 @@ type Options struct {
 // Client type for elasticsearch
 type Client struct {
 	index    string
+	options  *Options
 	esClient *elasticsearch.Client
 }
 
@@ -57,10 +58,12 @@ func New(option *Options) (*Client, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "error creating elasticsearch client")
 	}
-	return &Client{
+	client := &Client{
 		esClient: elasticsearchClient,
 		index:    option.IndexName,
-	}, nil
+		options:  option,
+	}
+	return client, nil
 
 }
 
