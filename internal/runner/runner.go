@@ -19,7 +19,9 @@ type Runner struct {
 
 // NewRunner instance
 func NewRunner(options *Options) (*Runner, error) {
-	certs.LoadCerts(options.Directory)
+	if err := certs.LoadCerts(options.Directory); err != nil {
+		gologger.Fatal().Msgf("%s\n", err)
+	}
 
 	if options.OutCAFile != "" {
 		err := certs.SaveCAToFile(options.OutCAFile)

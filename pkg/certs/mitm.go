@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -91,18 +92,18 @@ func readPemFromDisk(filename string) (*pem.Block, error) {
 	return block, nil
 }
 
-func LoadCerts(dir string) {
+func LoadCerts(dir string) error {
 	certFile := path.Join(dir, caCertName)
 	keyFile := path.Join(dir, caKeyName)
 
 	if !fileutil.FileExists(certFile) || !fileutil.FileExists(keyFile) {
-		generateCertificate(certFile, keyFile)
-		return
+		return generateCertificate(certFile, keyFile)
 	}
 	if err := readCertNKeyFromDisk(certFile, keyFile); err != nil {
-		gologger.Print().Msgf("malformed/expired certificate found generating new ones\nNote: Certificates must be reinstalled")
+		return fmt.Errorf("malformed/expired certificate found generating new ones\nNote: Certificates must be reinstalled")
 	}
 	if cert == nil || pkey == nil {
-		gologger.Fatal().Msgf("something went wrong, cannot start proxify")
+		return errors.New("something went wrong, cannot start proxify")
 	}
+	return nil
 }
