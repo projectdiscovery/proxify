@@ -473,7 +473,9 @@ func NewProxy(options *Options) (*Proxy, error) {
 		rbsocks5: rbsocks5,
 	}
 
-	proxy.setupHTTPProxy()
+	if err := proxy.setupHTTPProxy(); err != nil {
+		return nil, err
+	}
 
 	var socks5proxy *socks5.Server
 	if options.ListenAddrSocks5 != "" {
