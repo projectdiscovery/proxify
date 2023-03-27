@@ -16,13 +16,13 @@ import (
 
 	"github.com/armon/go-socks5"
 	"github.com/elazarl/goproxy"
-	"github.com/google/martian/v3"
-	martianlog "github.com/google/martian/v3/log"
 	"github.com/haxii/fastproxy/bufiopool"
 	"github.com/haxii/fastproxy/superproxy"
 	"github.com/projectdiscovery/dsl"
 	"github.com/projectdiscovery/fastdialer/fastdialer"
 	"github.com/projectdiscovery/gologger"
+	"github.com/projectdiscovery/martian/v3"
+	martianlog "github.com/projectdiscovery/martian/v3/log"
 	"github.com/projectdiscovery/proxify/pkg/certs"
 	"github.com/projectdiscovery/proxify/pkg/logger"
 	"github.com/projectdiscovery/proxify/pkg/logger/elastic"
@@ -333,15 +333,18 @@ func (p *Proxy) Run() error {
 // setupHTTPProxy configures proxy with settings
 func (p *Proxy) setupHTTPProxy() error {
 	hp := martian.NewProxy()
+	hp.Miscellaneous.SetH1ConnectionHeader = true
+	hp.Miscellaneous.StripProxyHeaders = true
+	hp.Miscellaneous.IgnoreWebSocketError = true
 	rt, err := p.getRoundTripper()
 	if err != nil {
 		return errorutil.NewWithErr(err).Msgf("failed to setup transport")
 	}
 	hp.SetRoundTripper(rt)
-	dialfunc := func(a, b string) (net.Conn, error) {
-		return p.Dialer.Dial(context.Background(), a, b)
+	dialContextFunc := func(ctx context.Context, a, b string) (net.Conn, error) {
+		return p.Dialer.Dial(ctx, a, b)
 	}
-	hp.SetDial(dialfunc)
+	hp.SetDialContext(dialContextFunc)
 	hp.SetMITM(certs.GetMitMConfig())
 	p.httpProxy = hp
 	return nil

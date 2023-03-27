@@ -10,8 +10,8 @@ import (
 	"path"
 	"time"
 
-	"github.com/google/martian/v3/mitm"
 	"github.com/projectdiscovery/gologger"
+	"github.com/projectdiscovery/martian/v3/mitm"
 	fileutil "github.com/projectdiscovery/utils/file"
 )
 
