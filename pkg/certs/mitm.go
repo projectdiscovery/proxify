@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/projectdiscovery/gologger"
@@ -19,6 +19,18 @@ import (
 var (
 	cert *x509.Certificate
 	pkey *rsa.PrivateKey
+)
+
+const (
+	caKeyName     = "cakey.pem"
+	caCertName    = "cacert.pem"
+	bits          = 2048
+	organization  = "Proxify CA"
+	country       = "US"
+	province      = "CA"
+	locality      = "San Francisco"
+	streetAddress = "548 Market St"
+	postalCode    = "94104"
 )
 
 // GetMitMConfig returns mitm config for martian
@@ -93,8 +105,8 @@ func readPemFromDisk(filename string) (*pem.Block, error) {
 }
 
 func LoadCerts(dir string) error {
-	certFile := path.Join(dir, caCertName)
-	keyFile := path.Join(dir, caKeyName)
+	certFile := filepath.Join(dir, caCertName)
+	keyFile := filepath.Join(dir, caKeyName)
 
 	if !fileutil.FileExists(certFile) || !fileutil.FileExists(keyFile) {
 		return generateCertificate(certFile, keyFile)

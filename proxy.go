@@ -15,7 +15,6 @@ import (
 	"strings"
 
 	"github.com/armon/go-socks5"
-	"github.com/elazarl/goproxy"
 	"github.com/haxii/fastproxy/bufiopool"
 	"github.com/haxii/fastproxy/superproxy"
 	"github.com/projectdiscovery/dsl"
@@ -35,9 +34,8 @@ import (
 	"golang.org/x/net/proxy"
 )
 
-type OnRequestFunc func(*http.Request, *goproxy.ProxyCtx) (*http.Request, *http.Response)
-type OnResponseFunc func(*http.Response, *goproxy.ProxyCtx) *http.Response
-type OnConnectFunc func(string, *goproxy.ProxyCtx) (*goproxy.ConnectAction, string)
+type OnRequestFunc func(req *http.Request, ctx *martian.Context) error
+type OnResponseFunc func(resp *http.Response, ctx *martian.Context) error
 
 type Options struct {
 	DumpRequest                 bool
@@ -58,8 +56,6 @@ type Options struct {
 	DNSFallbackResolver         string
 	RequestMatchReplaceDSL      []string
 	ResponseMatchReplaceDSL     []string
-	OnConnectHTTPCallback       OnConnectFunc
-	OnConnectHTTPSCallback      OnConnectFunc
 	OnRequestCallback           OnRequestFunc
 	OnResponseCallback          OnResponseFunc
 	Deny                        []string
@@ -71,11 +67,9 @@ type Options struct {
 }
 
 type Proxy struct {
-	Dialer  *fastdialer.Dialer
-	options *Options
-	logger  *logger.Logger
-	// certs        *certs.Manager
-	// httpproxy    *goproxy.ProxyHttpServer
+	Dialer       *fastdialer.Dialer
+	options      *Options
+	logger       *logger.Logger
 	httpProxy    *martian.Proxy
 	socks5proxy  *socks5.Server
 	socks5tunnel *superproxy.SuperProxy
@@ -96,6 +90,11 @@ func (p *Proxy) ModifyRequest(req *http.Request) error {
 		Host: req.Host,
 	}
 
+	// If callbacks are given use them (for library use cases)
+	if p.options.OnRequestCallback != nil {
+		return p.options.OnRequestCallback(req, ctx)
+	}
+
 	for _, expr := range p.options.RequestDSL {
 		if !userData.Match {
 			m, _ := util.HTTPRequesToMap(req)
@@ -112,21 +111,7 @@ func (p *Proxy) ModifyRequest(req *http.Request) error {
 	if len(p.options.RequestMatchReplaceDSL) != 0 {
 		_ = p.MatchReplaceRequest(req)
 	}
-
-	// var tempBody io.ReadCloser = nil
-	// if req.ContentLength > 0 {
-	// 	bin, err := io.ReadAll(req.Body)
-	// 	if err == nil {
-	// 		tempBody = io.NopCloser(bytes.NewReader(bin))
-	// 	}
-	// }
-
 	_ = p.logger.LogRequest(req, userData)
-
-	// if tempBody != nil {
-	// 	req.Body = tempBody
-	// }
-
 	return nil
 }
 
@@ -145,6 +130,11 @@ func (p *Proxy) ModifyResponse(resp *http.Response) error {
 		userData = &types.UserData{}
 	}
 	userData.HasResponse = true
+
+	// If callbacks are given use them (for library use cases)
+	if p.options.OnResponseCallback != nil {
+		return p.options.OnResponseCallback(resp, ctx)
+	}
 
 	// TODO: match in request seems to be seperate from response
 	// but share same `Match` value. investigate this
