@@ -1,4 +1,4 @@
-<h1 align="center">read
+<h1 align="center">
   <img src="static/proxify-logo.png" alt="proxify" width="200px">
   <br>
 </h1>
