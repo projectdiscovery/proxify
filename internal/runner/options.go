@@ -37,6 +37,7 @@ type Options struct {
 	UpstreamProxyRequestsNumber int                 // Number of requests before switching upstream proxy
 	DumpRequest                 bool                // Dump requests in separate files
 	DumpResponse                bool                // Dump responses in separate files
+	OutCAFile                   string
 	Deny                        goflags.StringSlice // Deny ip/cidr
 	Allow                       goflags.StringSlice // Allow ip/cidr
 	Elastic                     elastic.Options
@@ -63,6 +64,7 @@ func ParseOptions() *Options {
 		flagSet.StringVarP(&options.OutputDirectory, "output", "o", "logs", "Output Directory to store HTTP proxy logs"),
 		flagSet.BoolVar(&options.DumpRequest, "dump-req", false, "Dump only HTTP requests to output file"),
 		flagSet.BoolVar(&options.DumpResponse, "dump-resp", false, "Dump only HTTP responses to output file"),
+		flagSet.StringVarP(&options.OutCAFile, "out-ca", "oca", "", "Generate and Save CA File to filename"),
 	)
 
 	flagSet.CreateGroup("update", "Update",

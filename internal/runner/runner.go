@@ -1,12 +1,14 @@
 package runner
 
 import (
+	"os"
 	"strings"
 
 	"github.com/Knetic/govaluate"
 	"github.com/projectdiscovery/dsl"
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/proxify"
+	"github.com/projectdiscovery/proxify/pkg/certs"
 )
 
 // Runner contains the internal logic of the program
@@ -17,6 +19,19 @@ type Runner struct {
 
 // NewRunner instance
 func NewRunner(options *Options) (*Runner, error) {
+	if err := certs.LoadCerts(options.Directory); err != nil {
+		gologger.Fatal().Msgf("%s\n", err)
+	}
+
+	if options.OutCAFile != "" {
+		err := certs.SaveCAToFile(options.OutCAFile)
+		if err != nil {
+			return nil, err
+		}
+		gologger.Print().Msgf("Saved CA File at %v", options.OutCAFile)
+		os.Exit(0)
+	}
+
 	proxy, err := proxify.NewProxy(&proxify.Options{
 		Directory:                   options.Directory,
 		CertCacheSize:               options.CertCacheSize,
@@ -63,6 +78,7 @@ func (r *Runner) validateExpressions(expressionsGroups ...[]string) error {
 
 // Run polling and notification
 func (r *Runner) Run() error {
+
 	if err := r.validateExpressions(r.options.RequestDSL, r.options.ResponseDSL, r.options.RequestMatchReplaceDSL, r.options.ResponseMatchReplaceDSL); err != nil {
 		return err
 	}

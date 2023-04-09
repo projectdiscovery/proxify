@@ -2,7 +2,6 @@ package proxify
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -12,32 +11,31 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"regexp"
 	"strconv"
 	"strings"
 
-	rbtransport "github.com/Mzack9999/roundrobin/transport"
 	"github.com/armon/go-socks5"
-	"github.com/elazarl/goproxy"
 	"github.com/haxii/fastproxy/bufiopool"
 	"github.com/haxii/fastproxy/superproxy"
 	"github.com/projectdiscovery/dsl"
 	"github.com/projectdiscovery/fastdialer/fastdialer"
 	"github.com/projectdiscovery/gologger"
+	"github.com/projectdiscovery/martian/v3"
+	martianlog "github.com/projectdiscovery/martian/v3/log"
 	"github.com/projectdiscovery/proxify/pkg/certs"
 	"github.com/projectdiscovery/proxify/pkg/logger"
 	"github.com/projectdiscovery/proxify/pkg/logger/elastic"
 	"github.com/projectdiscovery/proxify/pkg/logger/kafka"
 	"github.com/projectdiscovery/proxify/pkg/types"
 	"github.com/projectdiscovery/proxify/pkg/util"
+	rbtransport "github.com/projectdiscovery/roundrobin/transport"
 	"github.com/projectdiscovery/tinydns"
-	"github.com/rs/xid"
+	errorutil "github.com/projectdiscovery/utils/errors"
 	"golang.org/x/net/proxy"
 )
 
-type OnRequestFunc func(*http.Request, *goproxy.ProxyCtx) (*http.Request, *http.Response)
-type OnResponseFunc func(*http.Response, *goproxy.ProxyCtx) *http.Response
-type OnConnectFunc func(string, *goproxy.ProxyCtx) (*goproxy.ConnectAction, string)
+type OnRequestFunc func(req *http.Request, ctx *martian.Context) error
+type OnResponseFunc func(resp *http.Response, ctx *martian.Context) error
 
 type Options struct {
 	DumpRequest                 bool
@@ -58,8 +56,6 @@ type Options struct {
 	DNSFallbackResolver         string
 	RequestMatchReplaceDSL      []string
 	ResponseMatchReplaceDSL     []string
-	OnConnectHTTPCallback       OnConnectFunc
-	OnConnectHTTPSCallback      OnConnectFunc
 	OnRequestCallback           OnRequestFunc
 	OnResponseCallback          OnResponseFunc
 	Deny                        []string
@@ -74,8 +70,7 @@ type Proxy struct {
 	Dialer       *fastdialer.Dialer
 	options      *Options
 	logger       *logger.Logger
-	certs        *certs.Manager
-	httpproxy    *goproxy.ProxyHttpServer
+	httpProxy    *martian.Proxy
 	socks5proxy  *socks5.Server
 	socks5tunnel *superproxy.SuperProxy
 	bufioPool    *bufiopool.Pool
@@ -84,78 +79,94 @@ type Proxy struct {
 	rbsocks5     *rbtransport.RoundTransport
 }
 
-func (p *Proxy) OnRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-	var userdata types.UserData
-	if ctx.UserData != nil {
-		userdata = ctx.UserData.(types.UserData)
-	} else {
-		userdata.Host = req.URL.Host
+// ModifyRequest
+func (p *Proxy) ModifyRequest(req *http.Request) error {
+	ctx := martian.NewContext(req)
+	// disable upgrading http connections to https by default
+	ctx.Session().MarkInsecure()
+	// setup passthrought and hijack here
+	userData := types.UserData{
+		ID:   ctx.ID(),
+		Host: req.Host,
 	}
 
-	// check dsl
+	// If callbacks are given use them (for library use cases)
+	if p.options.OnRequestCallback != nil {
+		return p.options.OnRequestCallback(req, ctx)
+	}
+
 	for _, expr := range p.options.RequestDSL {
-		if !userdata.Match {
+		if !userData.Match {
 			m, _ := util.HTTPRequesToMap(req)
 			v, err := dsl.EvalExpr(expr, m)
 			if err != nil {
 				gologger.Warning().Msgf("Could not evaluate request dsl: %s\n", err)
 			}
-			userdata.Match = err == nil && v.(bool)
+			userData.Match = err == nil && v.(bool)
 		}
 	}
-
-	id := xid.New().String()
-	userdata.ID = id
+	ctx.Set("user-data", userData)
 
 	// perform match and replace
 	if len(p.options.RequestMatchReplaceDSL) != 0 {
 		_ = p.MatchReplaceRequest(req)
 	}
-
-	_ = p.logger.LogRequest(req, userdata)
-	ctx.UserData = userdata
-
-	return req, nil
+	_ = p.logger.LogRequest(req, userData)
+	return nil
 }
 
-func (p *Proxy) OnResponse(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
-	userdata := ctx.UserData.(types.UserData)
-	userdata.HasResponse = true
+// ModifyResponse
+func (p *Proxy) ModifyResponse(resp *http.Response) error {
+	ctx := martian.NewContext(resp.Request)
+	var userData *types.UserData
+	if w, ok := ctx.Get("user-data"); ok {
+		if data, ok2 := w.(types.UserData); ok2 {
+			userData = &data
+		}
+	}
+	if userData == nil {
+		gologger.Error().Msgf("something went wrong got response without userData")
+		// pass empty struct to avoid panic
+		userData = &types.UserData{}
+	}
+	userData.HasResponse = true
+
+	// If callbacks are given use them (for library use cases)
+	if p.options.OnResponseCallback != nil {
+		return p.options.OnResponseCallback(resp, ctx)
+	}
+
+	// TODO: match in request seems to be seperate from response
+	// but share same `Match` value. investigate this
+	matchStatus := false
 	for _, expr := range p.options.ResponseDSL {
-		if !userdata.Match {
+		if !matchStatus {
 			m, _ := util.HTTPResponseToMap(resp)
 			v, err := dsl.EvalExpr(expr, m)
 			if err != nil {
 				gologger.Warning().Msgf("Could not evaluate response dsl: %s\n", err)
 			}
-			userdata.Match = err == nil && v.(bool)
+			matchStatus = err == nil && v.(bool)
 		}
 	}
-
+	userData.Match = matchStatus
 	// perform match and replace
 	if len(p.options.ResponseMatchReplaceDSL) != 0 {
 		_ = p.MatchReplaceResponse(resp)
 	}
-
-	_ = p.logger.LogResponse(resp, userdata)
-	ctx.UserData = userdata
-	return resp
-}
-
-func (p *Proxy) OnConnectHTTP(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
-	if util.MatchAnyRegex(p.options.PassThrough, host) {
-		return goproxy.OkConnect, host
+	_ = p.logger.LogResponse(resp, *userData)
+	if resp.StatusCode == 301 || resp.StatusCode == 302 {
+		// set connection close header
+		// close connection if redirected to different host
+		if loc, err := resp.Location(); err == nil {
+			if loc.Host == resp.Request.Host {
+				// if same host redirect do not close connection
+				return nil
+			}
+		}
+		resp.Close = true
 	}
-	ctx.UserData = types.UserData{Host: host}
-	return goproxy.HTTPMitmConnect, host
-}
-
-func (p *Proxy) OnConnectHTTPS(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
-	if util.MatchAnyRegex(p.options.PassThrough, host) {
-		return goproxy.OkConnect, host
-	}
-	ctx.UserData = types.UserData{Host: host}
-	return goproxy.MitmConnect, host
+	return nil
 }
 
 // MatchReplaceRequest strings or regex
@@ -244,86 +255,55 @@ func (p *Proxy) Run() error {
 	}
 
 	// http proxy
-	if p.httpproxy != nil {
-		if len(p.options.UpstreamHTTPProxies) > 0 {
-			p.httpproxy.Tr = &http.Transport{Proxy: func(req *http.Request) (*url.URL, error) {
-				return url.Parse(p.rbhttp.Next())
-			}, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-			p.httpproxy.ConnectDial = nil
-		} else if len(p.options.UpstreamSock5Proxies) > 0 {
-			// for each socks5 proxy create a dialer
-			socks5Dialers := make(map[string]proxy.Dialer)
-			for _, socks5proxy := range p.options.UpstreamSock5Proxies {
-				dialer, err := proxy.SOCKS5("tcp", socks5proxy, nil, proxy.Direct)
-				if err != nil {
-					return err
-				}
-				socks5Dialers[socks5proxy] = dialer
+	if p.httpProxy != nil {
+		p.httpProxy.TLSPassthroughFunc = func(req *http.Request) bool {
+			// if !stringsutil.ContainsAny(req.URL.Host, "avatars") {
+			// 	log.Printf("Skipped MITM for %v", req.URL.Host)
+			// 	return true
+			// }
+			return false
+		}
+
+		p.httpProxy.SetRequestModifier(p)
+		p.httpProxy.SetResponseModifier(p)
+
+		go func() {
+			l, err := net.Listen("tcp", p.options.ListenAddrHTTP)
+			if err != nil {
+				gologger.Fatal().Msgf("failed to setup listener got %v", err)
 			}
-			p.httpproxy.Tr = &http.Transport{Dial: func(network, addr string) (net.Conn, error) {
-				// lookup next dialer
-				socks5Proxy := p.rbsocks5.Next()
-				socks5Dialer := socks5Dialers[socks5Proxy]
-				// use it to perform the request
-				return socks5Dialer.Dial(network, addr)
-			}, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-			p.httpproxy.ConnectDial = nil
-		} else {
-			p.httpproxy.Tr.DialContext = p.Dialer.Dial
-		}
-		onConnectHTTP := p.OnConnectHTTP
-		if p.options.OnConnectHTTPCallback != nil {
-			onConnectHTTP = p.options.OnConnectHTTPCallback
-		}
-		onConnectHTTPS := p.OnConnectHTTPS
-		if p.options.OnConnectHTTPSCallback != nil {
-			onConnectHTTPS = p.options.OnConnectHTTPSCallback
-		}
-		onRequest := p.OnRequest
-		if p.options.OnRequestCallback != nil {
-			onRequest = p.options.OnRequestCallback
-		}
-		onResponse := p.OnResponse
-		if p.options.OnResponseCallback != nil {
-			onResponse = p.options.OnResponseCallback
-		}
-		p.httpproxy.OnRequest(goproxy.ReqHostMatches(regexp.MustCompile("^.*:80$"))).HandleConnectFunc(onConnectHTTP)
-		p.httpproxy.OnRequest(goproxy.ReqHostMatches(regexp.MustCompile("^.*:443$"))).HandleConnectFunc(onConnectHTTPS)
-		// catch all
-		p.httpproxy.OnRequest().HandleConnectFunc(onConnectHTTPS)
-		p.httpproxy.OnRequest().DoFunc(onRequest)
-		p.httpproxy.OnResponse().DoFunc(onResponse)
+			gologger.Fatal().Msgf("%v", p.httpProxy.Serve(l))
+		}()
 
-		// Serve the certificate when the user makes requests to /proxify
-		p.httpproxy.OnRequest(goproxy.DstHostIs("proxify")).DoFunc(
-			func(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-				if r.URL.Path != "/cacert.crt" {
-					return r, goproxy.NewResponse(r, "text/plain", 404, "Invalid path given")
-				}
+		// // Serve the certificate when the user makes requests to /proxify
+		// p.httpproxy.OnRequest(goproxy.DstHostIs("proxify")).DoFunc(
+		// 	func(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
+		// 		if r.URL.Path != "/cacert.crt" {
+		// 			return r, goproxy.NewResponse(r, "text/plain", 404, "Invalid path given")
+		// 		}
 
-				_, ca := p.certs.GetCA()
-				reader := bytes.NewReader(ca)
+		// 		_, ca := p.certs.GetCA()
+		// 		reader := bytes.NewReader(ca)
 
-				header := http.Header{}
-				header.Set("Content-Type", "application/pkix-cert")
-				resp := &http.Response{
-					Request:          r,
-					TransferEncoding: r.TransferEncoding,
-					Header:           header,
-					StatusCode:       200,
-					Status:           http.StatusText(200),
-					ContentLength:    int64(reader.Len()),
-					Body:             io.NopCloser(reader),
-				}
-				return r, resp
-			},
-		)
-		go http.ListenAndServe(p.options.ListenAddrHTTP, p.httpproxy) // nolint
+		// 		header := http.Header{}
+		// 		header.Set("Content-Type", "application/pkix-cert")
+		// 		resp := &http.Response{
+		// 			Request:          r,
+		// 			TransferEncoding: r.TransferEncoding,
+		// 			Header:           header,
+		// 			StatusCode:       200,
+		// 			Status:           http.StatusText(200),
+		// 			ContentLength:    int64(reader.Len()),
+		// 			Body:             io.NopCloser(reader),
+		// 		}
+		// 		return r, resp
+		// 	},
+		// )
 	}
 
 	// socks5 proxy
 	if p.socks5proxy != nil {
-		if p.httpproxy != nil {
+		if p.httpProxy != nil {
 			httpProxyIP, httpProxyPort, err := net.SplitHostPort(p.options.ListenAddrHTTP)
 			if err != nil {
 				return err
@@ -345,37 +325,78 @@ func (p *Proxy) Run() error {
 	return nil
 }
 
-func (p *Proxy) Stop() {
+// setupHTTPProxy configures proxy with settings
+func (p *Proxy) setupHTTPProxy() error {
+	hp := martian.NewProxy()
+	hp.Miscellaneous.SetH1ConnectionHeader = true
+	hp.Miscellaneous.StripProxyHeaders = true
+	hp.Miscellaneous.IgnoreWebSocketError = true
+	rt, err := p.getRoundTripper()
+	if err != nil {
+		return errorutil.NewWithErr(err).Msgf("failed to setup transport")
+	}
+	hp.SetRoundTripper(rt)
+	dialContextFunc := func(ctx context.Context, a, b string) (net.Conn, error) {
+		return p.Dialer.Dial(ctx, a, b)
+	}
+	hp.SetDialContext(dialContextFunc)
+	hp.SetMITM(certs.GetMitMConfig())
+	p.httpProxy = hp
+	return nil
+}
 
+// getRoundTripper returns RoundTripper configured with options
+func (p *Proxy) getRoundTripper() (http.RoundTripper, error) {
+	roundtrip := &http.Transport{
+		MaxIdleConnsPerHost: -1,
+		MaxIdleConns:        0,
+		MaxConnsPerHost:     0,
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}
+
+	if len(p.options.UpstreamHTTPProxies) > 0 {
+		roundtrip = &http.Transport{Proxy: func(req *http.Request) (*url.URL, error) {
+			return url.Parse(p.rbhttp.Next())
+		}, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+	} else if len(p.options.UpstreamSock5Proxies) > 0 {
+		// for each socks5 proxy create a dialer
+		socks5Dialers := make(map[string]proxy.Dialer)
+		for _, socks5proxy := range p.options.UpstreamSock5Proxies {
+			dialer, err := proxy.SOCKS5("tcp", socks5proxy, nil, proxy.Direct)
+			if err != nil {
+				return nil, err
+			}
+			socks5Dialers[socks5proxy] = dialer
+		}
+		roundtrip = &http.Transport{Dial: func(network, addr string) (net.Conn, error) {
+			// lookup next dialer
+			socks5Proxy := p.rbsocks5.Next()
+			socks5Dialer := socks5Dialers[socks5Proxy]
+			// use it to perform the request
+			return socks5Dialer.Dial(network, addr)
+		}, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+	}
+	return roundtrip, nil
+}
+
+func (p *Proxy) Stop() {
+	// p.httpProxy.Close()
 }
 
 func NewProxy(options *Options) (*Proxy, error) {
-	certs, err := certs.New(&certs.Options{
-		CacheSize: options.CertCacheSize,
-		Directory: options.Directory,
-	})
-	if err != nil {
-		return nil, err
-	}
 
-	var httpproxy *goproxy.ProxyHttpServer
-	if options.ListenAddrHTTP != "" {
-		httpproxy = goproxy.NewProxyHttpServer()
-		if options.Verbosity <= types.VerbositySilent {
-			httpproxy.Logger = log.New(io.Discard, "", log.Ltime|log.Lshortfile)
-		} else if options.Verbosity >= types.VerbosityVerbose {
-			httpproxy.Verbose = true
-		} else {
-			httpproxy.Verbose = false
-		}
+	switch options.Verbosity {
+	case types.VerbositySilent:
+		martianlog.SetLevel(martianlog.Silent)
+	case types.VerbosityVerbose:
+		martianlog.SetLevel(martianlog.Info)
+	case types.VerbosityVeryVerbose:
+		martianlog.SetLevel(martianlog.Debug)
+	default:
+		martianlog.SetLevel(martianlog.Error)
 	}
-
-	ca, _ := certs.GetCA()
-	goproxy.GoproxyCa = ca
-	goproxy.OkConnect = &goproxy.ConnectAction{Action: goproxy.ConnectAccept, TLSConfig: certs.TLSConfigFromCA()}
-	goproxy.MitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectMitm, TLSConfig: certs.TLSConfigFromCA()}
-	goproxy.HTTPMitmConnect = &goproxy.ConnectAction{Action: goproxy.ConnectHTTPMitm, TLSConfig: certs.TLSConfigFromCA()}
-	goproxy.RejectConnect = &goproxy.ConnectAction{Action: goproxy.ConnectReject, TLSConfig: certs.TLSConfigFromCA()}
 
 	logger := logger.NewLogger(&logger.OptionsLogger{
 		Verbosity:    options.Verbosity,
@@ -402,6 +423,7 @@ func NewProxy(options *Options) (*Proxy, error) {
 			}
 			dnsmapping[data[0]] = &tinydns.DnsRecord{A: []string{data[1]}}
 		}
+		var err error
 		tdns, err = tinydns.New(&tinydns.Options{
 			ListenAddress:   options.ListenDNSAddr,
 			Net:             "udp",
@@ -433,14 +455,16 @@ func NewProxy(options *Options) (*Proxy, error) {
 	}
 
 	proxy := &Proxy{
-		httpproxy: httpproxy,
-		certs:     certs,
-		logger:    logger,
-		options:   options,
-		Dialer:    dialer,
-		tinydns:   tdns,
-		rbhttp:    rbhttp,
-		rbsocks5:  rbsocks5,
+		logger:   logger,
+		options:  options,
+		Dialer:   dialer,
+		tinydns:  tdns,
+		rbhttp:   rbhttp,
+		rbsocks5: rbsocks5,
+	}
+
+	if err := proxy.setupHTTPProxy(); err != nil {
+		return nil, err
 	}
 
 	var socks5proxy *socks5.Server

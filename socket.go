@@ -22,7 +22,7 @@ type SocketProxy struct {
 
 // SocketConn represent the single full duplex pipe
 type SocketConn struct {
-	laddr, raddr            net.Addr //nolint
+	// laddr, raddr            net.Addr //nolint
 	lconn, rconn            net.Conn
 	erred                   bool
 	errsig                  chan bool

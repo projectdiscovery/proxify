@@ -1,25 +1,24 @@
 module github.com/projectdiscovery/proxify
 
-go 1.19
+go 1.20
 
 require (
 	github.com/Knetic/govaluate v3.0.0+incompatible
-	github.com/Mzack9999/roundrobin v0.0.0-20211108110706-e876335f5ad4
 	github.com/Shopify/sarama v1.38.1
 	github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/elastic/go-elasticsearch/v7 v7.17.7
 	github.com/elazarl/goproxy v0.0.0-20221015165544-a0805db90819
-	github.com/hashicorp/golang-lru v0.5.4
 	github.com/haxii/fastproxy v0.5.37
 	github.com/pkg/errors v0.9.1
 	github.com/projectdiscovery/dsl v0.0.5
 	github.com/projectdiscovery/fastdialer v0.0.24
 	github.com/projectdiscovery/goflags v0.1.8
 	github.com/projectdiscovery/gologger v1.1.8
+	github.com/projectdiscovery/martian/v3 v3.0.0-20230327175357-82434c1bb926
+	github.com/projectdiscovery/roundrobin v0.0.6
 	github.com/projectdiscovery/tinydns v0.0.3
 	github.com/projectdiscovery/utils v0.0.19
-	github.com/rs/xid v1.4.0
 	golang.org/x/net v0.9.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -81,7 +80,7 @@ require (
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pierrec/lz4/v4 v4.1.17 // indirect
 	github.com/projectdiscovery/blackrock v0.0.0-20230328171319-f24b18d05b64 // indirect
-	github.com/projectdiscovery/hmap v0.0.10 // indirect
+	github.com/projectdiscovery/hmap v0.0.11 // indirect
 	github.com/projectdiscovery/iputil v0.0.2 // indirect
 	github.com/projectdiscovery/mapcidr v1.1.1 // indirect
 	github.com/projectdiscovery/networkpolicy v0.0.4 // indirect
@@ -120,6 +119,8 @@ require (
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/tools v0.7.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
+	google.golang.org/genproto v0.0.0-20210624195500-8bfb893ecb84 // indirect
+	google.golang.org/grpc v1.38.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
