@@ -139,7 +139,7 @@ func ParseOptions() *Options {
 	showBanner()
 
 	if !options.DisableUpdateCheck {
-		latestVersion, err := updateutils.GetVersionCheckCallback("proxify")()
+		latestVersion, err := updateutils.GetToolVersionCallback("proxify", version)()
 		if err != nil {
 			if verbose {
 				gologger.Error().Msgf("proxify version check failed: %v", err.Error())
