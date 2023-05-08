@@ -55,8 +55,8 @@ github.com/eapache/go-xerial-snappy v0.0.0-20230111030713-bf00bc1b83b6 h1:8yY/I9
 github.com/eapache/go-xerial-snappy v0.0.0-20230111030713-bf00bc1b83b6/go.mod h1:YvSRo5mw33fLEx1+DlK6L2VV43tJt5Eyel9n9XBcR+0=
 github.com/eapache/queue v1.1.0 h1:YOEu7KNc61ntiQlcEeUIoDTJ2o8mQznoNvUhiigpIqc=
 github.com/eapache/queue v1.1.0/go.mod h1:6eCeP0CKFpHLu8blIFXhExK/dRa7WDZfr6jVFPTqq+I=
-github.com/elastic/go-elasticsearch/v7 v7.17.7 h1:pcYNfITNPusl+cLwLN6OLmVT+F73Els0nbaWOmYachs=
-github.com/elastic/go-elasticsearch/v7 v7.17.7/go.mod h1:OJ4wdbtDNk5g503kvlHLyErCgQwwzmDtaFC4XyOxXA4=
+github.com/elastic/go-elasticsearch/v7 v7.17.10 h1:TCQ8i4PmIJuBunvBS6bwT2ybzVFxxUhhltAs3Gyu1yo=
+github.com/elastic/go-elasticsearch/v7 v7.17.10/go.mod h1:OJ4wdbtDNk5g503kvlHLyErCgQwwzmDtaFC4XyOxXA4=
 github.com/elazarl/goproxy v0.0.0-20221015165544-a0805db90819 h1:RIB4cRk+lBqKK3Oy0r2gRX4ui7tuhiZq2SuTtTCi0/0=
 github.com/elazarl/goproxy v0.0.0-20221015165544-a0805db90819/go.mod h1:Ro8st/ElPeALwNFlcTpWmkr6IoMFfkjXAvTHpevnDsM=
 github.com/elazarl/goproxy/ext v0.0.0-20190711103511-473e67f1d7d2/go.mod h1:gNh8nYJoAm43RfaxurUnxr+N1PwuFV3ZMl/efxlIlY8=
@@ -227,10 +227,6 @@ github.com/projectdiscovery/iputil v0.0.2 h1:f6IGnZF4RImJLysPSPG3D84jyTH34q3lihC
 github.com/projectdiscovery/iputil v0.0.2/go.mod h1:J3Pcz1q51pi4/JL871mQztg0KOzyWDPxnPLOYJm2pVQ=
 github.com/projectdiscovery/mapcidr v1.1.1 h1:68Xvw9cKugNeAVxHE3Nl1Ej26nm1taWq6e1WPXpluc0=
 github.com/projectdiscovery/mapcidr v1.1.1/go.mod h1:yyp9ghqmmC0+r5DySgDBXE4cf2QW8SBloVESCteWiAg=
-github.com/projectdiscovery/martian/v3 v3.0.0-20230327175357-82434c1bb926 h1:xzUYoMEg9W6I1RXVbB8RDr520A8xekqMSBV9ymfWr54=
-github.com/projectdiscovery/martian/v3 v3.0.0-20230327175357-82434c1bb926/go.mod h1:wPvVUl2C/XOFacugXwsUp65GN0upmKfwKMyimA/AAaM=
-github.com/projectdiscovery/martian/v3 v3.0.0-20230411164955-4409cc859244 h1:CRAKk+kSvA70u4s/FB3v8nFqFzS3RPiuqDlNrPfWWkY=
-github.com/projectdiscovery/martian/v3 v3.0.0-20230411164955-4409cc859244/go.mod h1:wPvVUl2C/XOFacugXwsUp65GN0upmKfwKMyimA/AAaM=
 github.com/projectdiscovery/martian/v3 v3.0.0-20230412114616-98e3a0a6994a h1:TpQ/kMGhsFIv/9hytTU+xXaL+yl2xnTkxLqQRlV6+zE=
 github.com/projectdiscovery/martian/v3 v3.0.0-20230412114616-98e3a0a6994a/go.mod h1:wPvVUl2C/XOFacugXwsUp65GN0upmKfwKMyimA/AAaM=
 github.com/projectdiscovery/networkpolicy v0.0.4 h1:zcGjEqZbyECZEdyCy1jVuwOS7Ww1mzgCefQU75XqdJA=

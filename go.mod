@@ -7,7 +7,7 @@ require (
 	github.com/Shopify/sarama v1.38.1
 	github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
-	github.com/elastic/go-elasticsearch/v7 v7.17.7
+	github.com/elastic/go-elasticsearch/v7 v7.17.10
 	github.com/elazarl/goproxy v0.0.0-20221015165544-a0805db90819
 	github.com/haxii/fastproxy v0.5.37
 	github.com/pkg/errors v0.9.1
