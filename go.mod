@@ -19,7 +19,7 @@ require (
 	github.com/projectdiscovery/roundrobin v0.0.6
 	github.com/projectdiscovery/tinydns v0.0.3
 	github.com/projectdiscovery/utils v0.0.26
-	golang.org/x/net v0.9.0
+	golang.org/x/net v0.10.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -115,7 +115,7 @@ require (
 	golang.org/x/exp v0.0.0-20230315142452-642cacee5cc0 // indirect
 	golang.org/x/mod v0.9.0 // indirect
 	golang.org/x/oauth2 v0.7.0 // indirect
-	golang.org/x/sys v0.7.0 // indirect
+	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/tools v0.7.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
