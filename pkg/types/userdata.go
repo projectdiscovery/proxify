@@ -15,3 +15,18 @@ type OutputData struct {
 	PartSuffix string
 	Format     string
 }
+
+type HTTPRequestResponseLog struct {
+	Timestamp string `json:"timestamp"`
+	URL       string `json:"url"`
+	Request   struct {
+		Header map[string]string `json:"header"`
+		Body   string            `json:"body"`
+		Raw    string            `json:"raw"`
+	} `json:"request"`
+	Response struct {
+		Header map[string]string `json:"header"`
+		Body   string            `json:"body"`
+		Raw    string            `json:"raw"`
+	} `json:"response"`
+}

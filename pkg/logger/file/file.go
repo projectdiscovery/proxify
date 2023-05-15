@@ -13,6 +13,7 @@ import (
 type Options struct {
 	// OutputFolder is the folder where the logs will be stored
 	OutputFolder string `yaml:"output-folder"`
+	OutputJsonl  bool   `yaml:"output-jsonl"`
 }
 
 // Client type for file based logging
@@ -22,14 +23,18 @@ type Client struct {
 
 // New creates and returns a new client for file based logging
 func New(option *Options) (*Client, error) {
-	client := &Client{options: &Options{OutputFolder: option.OutputFolder}}
+	client := &Client{options: option}
 	return client, fileutil.CreateFolder(option.OutputFolder)
 }
 
 // Store writes the log to the file
 func (c *Client) Save(data types.OutputData) error {
+	fileExt := "txt"
+	if c.options.OutputJsonl {
+		fileExt = "json"
+	}
 	// generate the file destination file name
-	destFile := filepath.Join(c.options.OutputFolder, fmt.Sprintf("%s.%s", data.Name, "txt"))
+	destFile := filepath.Join(c.options.OutputFolder, fmt.Sprintf("%s.%s", data.Name, fileExt))
 	// if it's a response and file doesn't exist skip
 	f, err := os.OpenFile(destFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {

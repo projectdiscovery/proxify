@@ -50,6 +50,7 @@ func NewRunner(options *Options) (*Runner, error) {
 		ResponseMatchReplaceDSL:     options.ResponseMatchReplaceDSL,
 		DumpRequest:                 options.DumpRequest,
 		DumpResponse:                options.DumpResponse,
+		OutputJsonl:                 options.OutputJsonl,
 		MaxSize:                     options.MaxSize,
 		UpstreamProxyRequestsNumber: options.UpstreamProxyRequestsNumber,
 		Elastic:                     &options.Elastic,
