@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"strings"
@@ -182,7 +181,7 @@ func (l *Logger) LogResponse(resp *http.Response, userdata types.UserData) error
 	if l.options.OutputJsonl {
 		outputData := l.jsonLogMap[resp.Request.URL.String()]
 		fillJsonResponseData(resp, &outputData)
-		respdump, err = json.MarshalIndent(outputData, "", "  ")
+		respdump, err = json.Marshal(outputData)
 		if err != nil {
 			return err
 		}
@@ -224,12 +223,12 @@ func fillJsonRequestData(req *http.Request, outputData *types.HTTPRequestRespons
 	}
 	outputData.Request.Header = reqHeaders
 	// Extract body from the request
-	reqBody, err := ioutil.ReadAll(req.Body)
+	reqBody, err := io.ReadAll(req.Body)
 	if err != nil {
 		return err
 	}
 	defer req.Body.Close()
-	req.Body = ioutil.NopCloser(strings.NewReader(string(reqBody)))
+	req.Body = io.NopCloser(strings.NewReader(string(reqBody)))
 	if err != nil {
 		return err
 	}
@@ -252,12 +251,12 @@ func fillJsonResponseData(resp *http.Response, outputData *types.HTTPRequestResp
 	}
 	outputData.Response.Header = respHeaders
 	// Extract body from the response
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
-	resp.Body = ioutil.NopCloser(strings.NewReader(string(respBody)))
+	resp.Body = io.NopCloser(strings.NewReader(string(respBody)))
 	outputData.Response.Body = string(respBody)
 	// Extract raw response
 	respdumpNoBody, err := httputil.DumpResponse(resp, false)
