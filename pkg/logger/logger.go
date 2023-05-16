@@ -143,7 +143,9 @@ func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
 	}
 	if l.options.OutputJsonl {
 		outputData := types.HTTPRequestResponseLog{}
-		fillJsonRequestData(req, &outputData)
+		if err := fillJsonRequestData(req, &outputData); err != nil {
+			return err
+		}
 		l.jsonLogMap[req.URL.String()] = outputData
 	}
 	if (!l.options.OutputJsonl) && (l.options.OutputFolder != "" || l.options.Kafka.Addr != "" || l.options.Elastic.Addr != "") {
@@ -179,13 +181,15 @@ func (l *Logger) LogResponse(resp *http.Response, userdata types.UserData) error
 		return err
 	}
 	if l.options.OutputJsonl {
+		defer delete(l.jsonLogMap, resp.Request.URL.String())
 		outputData := l.jsonLogMap[resp.Request.URL.String()]
-		fillJsonResponseData(resp, &outputData)
+		if err := fillJsonResponseData(resp, &outputData); err != nil {
+			return err
+		}
 		respdump, err = json.Marshal(outputData)
 		if err != nil {
 			return err
 		}
-		delete(l.jsonLogMap, resp.Request.URL.String())
 	}
 	if l.options.OutputFolder != "" || l.options.Kafka.Addr != "" || l.options.Elastic.Addr != "" {
 		l.asyncqueue <- types.OutputData{Data: respdump, Userdata: userdata}
