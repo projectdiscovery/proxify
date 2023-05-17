@@ -1,7 +1,6 @@
 package runner
 
 import (
-	"math"
 	"os"
 	"path/filepath"
 
@@ -9,8 +8,6 @@ import (
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/gologger/formatter"
 	"github.com/projectdiscovery/gologger/levels"
-	"github.com/projectdiscovery/proxify/pkg/logger/elastic"
-	"github.com/projectdiscovery/proxify/pkg/logger/kafka"
 	"github.com/projectdiscovery/proxify/pkg/types"
 	updateutils "github.com/projectdiscovery/utils/update"
 )
@@ -40,12 +37,10 @@ type Options struct {
 	OutCAFile                   string
 	Deny                        goflags.StringSlice // Deny ip/cidr
 	Allow                       goflags.StringSlice // Allow ip/cidr
-	Elastic                     elastic.Options
-	Kafka                       kafka.Options
 	PassThrough                 goflags.StringSlice // Passthrough items list
-	MaxSize                     int
-	DisableUpdateCheck          bool // DisableUpdateCheck disables automatic update check
-	OutputJsonl                 bool // OutputJsonl outputs data in JSONL format
+	DisableUpdateCheck          bool                // DisableUpdateCheck disables automatic update check
+	OutputJsonl                 bool                // OutputJsonl outputs data in JSONL format
+	ExportConfig                string
 }
 
 func ParseOptions() *Options {
@@ -96,15 +91,7 @@ func ParseOptions() *Options {
 	)
 
 	flagSet.CreateGroup("export", "Export",
-		flagSet.IntVar(&options.MaxSize, "max-size", math.MaxInt, "Max export data size (request/responses will be truncated)"),
-		flagSet.StringVar(&options.Elastic.Addr, "elastic-address", "", "elasticsearch address (ip:port)"),
-		flagSet.BoolVar(&options.Elastic.SSL, "elastic-ssl", false, "enable elasticsearch ssl"),
-		flagSet.BoolVar(&options.Elastic.SSLVerification, "elastic-ssl-verification", false, "enable elasticsearch ssl verification"),
-		flagSet.StringVar(&options.Elastic.Username, "elastic-username", "", "elasticsearch username"),
-		flagSet.StringVar(&options.Elastic.Password, "elastic-password", "", "elasticsearch password"),
-		flagSet.StringVar(&options.Elastic.IndexName, "elastic-index", "proxify", "elasticsearch index name"),
-		flagSet.StringVar(&options.Kafka.Addr, "kafka-address", "", "address of kafka broker (ip:port)"),
-		flagSet.StringVar(&options.Kafka.Topic, "kafka-topic", "proxify", "kafka topic to publish messages on"),
+		flagSet.StringVarP(&options.ExportConfig, "export-config", "ec", "", "proxify export configuration file"),
 	)
 
 	flagSet.CreateGroup("configuration", "Configuration",
