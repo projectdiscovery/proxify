@@ -44,9 +44,9 @@ type Store interface {
 type Logger struct {
 	options    *OptionsLogger
 	asyncqueue chan types.OutputData
-	jsonLogMap map[string]types.HTTPRequestResponseLog
+	jsonLogMap sync.Map
 	Store      []Store
-	mutex        sync.Mutex
+	mutex      sync.Mutex
 }
 
 // NewLogger instance
@@ -56,7 +56,7 @@ func NewLogger(options *OptionsLogger) *Logger {
 		asyncqueue: make(chan types.OutputData, 1000),
 	}
 	if options.OutputJsonl {
-		logger.jsonLogMap = make(map[string]types.HTTPRequestResponseLog)
+		logger.jsonLogMap = sync.Map{}
 	}
 	if options.Elastic.Addr != "" {
 		store, err := elastic.New(options.Elastic)
@@ -148,9 +148,7 @@ func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
 		if err := fillJsonRequestData(req, &outputData); err != nil {
 			return err
 		}
-		l.mutex.Lock()
-		l.jsonLogMap[req.URL.String()] = outputData
-		l.mutex.Unlock()
+		l.jsonLogMap.Store(req.URL.String(), outputData)
 	}
 	if (!l.options.OutputJsonl) && (l.options.OutputFolder != "" || l.options.Kafka.Addr != "" || l.options.Elastic.Addr != "") {
 		l.asyncqueue <- types.OutputData{Data: reqdump, Userdata: userdata}
@@ -185,10 +183,16 @@ func (l *Logger) LogResponse(resp *http.Response, userdata types.UserData) error
 		return err
 	}
 	if l.options.OutputJsonl {
-		defer delete(l.jsonLogMap, resp.Request.URL.String())
-		l.mutex.Lock()
-		outputData := l.jsonLogMap[resp.Request.URL.String()]
-		l.mutex.Unlock()
+		defer l.jsonLogMap.Delete(resp.Request.URL.String())
+		outputData := types.HTTPRequestResponseLog{}
+		filledOutputReq, ok := l.jsonLogMap.Load(resp.Request.URL.String())
+		if !ok {
+			if err := fillJsonRequestData(resp.Request, &outputData); err != nil {
+				return err
+			}
+		} else {
+			outputData = filledOutputReq.(types.HTTPRequestResponseLog)
+		}
 		if err := fillJsonResponseData(resp, &outputData); err != nil {
 			return err
 		}
