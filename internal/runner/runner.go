@@ -1,7 +1,6 @@
 package runner
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -81,9 +80,6 @@ func NewRunner(options *Options) (*Runner, error) {
 		return nil, err
 	}
 
-	fmt.Printf("exportConfig: %+v\n", exportConfig)
-	fmt.Printf("exportConfig.Elastic: %+v\n", exportConfig.Elastic)
-	fmt.Printf("exportConfig.Kafka: %+v\n", exportConfig.Kafka)
 	return &Runner{options: options, proxy: proxy, exportConfig: exportConfig}, nil
 }
 
