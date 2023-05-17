@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/asaskevich/govalidator"
@@ -45,6 +46,7 @@ type Logger struct {
 	asyncqueue chan types.OutputData
 	jsonLogMap map[string]types.HTTPRequestResponseLog
 	Store      []Store
+	mutex        sync.Mutex
 }
 
 // NewLogger instance
@@ -146,7 +148,9 @@ func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
 		if err := fillJsonRequestData(req, &outputData); err != nil {
 			return err
 		}
+		l.mutex.Lock()
 		l.jsonLogMap[req.URL.String()] = outputData
+		l.mutex.Unlock()
 	}
 	if (!l.options.OutputJsonl) && (l.options.OutputFolder != "" || l.options.Kafka.Addr != "" || l.options.Elastic.Addr != "") {
 		l.asyncqueue <- types.OutputData{Data: reqdump, Userdata: userdata}
@@ -182,7 +186,9 @@ func (l *Logger) LogResponse(resp *http.Response, userdata types.UserData) error
 	}
 	if l.options.OutputJsonl {
 		defer delete(l.jsonLogMap, resp.Request.URL.String())
+		l.mutex.Lock()
 		outputData := l.jsonLogMap[resp.Request.URL.String()]
+		l.mutex.Unlock()
 		if err := fillJsonResponseData(resp, &outputData); err != nil {
 			return err
 		}
@@ -214,7 +220,6 @@ func (l *Logger) Close() {
 func fillJsonRequestData(req *http.Request, outputData *types.HTTPRequestResponseLog) error {
 	outputData.Timestamp = time.Now().Format(time.RFC3339)
 	outputData.URL = req.URL.String()
-	outputData.Request.Header = make(map[string]string)
 	// Extract headers from the request
 	reqHeaders := make(map[string]string)
 	// basic header info

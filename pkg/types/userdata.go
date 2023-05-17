@@ -17,16 +17,16 @@ type OutputData struct {
 }
 
 type HTTPRequestResponseLog struct {
-	Timestamp string `json:"timestamp"`
-	URL       string `json:"url"`
+	Timestamp string `json:"timestamp,omitempty"`
+	URL       string `json:"url,omitempty"`
 	Request   struct {
-		Header map[string]string `json:"header"`
-		Body   string            `json:"body"`
-		Raw    string            `json:"raw"`
-	} `json:"request"`
+		Header map[string]string `json:"header,omitempty"`
+		Body   string            `json:"body,omitempty"`
+		Raw    string            `json:"raw,omitempty"`
+	} `json:"request,omitempty"`
 	Response struct {
-		Header map[string]string `json:"header"`
-		Body   string            `json:"body"`
-		Raw    string            `json:"raw"`
-	} `json:"response"`
+		Header map[string]string `json:"header,omitempty"`
+		Body   string            `json:"body,omitempty"`
+		Raw    string            `json:"raw,omitempty"`
+	} `json:"response,omitempty"`
 }
