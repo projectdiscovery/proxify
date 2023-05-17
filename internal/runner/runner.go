@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -8,15 +9,19 @@ import (
 	"github.com/Knetic/govaluate"
 	"github.com/projectdiscovery/dsl"
 	"github.com/projectdiscovery/gologger"
+	"github.com/projectdiscovery/nuclei/v2/pkg/utils/yaml"
 	"github.com/projectdiscovery/proxify"
 	"github.com/projectdiscovery/proxify/pkg/certs"
+	"github.com/projectdiscovery/proxify/pkg/logger/export"
 	"github.com/projectdiscovery/proxify/pkg/logger/file"
+	fileutil "github.com/projectdiscovery/utils/file"
 )
 
 // Runner contains the internal logic of the program
 type Runner struct {
-	options *Options
-	proxy   *proxify.Proxy
+	options      *Options
+	proxy        *proxify.Proxy
+	exportConfig *export.Config
 }
 
 // NewRunner instance
@@ -32,6 +37,17 @@ func NewRunner(options *Options) (*Runner, error) {
 		}
 		gologger.Print().Msgf("Saved CA File at %v", options.OutCAFile)
 		os.Exit(0)
+	}
+
+	reader, err := fileutil.SubstituteConfigFromEnvVars(options.ExportConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	exportConfig := &export.Config{}
+	err = yaml.DecodeAndValidate(reader, exportConfig)
+	if err != nil {
+		return nil, err
 	}
 
 	proxy, err := proxify.NewProxy(&proxify.Options{
@@ -53,18 +69,22 @@ func NewRunner(options *Options) (*Runner, error) {
 		DumpRequest:                 options.DumpRequest,
 		DumpResponse:                options.DumpResponse,
 		OutputJsonl:                 options.OutputJsonl,
-		MaxSize:                     options.MaxSize,
 		UpstreamProxyRequestsNumber: options.UpstreamProxyRequestsNumber,
-		Elastic:                     &options.Elastic,
-		Kafka:                       &options.Kafka,
 		Allow:                       options.Allow,
 		Deny:                        options.Deny,
 		PassThrough:                 options.PassThrough,
+		MaxSize:                     exportConfig.MaxSize,
+		Elastic:                     exportConfig.Elastic,
+		Kafka:                       exportConfig.Kafka,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &Runner{options: options, proxy: proxy}, nil
+
+	fmt.Printf("exportConfig: %+v\n", exportConfig)
+	fmt.Printf("exportConfig.Elastic: %+v\n", exportConfig.Elastic)
+	fmt.Printf("exportConfig.Kafka: %+v\n", exportConfig.Kafka)
+	return &Runner{options: options, proxy: proxy, exportConfig: exportConfig}, nil
 }
 
 func (r *Runner) validateExpressions(expressionsGroups ...[]string) error {
@@ -101,11 +121,11 @@ func (r *Runner) Run() error {
 		}
 		gologger.Info().Msgf("Saving proxify traffic to %s\n", logPath)
 	}
-	if r.options.Kafka.Addr != "" {
-		gologger.Info().Msgf("Sending traffic to Kafka at %s\n", r.options.Kafka.Addr)
+	if r.exportConfig.Kafka.Addr != "" {
+		gologger.Info().Msgf("Sending traffic to Kafka at %s\n", r.exportConfig.Kafka.Addr)
 	}
-	if r.options.Elastic.Addr != "" {
-		gologger.Info().Msgf("Sending traffic to Elasticsearch at %s\n", r.options.Elastic.Addr)
+	if r.exportConfig.Elastic.Addr != "" {
+		gologger.Info().Msgf("Sending traffic to Elasticsearch at %s\n", r.exportConfig.Elastic.Addr)
 	}
 
 	if len(r.options.UpstreamHTTPProxies) > 0 {
