@@ -46,7 +46,6 @@ type Logger struct {
 	asyncqueue chan types.OutputData
 	jsonLogMap sync.Map
 	Store      []Store
-	mutex      sync.Mutex
 }
 
 // NewLogger instance
