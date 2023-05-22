@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	dataWithNewLine    = "%s\n\n"
+	dataWithNewLine    = "%s\n"
 	dataWithoutNewLine = "%s"
 )
 
