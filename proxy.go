@@ -40,6 +40,7 @@ type OnResponseFunc func(resp *http.Response, ctx *martian.Context) error
 type Options struct {
 	DumpRequest                 bool
 	DumpResponse                bool
+	OutputJsonl                 bool
 	MaxSize                     int
 	Verbosity                   types.Verbosity
 	CertCacheSize               int
@@ -403,6 +404,7 @@ func NewProxy(options *Options) (*Proxy, error) {
 		OutputFolder: options.OutputDirectory,
 		DumpRequest:  options.DumpRequest,
 		DumpResponse: options.DumpResponse,
+		OutputJsonl:  options.OutputJsonl,
 		MaxSize:      options.MaxSize,
 		Elastic:      options.Elastic,
 		Kafka:        options.Kafka,

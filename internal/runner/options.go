@@ -45,6 +45,7 @@ type Options struct {
 	PassThrough                 goflags.StringSlice // Passthrough items list
 	MaxSize                     int
 	DisableUpdateCheck          bool // DisableUpdateCheck disables automatic update check
+	OutputJsonl                 bool // OutputJsonl outputs data in JSONL format
 }
 
 func ParseOptions() *Options {
@@ -64,6 +65,7 @@ func ParseOptions() *Options {
 		flagSet.StringVarP(&options.OutputDirectory, "output", "o", "logs", "Output Directory to store HTTP proxy logs"),
 		flagSet.BoolVar(&options.DumpRequest, "dump-req", false, "Dump only HTTP requests to output file"),
 		flagSet.BoolVar(&options.DumpResponse, "dump-resp", false, "Dump only HTTP responses to output file"),
+		flagSet.BoolVarP(&options.OutputJsonl, "jsonl", "j", false, "write output in JSONL(ines) format"),
 		flagSet.StringVarP(&options.OutCAFile, "out-ca", "oca", "", "Generate and Save CA File to filename"),
 	)
 

@@ -2,11 +2,14 @@ package logger
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httputil"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/projectdiscovery/gologger"
@@ -19,7 +22,7 @@ import (
 )
 
 const (
-	dataWithNewLine    = "%s\n\n"
+	dataWithNewLine    = "%s\n"
 	dataWithoutNewLine = "%s"
 )
 
@@ -28,6 +31,7 @@ type OptionsLogger struct {
 	OutputFolder string
 	DumpRequest  bool
 	DumpResponse bool
+	OutputJsonl  bool
 	MaxSize      int
 	Elastic      *elastic.Options
 	Kafka        *kafka.Options
@@ -40,6 +44,7 @@ type Store interface {
 type Logger struct {
 	options    *OptionsLogger
 	asyncqueue chan types.OutputData
+	jsonLogMap sync.Map
 	Store      []Store
 }
 
@@ -48,6 +53,9 @@ func NewLogger(options *OptionsLogger) *Logger {
 	logger := &Logger{
 		options:    options,
 		asyncqueue: make(chan types.OutputData, 1000),
+	}
+	if options.OutputJsonl {
+		logger.jsonLogMap = sync.Map{}
 	}
 	if options.Elastic.Addr != "" {
 		store, err := elastic.New(options.Elastic)
@@ -73,6 +81,7 @@ func NewLogger(options *OptionsLogger) *Logger {
 	if options.OutputFolder != "" {
 		store, err := file.New(&file.Options{
 			OutputFolder: options.OutputFolder,
+			OutputJsonl:  options.OutputJsonl,
 		})
 		if err != nil {
 			gologger.Warning().Msgf("Error while creating file logger: %s", err)
@@ -133,7 +142,14 @@ func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
 	if err != nil {
 		return err
 	}
-	if l.options.OutputFolder != "" || l.options.Kafka.Addr != "" || l.options.Elastic.Addr != "" {
+	if l.options.OutputJsonl {
+		outputData := types.HTTPRequestResponseLog{}
+		if err := fillJsonRequestData(req, &outputData); err != nil {
+			return err
+		}
+		l.jsonLogMap.Store(userdata.ID, outputData)
+	}
+	if (!l.options.OutputJsonl) && (l.options.OutputFolder != "" || l.options.Kafka.Addr != "" || l.options.Elastic.Addr != "") {
 		l.asyncqueue <- types.OutputData{Data: reqdump, Userdata: userdata}
 	}
 
@@ -165,6 +181,25 @@ func (l *Logger) LogResponse(resp *http.Response, userdata types.UserData) error
 	if err != nil {
 		return err
 	}
+	if l.options.OutputJsonl {
+		defer l.jsonLogMap.Delete(userdata.ID)
+		outputData := types.HTTPRequestResponseLog{}
+		filledOutputReq, ok := l.jsonLogMap.Load(userdata.ID)
+		if !ok {
+			if err := fillJsonRequestData(resp.Request, &outputData); err != nil {
+				return err
+			}
+		} else {
+			outputData = filledOutputReq.(types.HTTPRequestResponseLog)
+		}
+		if err := fillJsonResponseData(resp, &outputData); err != nil {
+			return err
+		}
+		respdump, err = json.Marshal(outputData)
+		if err != nil {
+			return err
+		}
+	}
 	if l.options.OutputFolder != "" || l.options.Kafka.Addr != "" || l.options.Elastic.Addr != "" {
 		l.asyncqueue <- types.OutputData{Data: respdump, Userdata: userdata}
 	}
@@ -183,4 +218,63 @@ func (l *Logger) LogResponse(resp *http.Response, userdata types.UserData) error
 // Close logger instance
 func (l *Logger) Close() {
 	close(l.asyncqueue)
+}
+
+func fillJsonRequestData(req *http.Request, outputData *types.HTTPRequestResponseLog) error {
+	outputData.Timestamp = time.Now().Format(time.RFC3339)
+	outputData.URL = req.URL.String()
+	// Extract headers from the request
+	reqHeaders := make(map[string]string)
+	// basic header info
+	reqHeaders["scheme"] = req.URL.Scheme
+	reqHeaders["method"] = req.Method
+	reqHeaders["path"] = req.URL.Path
+	reqHeaders["host"] = req.URL.Host
+	for key, values := range req.Header {
+		reqHeaders[key] = strings.Join(values, ", ")
+	}
+	outputData.Request.Header = reqHeaders
+	// Extract body from the request
+	reqBody, err := io.ReadAll(req.Body)
+	if err != nil {
+		return err
+	}
+	defer req.Body.Close()
+	req.Body = io.NopCloser(strings.NewReader(string(reqBody)))
+	if err != nil {
+		return err
+	}
+	outputData.Request.Body = string(reqBody)
+	// Extract raw request
+	reqdumpNoBody, err := httputil.DumpRequest(req, false)
+	if err != nil {
+		return err
+	}
+	outputData.Request.Raw = string(reqdumpNoBody)
+	return nil
+}
+
+func fillJsonResponseData(resp *http.Response, outputData *types.HTTPRequestResponseLog) error {
+	outputData.Timestamp = time.Now().Format(time.RFC3339)
+	// Extract headers from the response
+	respHeaders := make(map[string]string)
+	for key, values := range resp.Header {
+		respHeaders[key] = strings.Join(values, ", ")
+	}
+	outputData.Response.Header = respHeaders
+	// Extract body from the response
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	resp.Body = io.NopCloser(strings.NewReader(string(respBody)))
+	outputData.Response.Body = string(respBody)
+	// Extract raw response
+	respdumpNoBody, err := httputil.DumpResponse(resp, false)
+	if err != nil {
+		return err
+	}
+	outputData.Response.Raw = string(respdumpNoBody)
+	return nil
 }

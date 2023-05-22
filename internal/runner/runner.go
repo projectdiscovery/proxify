@@ -2,6 +2,7 @@ package runner
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/Knetic/govaluate"
@@ -9,6 +10,7 @@ import (
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/proxify"
 	"github.com/projectdiscovery/proxify/pkg/certs"
+	"github.com/projectdiscovery/proxify/pkg/logger/file"
 )
 
 // Runner contains the internal logic of the program
@@ -50,6 +52,7 @@ func NewRunner(options *Options) (*Runner, error) {
 		ResponseMatchReplaceDSL:     options.ResponseMatchReplaceDSL,
 		DumpRequest:                 options.DumpRequest,
 		DumpResponse:                options.DumpResponse,
+		OutputJsonl:                 options.OutputJsonl,
 		MaxSize:                     options.MaxSize,
 		UpstreamProxyRequestsNumber: options.UpstreamProxyRequestsNumber,
 		Elastic:                     &options.Elastic,
@@ -92,7 +95,11 @@ func (r *Runner) Run() error {
 	}
 
 	if r.options.OutputDirectory != "" {
-		gologger.Info().Msgf("Saving proxify traffic to %s\n", r.options.OutputDirectory)
+		logPath := r.options.OutputDirectory
+		if r.options.OutputJsonl {
+			logPath = filepath.Join(logPath, file.ProxifyJsonlLogFile)
+		}
+		gologger.Info().Msgf("Saving proxify traffic to %s\n", logPath)
 	}
 	if r.options.Kafka.Addr != "" {
 		gologger.Info().Msgf("Sending traffic to Kafka at %s\n", r.options.Kafka.Addr)
