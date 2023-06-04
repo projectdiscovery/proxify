@@ -1,4 +1,4 @@
-<h1 align="center">read
+<h1 align="center">
   <img src="static/proxify-logo.png" alt="proxify" width="200px">
   <br>
 </h1>
@@ -63,13 +63,14 @@ This will display help for the tool. Here are all the switches it supports.
 
 ```shell
 Usage:
-  ./proxify [flags]
+    ./proxify [flags]
 
 Flags:
 OUTPUT:
-   -o, -output string  Output Directory to store HTTP proxy logs (default "logs")
-   -dump-req           Dump only HTTP requests to output file
-   -dump-resp          Dump only HTTP responses to output file
+   -o, -output string    Output Directory to store HTTP proxy logs (default "logs")
+   -dump-req             Dump only HTTP requests to output file
+   -dump-resp            Dump only HTTP responses to output file
+   -oca, -out-ca string  Generate and Save CA File to filename
 
 UPDATE:
    -up, -update                 update proxify to latest version
@@ -94,15 +95,7 @@ PROXY:
    -c int                       Number of requests before switching to the next upstream proxy (default 1)
 
 EXPORT:
-   -max-size int              Max export data size (request/responses will be truncated) (default 9223372036854775807)
-   -elastic-address string    elasticsearch address (ip:port)
-   -elastic-ssl               enable elasticsearch ssl
-   -elastic-ssl-verification  enable elasticsearch ssl verification
-   -elastic-username string   elasticsearch username
-   -elastic-password string   elasticsearch password
-   -elastic-index string      elasticsearch index name (default "proxify")
-   -kafka-address string      address of kafka broker (ip:port)
-   -kafka-topic string        kafka topic to publish messages on (default "proxify")
+   -ec, -export-config string  proxify export configuration file
 
 CONFIGURATION:
    -config string              Directory for storing program information (default "$HOME/.config/proxify")
