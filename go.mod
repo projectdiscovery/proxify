@@ -12,13 +12,13 @@ require (
 	github.com/haxii/fastproxy v0.5.37
 	github.com/pkg/errors v0.9.1
 	github.com/projectdiscovery/dsl v0.0.9
-	github.com/projectdiscovery/fastdialer v0.0.27
+	github.com/projectdiscovery/fastdialer v0.0.29
 	github.com/projectdiscovery/goflags v0.1.8
 	github.com/projectdiscovery/gologger v1.1.10
 	github.com/projectdiscovery/martian/v3 v3.0.0-20230412114616-98e3a0a6994a
 	github.com/projectdiscovery/roundrobin v0.0.6
 	github.com/projectdiscovery/tinydns v0.0.3
-	github.com/projectdiscovery/utils v0.0.34
+	github.com/projectdiscovery/utils v0.0.37
 	golang.org/x/net v0.10.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -31,6 +31,7 @@ require (
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/akrylysov/pogreb v0.10.1 // indirect
 	github.com/alecthomas/chroma v0.10.0 // indirect
+	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/glamour v0.6.0 // indirect
@@ -45,6 +46,7 @@ require (
 	github.com/eapache/queue v1.1.0 // indirect
 	github.com/elazarl/goproxy/ext v0.0.0-20210110162100-a92cc753f88e // indirect
 	github.com/fatih/color v1.14.1 // indirect
+	github.com/gaukas/godicttls v0.0.3 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
@@ -81,19 +83,20 @@ require (
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pierrec/lz4/v4 v4.1.17 // indirect
 	github.com/projectdiscovery/blackrock v0.0.1 // indirect
-	github.com/projectdiscovery/hmap v0.0.11 // indirect
+	github.com/projectdiscovery/hmap v0.0.13 // indirect
 	github.com/projectdiscovery/mapcidr v1.1.1 // indirect
 	github.com/projectdiscovery/networkpolicy v0.0.6 // indirect
-	github.com/projectdiscovery/retryabledns v1.0.26 // indirect
-	github.com/projectdiscovery/retryablehttp-go v1.0.16 // indirect
+	github.com/projectdiscovery/retryabledns v1.0.29 // indirect
+	github.com/projectdiscovery/retryablehttp-go v1.0.17 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
+	github.com/refraction-networking/utls v1.3.2 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
 	github.com/sashabaranov/go-openai v1.9.1 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/tidwall/btree v1.5.0 // indirect
-	github.com/tidwall/buntdb v1.2.10 // indirect
+	github.com/tidwall/buntdb v1.3.0 // indirect
 	github.com/tidwall/gjson v1.14.3 // indirect
 	github.com/tidwall/grect v0.1.4 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
