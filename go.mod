@@ -11,7 +11,7 @@ require (
 	github.com/elazarl/goproxy v0.0.0-20221015165544-a0805db90819
 	github.com/haxii/fastproxy v0.5.37
 	github.com/pkg/errors v0.9.1
-	github.com/projectdiscovery/dsl v0.0.14
+	github.com/projectdiscovery/dsl v0.0.15
 	github.com/projectdiscovery/fastdialer v0.0.35
 	github.com/projectdiscovery/goflags v0.1.11
 	github.com/projectdiscovery/gologger v1.1.11
@@ -92,7 +92,7 @@ require (
 	github.com/refraction-networking/utls v1.3.2 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
-	github.com/sashabaranov/go-openai v1.13.0 // indirect
+	github.com/sashabaranov/go-openai v1.14.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/tidwall/btree v1.6.0 // indirect

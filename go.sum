@@ -216,8 +216,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/projectdiscovery/blackrock v0.0.1 h1:lHQqhaaEFjgf5WkuItbpeCZv2DUIE45k0VbGJyft6LQ=
 github.com/projectdiscovery/blackrock v0.0.1/go.mod h1:ANUtjDfaVrqB453bzToU+YB4cUbvBRpLvEwoWIwlTss=
-github.com/projectdiscovery/dsl v0.0.14 h1:CAxCoYbIEBCuINiMR1UKA1v6ifmub3P5hCwzBmmkh0c=
-github.com/projectdiscovery/dsl v0.0.14/go.mod h1:3K2GmExpriruVHsVJmsTugxR7H9wVpUo8/+jWXXbSSw=
+github.com/projectdiscovery/dsl v0.0.15 h1:2ZiwM79jv7AD7rR8sPWkLEsJEBn6zAmjlfJMyzvAztc=
+github.com/projectdiscovery/dsl v0.0.15/go.mod h1:8cwqri4qO0Zg09PRyCSp8GMsa/DdPZXXJK21SE2Ty+k=
 github.com/projectdiscovery/fastdialer v0.0.35 h1:dCjYaZ2dOtKmIbQ7OUuf/pZiMQRHfUjjLoHrEF8CJ8g=
 github.com/projectdiscovery/fastdialer v0.0.35/go.mod h1:dTx0C7JRWKKO5ZxGqM0NUDzB4svmyYqGM6zcHIk2ueo=
 github.com/projectdiscovery/goflags v0.1.11 h1:C4UTO3SM5Vfy1J2sdhukm7wONW/tljMpUMNKue5ie00=
@@ -256,8 +256,8 @@ github.com/rogpeppe/go-internal v1.9.0 h1:73kH8U+JUqXU8lRuOHeVHaa/SZPifC7BkcraZV
 github.com/rs/zerolog v1.11.0/go.mod h1:YbFCdg8HfsridGWAh22vktObvhZbQsZXe4/zB0OKkWU=
 github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d h1:hrujxIzL1woJ7AwssoOcM/tq5JjjG2yYOc8odClEiXA=
 github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d/go.mod h1:uugorj2VCxiV1x+LzaIdVa9b4S4qGAcH6cbhh4qVxOU=
-github.com/sashabaranov/go-openai v1.13.0 h1:EAusFfnhaMaaUspUZ2+MbB/ZcVeD4epJmTOlZ+8AcAE=
-github.com/sashabaranov/go-openai v1.13.0/go.mod h1:lj5b/K+zjTSFxVLijLSTDZuP7adOgerWeFyZLUhAKRg=
+github.com/sashabaranov/go-openai v1.14.0 h1:D1yAB+DHElgbJFdYyjxfTWMFzhddn+PwZmkQ039L7mQ=
+github.com/sashabaranov/go-openai v1.14.0/go.mod h1:lj5b/K+zjTSFxVLijLSTDZuP7adOgerWeFyZLUhAKRg=
 github.com/sirupsen/logrus v1.3.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/sirupsen/logrus v1.7.0/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
 github.com/spaolacci/murmur3 v1.1.0 h1:7c1g84S4BPRrfL5Xrdp6fOJ206sU9y293DDHaoy0bLI=
