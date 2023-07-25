@@ -5,3 +5,4 @@ cmd/proxify/logs/*
 cmd/replay/replay
 cmd/mitmrelay/mitmrelay
 *.exe
+dist/*
