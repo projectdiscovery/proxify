@@ -67,9 +67,11 @@ Usage:
 
 Flags:
 OUTPUT:
-   -o, -output string  Output Directory to store HTTP proxy logs (default "logs")
-   -dump-req           Dump only HTTP requests to output file
-   -dump-resp          Dump only HTTP responses to output file
+   -o, -output string    Output Directory to store HTTP proxy logs (default "logs")
+   -dump-req             Dump only HTTP requests to output file
+   -dump-resp            Dump only HTTP responses to output file
+   -j, -jsonl            write output in JSONL(ines) format
+   -oca, -out-ca string  Generate and Save CA File to filename
 
 UPDATE:
    -up, -update                 update proxify to latest version
