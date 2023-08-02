@@ -12,6 +12,7 @@ import (
 	"github.com/projectdiscovery/proxify/pkg/logger/elastic"
 	"github.com/projectdiscovery/proxify/pkg/logger/kafka"
 	"github.com/projectdiscovery/proxify/pkg/types"
+	fileutil "github.com/projectdiscovery/utils/file"
 	updateutils "github.com/projectdiscovery/utils/update"
 )
 
@@ -49,12 +50,6 @@ type Options struct {
 }
 
 func ParseOptions() *Options {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		// Almost never here but panic
-		panic(err)
-	}
-
 	options := &Options{}
 
 	flagSet := goflags.NewFlagSet()
@@ -108,8 +103,7 @@ func ParseOptions() *Options {
 	)
 
 	flagSet.CreateGroup("configuration", "Configuration",
-		// Todo: default config file support (homeDir/.config/proxify/config.yaml)
-		flagSet.StringVar(&options.Directory, "config", filepath.Join(homeDir, ".config", "proxify"), "Directory for storing program information"),
+		flagSet.StringVar(&options.Directory, "config", "", "override the default config path ($home/.config/proxify)"),
 		flagSet.IntVar(&options.CertCacheSize, "cert-cache-size", 256, "Number of certificates to cache"),
 		flagSet.StringSliceVarP(&options.Allow, "allow", "a", nil, "Allowed list of IP/CIDR's to be proxied", goflags.FileNormalizedStringSliceOptions),
 		flagSet.StringSliceVarP(&options.Deny, "deny", "d", nil, "Denied list of IP/CIDR's to be proxied", goflags.FileNormalizedStringSliceOptions),
@@ -126,7 +120,16 @@ func ParseOptions() *Options {
 	)
 
 	_ = flagSet.Parse()
-	os.MkdirAll(options.Directory, os.ModePerm) //nolint
+	if options.Directory != "" {
+		_ = os.MkdirAll(options.Directory, os.ModePerm)
+		readFlagsConfig(flagSet, options.Directory)
+	} else {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			panic(err)
+		}
+		options.Directory = filepath.Join(homeDir, ".config", "proxify")
+	}
 
 	// Read the inputs and configure the logging
 	options.configureVerbosity(silent, verbose, veryVerbose)
@@ -152,6 +155,35 @@ func ParseOptions() *Options {
 	}
 
 	return options
+}
+
+// readFlagsConfig reads the config file from the default config dir and copies it to the current config dir.
+func readFlagsConfig(flagset *goflags.FlagSet, configDir string) {
+	// check if config.yaml file exists
+	defaultCfgFile, err := flagset.GetConfigFilePath()
+	if err != nil {
+		// something went wrong either dir is not readable or something else went wrong upstream in `goflags`
+		// warn and exit in this case
+		gologger.Warning().Msgf("Could not read config file: %s\n", err)
+		return
+	}
+	cfgFile := filepath.Join(configDir, "config.yaml")
+	if !fileutil.FileExists(cfgFile) {
+		if !fileutil.FileExists(defaultCfgFile) {
+			// if default config does not exist, warn and exit
+			gologger.Warning().Msgf("missing default config file : %s", defaultCfgFile)
+			return
+		}
+		// if does not exist copy it from the default config
+		if err = fileutil.CopyFile(defaultCfgFile, cfgFile); err != nil {
+			gologger.Warning().Msgf("Could not copy config file: %s\n", err)
+		}
+		return
+	}
+	// if config file exists, merge it with the default config
+	if err = flagset.MergeConfigFile(cfgFile); err != nil {
+		gologger.Warning().Msgf("failed to merge configfile with flags got: %s\n", err)
+	}
 }
 
 func (options *Options) configureVerbosity(silent, verbose, veryVerbose bool) {
