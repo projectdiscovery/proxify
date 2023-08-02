@@ -107,7 +107,7 @@ EXPORT:
    -kafka-topic string        kafka topic to publish messages on (default "proxify")
 
 CONFIGURATION:
-   -config string              Directory for storing program information (default "$HOME/.config/proxify")
+   -config string              override the default config path ($home/.config/proxify)
    -cert-cache-size int        Number of certificates to cache (default 256)
    -a, -allow string[]         Allowed list of IP/CIDR's to be proxied
    -d, -deny string[]          Denied list of IP/CIDR's to be proxied
