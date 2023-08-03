@@ -44,7 +44,19 @@ func GetMitMConfig() *mitm.Config {
 
 func SaveCAToFile(filename string) error {
 	buffer := &bytes.Buffer{}
-	_ = pem.Encode(buffer, &pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw})
+	err := pem.Encode(buffer, &pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw})
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filename, buffer.Bytes(), 0600)
+}
+
+func SaveKeyToFile(filename string) error {
+	buffer := &bytes.Buffer{}
+	err := pem.Encode(buffer, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(pkey)})
+	if err != nil {
+		return err
+	}
 	return os.WriteFile(filename, buffer.Bytes(), 0600)
 }
 
@@ -58,14 +70,9 @@ func generateCertificate(certFile, keyFile string) error {
 	if err = SaveCAToFile(certFile); err != nil {
 		gologger.Fatal().Msgf("failed to save certFile to disk got %v", err)
 	}
-	kf, err := os.OpenFile(keyFile, os.O_WRONLY, 0600)
-	if err != nil {
-		gologger.Fatal().Msgf("failed to load open %v while saving private key got %v", keyFile, err)
-	}
-	if err := pem.Encode(kf, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(pkey)}); err != nil {
+	if err := SaveKeyToFile(keyFile); err != nil {
 		gologger.Fatal().Msgf("failed to write private key to file got %v", err)
 	}
-	_ = kf.Close()
 	return nil
 }
 
