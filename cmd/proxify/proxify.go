@@ -12,7 +12,10 @@ import (
 
 func main() {
 
-	options := runner.ParseOptions()
+	options, err := runner.ParseOptions()
+	if err != nil {
+		gologger.Fatal().Msgf("Could not parse options: %s\n", err)
+	}
 
 	proxifyRunner, err := runner.NewRunner(options)
 	if err != nil {

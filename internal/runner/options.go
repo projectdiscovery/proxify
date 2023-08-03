@@ -49,7 +49,7 @@ type Options struct {
 	OutputJsonl                 bool // OutputJsonl outputs data in JSONL format
 }
 
-func ParseOptions() *Options {
+func ParseOptions() (*Options, error) {
 	options := &Options{}
 
 	flagSet := goflags.NewFlagSet()
@@ -119,14 +119,17 @@ func ParseOptions() *Options {
 		flagSet.BoolVarP(&veryVerbose, "very-verbose", "vv", false, "Very Verbose"),
 	)
 
-	_ = flagSet.Parse()
+	if err := flagSet.Parse(); err != nil {
+		return nil, err
+	}
+
 	if options.Directory != "" {
 		_ = os.MkdirAll(options.Directory, os.ModePerm)
 		readFlagsConfig(flagSet, options.Directory)
 	} else {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		options.Directory = filepath.Join(homeDir, ".config", "proxify")
 	}
@@ -154,7 +157,7 @@ func ParseOptions() *Options {
 		}
 	}
 
-	return options
+	return options, nil
 }
 
 // readFlagsConfig reads the config file from the default config dir and copies it to the current config dir.
