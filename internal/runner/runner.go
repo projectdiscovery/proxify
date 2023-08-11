@@ -21,7 +21,7 @@ type Runner struct {
 
 // NewRunner instance
 func NewRunner(options *Options) (*Runner, error) {
-	if err := certs.LoadCerts(options.Directory); err != nil {
+	if err := certs.LoadCerts(options.ConfigDir); err != nil {
 		gologger.Fatal().Msgf("%s\n", err)
 	}
 
@@ -35,7 +35,7 @@ func NewRunner(options *Options) (*Runner, error) {
 	}
 
 	proxy, err := proxify.NewProxy(&proxify.Options{
-		Directory:                   options.Directory,
+		Directory:                   options.ConfigDir,
 		CertCacheSize:               options.CertCacheSize,
 		Verbosity:                   options.Verbosity,
 		ListenAddrHTTP:              options.ListenAddrHTTP,

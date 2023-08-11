@@ -13,13 +13,18 @@ import (
 	"github.com/projectdiscovery/proxify/pkg/logger/kafka"
 	"github.com/projectdiscovery/proxify/pkg/types"
 	fileutil "github.com/projectdiscovery/utils/file"
+	permissionutil "github.com/projectdiscovery/utils/permission"
 	updateutils "github.com/projectdiscovery/utils/update"
+)
+
+var (
+	cfgFile string
 )
 
 // Options of the runner
 type Options struct {
 	OutputDirectory             string
-	Directory                   string
+	ConfigDir                   string
 	CertCacheSize               int
 	Verbosity                   types.Verbosity
 	Version                     bool
@@ -50,6 +55,11 @@ type Options struct {
 }
 
 func ParseOptions() (*Options, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
+
 	options := &Options{}
 
 	flagSet := goflags.NewFlagSet()
@@ -103,7 +113,8 @@ func ParseOptions() (*Options, error) {
 	)
 
 	flagSet.CreateGroup("configuration", "Configuration",
-		flagSet.StringVar(&options.Directory, "config", "", "override the default config path ($home/.config/proxify)"),
+		flagSet.StringVar(&cfgFile, "config", "", "path to the proxify configuration file"),
+		flagSet.StringVar(&options.ConfigDir, "config-directory", filepath.Join(homeDir, ".config", "proxify"), "override the default config path ($home/.config/proxify)"),
 		flagSet.IntVar(&options.CertCacheSize, "cert-cache-size", 256, "Number of certificates to cache"),
 		flagSet.StringSliceVarP(&options.Allow, "allow", "a", nil, "Allowed list of IP/CIDR's to be proxied", goflags.FileNormalizedStringSliceOptions),
 		flagSet.StringSliceVarP(&options.Deny, "deny", "d", nil, "Denied list of IP/CIDR's to be proxied", goflags.FileNormalizedStringSliceOptions),
@@ -123,15 +134,19 @@ func ParseOptions() (*Options, error) {
 		return nil, err
 	}
 
-	if options.Directory != "" {
-		_ = os.MkdirAll(options.Directory, os.ModePerm)
-		readFlagsConfig(flagSet, options.Directory)
-	} else {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return nil, err
+	if options.ConfigDir != "" {
+		_ = os.MkdirAll(options.ConfigDir, permissionutil.ConfigFolderPermission)
+		readFlagsConfig(flagSet, options.ConfigDir)
+	}
+
+	if cfgFile != "" {
+		if !fileutil.FileExists(cfgFile) {
+			gologger.Fatal().Msgf("given config file '%s' does not exist", cfgFile)
 		}
-		options.Directory = filepath.Join(homeDir, ".config", "proxify")
+		// merge config file with flags
+		if err := flagSet.MergeConfigFile(cfgFile); err != nil {
+			gologger.Fatal().Msgf("Could not read config: %s\n", err)
+		}
 	}
 
 	// Read the inputs and configure the logging
