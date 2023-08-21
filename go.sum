@@ -132,7 +132,7 @@ github.com/hashicorp/go-uuid v1.0.3 h1:2gKiV6YVmrJ1i2CKKa9obLvRieoRGviZFL26PcT/C
 github.com/hashicorp/go-uuid v1.0.3/go.mod h1:6SBZvOh/SIDV7/2o3Jml5SYk/TvGqwFJ/bN7x4byOro=
 github.com/hashicorp/go-version v1.6.0 h1:feTTfFNnjP967rlCxM/I9g701jU+RN74YKx2mOkIeek=
 github.com/hashicorp/go-version v1.6.0/go.mod h1:fltr4n8CU8Ke44wwGCBoEymUuxUHl09ZGVZPK5anwXA=
-github.com/hashicorp/golang-lru/v2 v2.0.2 h1:Dwmkdr5Nc/oBiXgJS3CDHNhJtIHkuZ3DZF5twqnfBdU=
+github.com/hashicorp/golang-lru/v2 v2.0.5 h1:wW7h1TG88eUIJ2i69gaE3uNVtEPIagzhGvHgwfx2Vm4=
 github.com/haxii/fastproxy v0.5.37 h1:grfso8V9sNO8jZjI/vkizFXzz8fE/yrsgl+XxTb3fio=
 github.com/haxii/fastproxy v0.5.37/go.mod h1:VFy3M4EmTbeKu+IccQ6UiJ1W4sPeQ75GV+1JDa8h864=
 github.com/haxii/log v1.0.0/go.mod h1:y9MlOm+u2ny65yQxScWfSGZFOhRVLXz2vJlkiIx2jfI=
@@ -232,8 +232,8 @@ github.com/projectdiscovery/gologger v1.1.11 h1:8vsz9oJlDT9euw6xlj7F7dZ6RWItVIqV
 github.com/projectdiscovery/gologger v1.1.11/go.mod h1:UR2bgXl7zraOxYGnUwuO917hifWrwMJ0feKnVqMQkzY=
 github.com/projectdiscovery/gostruct v0.0.1 h1:1KvR6Pn4mDbQqoLEQzhRfHpbreLno2R9xqRCCt5tgmU=
 github.com/projectdiscovery/gostruct v0.0.1/go.mod h1:H86peL4HKwMXcQQtEa6lmC8FuD9XFt6gkNR0B/Mu5PE=
-github.com/projectdiscovery/hmap v0.0.14 h1:6BCJKckoGGbujnwj3+ggfeiLZBqEi9g5+X1zGGGTk88=
-github.com/projectdiscovery/hmap v0.0.14/go.mod h1:conChiN3MPUV7NsZ2/N4ENOqKxE78sE+6SaG+fFL0s4=
+github.com/projectdiscovery/hmap v0.0.15 h1:iTRXV94bNIuR5obYBxOhvs3yEYXdNdJJnrXnxv4uLHc=
+github.com/projectdiscovery/hmap v0.0.15/go.mod h1:oybodscUwBbL4GnhBPPTemazPXyMErqL+dE+0ZtJ6lg=
 github.com/projectdiscovery/mapcidr v1.1.2 h1:Mmq/nPqvVc7fjvH/kJVK0IBOny/LrJIxZ4tQsLPCrsA=
 github.com/projectdiscovery/mapcidr v1.1.2/go.mod h1:Aoq0x/wJl6KDbtQ8OcPkjIDCqx2iEyx5ty1nzso8wXM=
 github.com/projectdiscovery/martian/v3 v3.0.0-20230412114616-98e3a0a6994a h1:TpQ/kMGhsFIv/9hytTU+xXaL+yl2xnTkxLqQRlV6+zE=
