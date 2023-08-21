@@ -11,14 +11,14 @@ require (
 	github.com/elazarl/goproxy v0.0.0-20221015165544-a0805db90819
 	github.com/haxii/fastproxy v0.5.37
 	github.com/pkg/errors v0.9.1
-	github.com/projectdiscovery/dsl v0.0.18
+	github.com/projectdiscovery/dsl v0.0.19
 	github.com/projectdiscovery/fastdialer v0.0.36
 	github.com/projectdiscovery/goflags v0.1.16
 	github.com/projectdiscovery/gologger v1.1.11
 	github.com/projectdiscovery/martian/v3 v3.0.0-20230412114616-98e3a0a6994a
 	github.com/projectdiscovery/roundrobin v0.0.6
 	github.com/projectdiscovery/tinydns v0.0.3
-	github.com/projectdiscovery/utils v0.0.49
+	github.com/projectdiscovery/utils v0.0.50
 	golang.org/x/net v0.14.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -92,7 +92,7 @@ require (
 	github.com/refraction-networking/utls v1.4.2 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
-	github.com/sashabaranov/go-openai v1.14.1 // indirect
+	github.com/sashabaranov/go-openai v1.14.2 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/tidwall/btree v1.6.0 // indirect
