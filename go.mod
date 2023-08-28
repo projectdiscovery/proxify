@@ -17,7 +17,7 @@ require (
 	github.com/projectdiscovery/gologger v1.1.11
 	github.com/projectdiscovery/martian/v3 v3.0.0-20230412114616-98e3a0a6994a
 	github.com/projectdiscovery/roundrobin v0.0.6
-	github.com/projectdiscovery/tinydns v0.0.3
+	github.com/projectdiscovery/tinydns v0.0.4
 	github.com/projectdiscovery/utils v0.0.52
 	golang.org/x/net v0.14.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -91,6 +91,7 @@ require (
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/refraction-networking/utls v1.4.2 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
+	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
 	github.com/sashabaranov/go-openai v1.14.2 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
