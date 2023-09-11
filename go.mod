@@ -17,8 +17,8 @@ require (
 	github.com/projectdiscovery/gologger v1.1.11
 	github.com/projectdiscovery/martian/v3 v3.0.0-20230412114616-98e3a0a6994a
 	github.com/projectdiscovery/roundrobin v0.0.6
-	github.com/projectdiscovery/tinydns v0.0.5
-	github.com/projectdiscovery/utils v0.0.53
+	github.com/projectdiscovery/tinydns v0.0.6
+	github.com/projectdiscovery/utils v0.0.54
 	golang.org/x/net v0.14.0
 	gopkg.in/yaml.v3 v3.0.1
 )
