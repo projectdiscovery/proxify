@@ -258,11 +258,8 @@ func (p *Proxy) Run() error {
 	// http proxy
 	if p.httpProxy != nil {
 		p.httpProxy.TLSPassthroughFunc = func(req *http.Request) bool {
-			// if !stringsutil.ContainsAny(req.URL.Host, "avatars") {
-			// 	log.Printf("Skipped MITM for %v", req.URL.Host)
-			// 	return true
-			// }
-			return false
+			// Skip MITM for hosts that are in pass-through list
+			return util.MatchAnyRegex(p.options.PassThrough, req.Host)
 		}
 
 		p.httpProxy.SetRequestModifier(p)
