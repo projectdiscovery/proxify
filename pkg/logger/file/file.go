@@ -9,13 +9,13 @@ import (
 	fileutil "github.com/projectdiscovery/utils/file"
 )
 
-var ProxifyJsonlLogFile = "proxify.jsonl"
-
 // Options required for file export
 type Options struct {
 	// OutputFolder is the folder where the logs will be stored
 	OutputFolder string `yaml:"output-folder"`
-	OutputJsonl  bool   `yaml:"output-jsonl"`
+	// OutputFile is the file where the jsonl logs will be stored
+	OutputFile  string `yaml:"output-file"`
+	OutputJsonl bool   `yaml:"output-jsonl"`
 }
 
 // Client type for file based logging
@@ -30,7 +30,7 @@ func New(option *Options) (*Client, error) {
 		return client, err
 	}
 	if option.OutputJsonl {
-		file, err := os.Create(filepath.Join(option.OutputFolder, ProxifyJsonlLogFile))
+		file, err := os.Create(filepath.Join(option.OutputFolder, option.OutputFile))
 		if err != nil {
 			return client, err
 		}
@@ -43,7 +43,7 @@ func New(option *Options) (*Client, error) {
 func (c *Client) Save(data types.OutputData) error {
 	logFile := fmt.Sprintf("%s.%s", data.Name, "txt")
 	if c.options.OutputJsonl {
-		logFile = ProxifyJsonlLogFile
+		logFile = c.options.OutputFile
 	}
 	// generate the file destination file name
 	destFile := filepath.Join(c.options.OutputFolder, logFile)

@@ -48,6 +48,7 @@ type Options struct {
 	ListenAddrHTTP              string
 	ListenAddrSocks5            string
 	OutputDirectory             string
+	OutputFile                  string
 	RequestDSL                  []string
 	ResponseDSL                 []string
 	UpstreamHTTPProxies         []string
@@ -353,7 +354,7 @@ func (p *Proxy) getRoundTripper() (http.RoundTripper, error) {
 		MaxIdleConns:        0,
 		MaxConnsPerHost:     0,
 		TLSClientConfig: &tls.Config{
-			MinVersion: tls.VersionTLS10,
+			MinVersion:         tls.VersionTLS10,
 			InsecureSkipVerify: true,
 		},
 	}
@@ -402,6 +403,7 @@ func NewProxy(options *Options) (*Proxy, error) {
 
 	logger := logger.NewLogger(&logger.OptionsLogger{
 		Verbosity:    options.Verbosity,
+		OutputFile:   options.OutputFile,
 		OutputFolder: options.OutputDirectory,
 		DumpRequest:  options.DumpRequest,
 		DumpResponse: options.DumpResponse,

@@ -29,6 +29,7 @@ const (
 type OptionsLogger struct {
 	Verbosity    types.Verbosity
 	OutputFolder string
+	OutputFile   string
 	DumpRequest  bool
 	DumpResponse bool
 	OutputJsonl  bool
@@ -82,6 +83,7 @@ func NewLogger(options *OptionsLogger) *Logger {
 		store, err := file.New(&file.Options{
 			OutputFolder: options.OutputFolder,
 			OutputJsonl:  options.OutputJsonl,
+			OutputFile:  options.OutputFile,
 		})
 		if err != nil {
 			gologger.Warning().Msgf("Error while creating file logger: %s", err)
