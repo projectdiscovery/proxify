@@ -353,6 +353,7 @@ func (p *Proxy) getRoundTripper() (http.RoundTripper, error) {
 		MaxIdleConns:        0,
 		MaxConnsPerHost:     0,
 		TLSClientConfig: &tls.Config{
+			MinVersion: tls.VersionTLS10,
 			InsecureSkipVerify: true,
 		},
 	}
