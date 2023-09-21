@@ -272,31 +272,6 @@ func (p *Proxy) Run() error {
 			}
 			gologger.Fatal().Msgf("%v", p.httpProxy.Serve(l))
 		}()
-
-		// // Serve the certificate when the user makes requests to /proxify
-		// p.httpproxy.OnRequest(goproxy.DstHostIs("proxify")).DoFunc(
-		// 	func(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-		// 		if r.URL.Path != "/cacert.crt" {
-		// 			return r, goproxy.NewResponse(r, "text/plain", 404, "Invalid path given")
-		// 		}
-
-		// 		_, ca := p.certs.GetCA()
-		// 		reader := bytes.NewReader(ca)
-
-		// 		header := http.Header{}
-		// 		header.Set("Content-Type", "application/pkix-cert")
-		// 		resp := &http.Response{
-		// 			Request:          r,
-		// 			TransferEncoding: r.TransferEncoding,
-		// 			Header:           header,
-		// 			StatusCode:       200,
-		// 			Status:           http.StatusText(200),
-		// 			ContentLength:    int64(reader.Len()),
-		// 			Body:             io.NopCloser(reader),
-		// 		}
-		// 		return r, resp
-		// 	},
-		// )
 	}
 
 	// socks5 proxy
