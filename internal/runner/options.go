@@ -172,6 +172,11 @@ func ParseOptions() (*Options, error) {
 		}
 	}
 
+	// On export mode default to jsonl output
+	if options.Elastic.Addr != "" || options.Kafka.Addr != "" {
+		options.OutputJsonl = true
+	}
+	
 	return options, nil
 }
 
