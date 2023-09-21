@@ -149,7 +149,7 @@ func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
 		}
 		l.jsonLogMap.Store(userdata.ID, outputData)
 	}
-	if (!l.options.OutputJsonl) && (l.options.OutputFolder != "" || l.options.Kafka.Addr != "" || l.options.Elastic.Addr != "") {
+	if l.options.OutputFolder != "" {
 		l.asyncqueue <- types.OutputData{RawData: reqdump, Userdata: userdata}
 	}
 

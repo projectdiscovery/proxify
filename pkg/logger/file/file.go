@@ -48,14 +48,13 @@ func (c *Client) Save(data types.OutputData) error {
 	if c.options.OutputFolder != "" {
 		err = c.writeToFile(filepath.Join(c.options.OutputFolder, logFile), string(data.RawData))
 	}
-	if c.options.OutputFile != "" {
+	if c.options.OutputFile != "" && len(data.Data) > 0 {
 		err = c.writeToFile(c.options.OutputFile, data.DataString)
 	}
 	return err
 }
 
 func (c *Client) writeToFile(filepath, content string) error {
-	// if it's a response and file doesn't exist skip
 	f, err := os.OpenFile(filepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
