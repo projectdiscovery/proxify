@@ -79,18 +79,15 @@ func NewLogger(options *OptionsLogger) *Logger {
 
 		}
 	}
-	if options.OutputFolder != "" {
-		store, err := file.New(&file.Options{
-			OutputFolder: options.OutputFolder,
-			OutputJsonl:  options.OutputJsonl,
-			OutputFile:  options.OutputFile,
-		})
-		if err != nil {
-			gologger.Warning().Msgf("Error while creating file logger: %s", err)
-		} else {
-			logger.Store = append(logger.Store, store)
-
-		}
+	store, err := file.New(&file.Options{
+		OutputFolder: options.OutputFolder,
+		OutputJsonl:  options.OutputJsonl,
+		OutputFile:   options.OutputFile,
+	})
+	if err != nil {
+		gologger.Warning().Msgf("Error while creating file logger: %s", err)
+	} else {
+		logger.Store = append(logger.Store, store)
 	}
 
 	go logger.AsyncWrite()
@@ -202,9 +199,9 @@ func (l *Logger) LogResponse(resp *http.Response, userdata types.UserData) error
 			return err
 		}
 	}
-	if l.options.OutputFolder != "" || l.options.Kafka.Addr != "" || l.options.Elastic.Addr != "" {
-		l.asyncqueue <- types.OutputData{Data: respdump, Userdata: userdata}
-	}
+
+	l.asyncqueue <- types.OutputData{Data: respdump, Userdata: userdata}
+
 	if l.options.Verbosity >= types.VerbosityVeryVerbose {
 		contentType := resp.Header.Get("Content-Type")
 		bodyBytes := bytes.TrimPrefix(respdump, respdumpNoBody)

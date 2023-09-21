@@ -26,11 +26,13 @@ type Client struct {
 // New creates and returns a new client for file based logging
 func New(option *Options) (*Client, error) {
 	client := &Client{options: option}
-	if err := fileutil.CreateFolder(option.OutputFolder); err != nil {
-		return client, err
+	if option.OutputFolder != "" && !option.OutputJsonl {
+		if err := fileutil.CreateFolder(option.OutputFolder); err != nil {
+			return client, err
+		}
 	}
-	if option.OutputJsonl {
-		file, err := os.Create(filepath.Join(option.OutputFolder, option.OutputFile))
+	if option.OutputFile != "" {
+		file, err := os.Create(option.OutputFile)
 		if err != nil {
 			return client, err
 		}
@@ -42,13 +44,12 @@ func New(option *Options) (*Client, error) {
 // Store writes the log to the file
 func (c *Client) Save(data types.OutputData) error {
 	logFile := fmt.Sprintf("%s.%s", data.Name, "txt")
+	logFile = filepath.Join(c.options.OutputFolder, logFile)
 	if c.options.OutputJsonl {
 		logFile = c.options.OutputFile
 	}
-	// generate the file destination file name
-	destFile := filepath.Join(c.options.OutputFolder, logFile)
 	// if it's a response and file doesn't exist skip
-	f, err := os.OpenFile(destFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}

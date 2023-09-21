@@ -174,16 +174,12 @@ func ParseOptions() (*Options, error) {
 		}
 	}
 
-	// if output directory is not set, set it to default(jsonl file)
-	if options.OutputDirectory == "" {
+	// if output directory is not set OR on export mode default to jsonl output
+	if options.OutputDirectory == "" || options.Elastic.Addr != "" || options.Kafka.Addr != "" || options.OutputFile != "" {
+		options.OutputJsonl = true
 		if options.OutputFile == "" {
 			options.OutputFile = "proxify_logs.jsonl"
 		}
-	}
-
-	// On export mode default to jsonl output
-	if options.Elastic.Addr != "" || options.Kafka.Addr != "" || options.OutputFile != "" {
-		options.OutputJsonl = true
 	}
 
 	return options, nil
