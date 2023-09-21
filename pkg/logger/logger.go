@@ -123,6 +123,7 @@ func (l *Logger) AsyncWrite() {
 
 			if l.options.MaxSize > 0 {
 				outputdata.DataString = stringsutil.Truncate(outputdata.DataString, l.options.MaxSize)
+				outputdata.RawData = []byte(stringsutil.Truncate(string(outputdata.RawData), l.options.MaxSize))
 			}
 
 			for _, store := range l.Store {
@@ -149,7 +150,7 @@ func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
 		l.jsonLogMap.Store(userdata.ID, outputData)
 	}
 	if (!l.options.OutputJsonl) && (l.options.OutputFolder != "" || l.options.Kafka.Addr != "" || l.options.Elastic.Addr != "") {
-		l.asyncqueue <- types.OutputData{Data: reqdump, Userdata: userdata}
+		l.asyncqueue <- types.OutputData{RawData: reqdump, Userdata: userdata}
 	}
 
 	if l.options.Verbosity >= types.VerbosityVeryVerbose {
@@ -180,6 +181,7 @@ func (l *Logger) LogResponse(resp *http.Response, userdata types.UserData) error
 	if err != nil {
 		return err
 	}
+	var data []byte
 	if l.options.OutputJsonl {
 		defer l.jsonLogMap.Delete(userdata.ID)
 		outputData := types.HTTPRequestResponseLog{}
@@ -194,13 +196,13 @@ func (l *Logger) LogResponse(resp *http.Response, userdata types.UserData) error
 		if err := fillJsonResponseData(resp, &outputData); err != nil {
 			return err
 		}
-		respdump, err = json.Marshal(outputData)
+		data, err = json.Marshal(outputData)
 		if err != nil {
 			return err
 		}
 	}
 
-	l.asyncqueue <- types.OutputData{Data: respdump, Userdata: userdata}
+	l.asyncqueue <- types.OutputData{RawData: respdump, Data: data, Userdata: userdata}
 
 	if l.options.Verbosity >= types.VerbosityVeryVerbose {
 		contentType := resp.Header.Get("Content-Type")

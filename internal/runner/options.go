@@ -173,15 +173,11 @@ func ParseOptions() (*Options, error) {
 			gologger.Info().Msgf("Current proxify version %v %v", version, updateutils.GetVersionDescription(version, latestVersion))
 		}
 	}
-
-	// if output directory is not set OR on export mode default to jsonl output
-	if options.OutputDirectory == "" || options.Elastic.Addr != "" || options.Kafka.Addr != "" || options.OutputFile != "" {
-		options.OutputJsonl = true
-		if options.OutputFile == "" {
-			options.OutputFile = "proxify_logs.jsonl"
-		}
+	options.OutputJsonl = true
+	// if OutputFile is not set, set it to default
+	if options.OutputFile == "" {
+		options.OutputFile = "proxify_logs.jsonl"
 	}
-
 	return options, nil
 }
 

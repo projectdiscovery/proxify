@@ -26,7 +26,7 @@ type Client struct {
 // New creates and returns a new client for file based logging
 func New(option *Options) (*Client, error) {
 	client := &Client{options: option}
-	if option.OutputFolder != "" && !option.OutputJsonl {
+	if option.OutputFolder != "" {
 		if err := fileutil.CreateFolder(option.OutputFolder); err != nil {
 			return client, err
 		}
@@ -43,17 +43,24 @@ func New(option *Options) (*Client, error) {
 
 // Store writes the log to the file
 func (c *Client) Save(data types.OutputData) error {
+	var err error
 	logFile := fmt.Sprintf("%s.%s", data.Name, "txt")
-	logFile = filepath.Join(c.options.OutputFolder, logFile)
-	if c.options.OutputJsonl {
-		logFile = c.options.OutputFile
+	if c.options.OutputFolder != "" {
+		err = c.writeToFile(filepath.Join(c.options.OutputFolder, logFile), string(data.RawData))
 	}
+	if c.options.OutputFile != "" {
+		err = c.writeToFile(c.options.OutputFile, data.DataString)
+	}
+	return err
+}
+
+func (c *Client) writeToFile(filepath, content string) error {
 	// if it's a response and file doesn't exist skip
-	f, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(filepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
 	// write to file
-	fmt.Fprint(f, data.DataString)
+	fmt.Fprint(f, content)
 	return f.Close()
 }
