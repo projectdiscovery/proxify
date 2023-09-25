@@ -12,7 +12,7 @@ require (
 	github.com/haxii/fastproxy v0.5.37
 	github.com/pkg/errors v0.9.1
 	github.com/projectdiscovery/dsl v0.0.22
-	github.com/projectdiscovery/fastdialer v0.0.37
+	github.com/projectdiscovery/fastdialer v0.0.38
 	github.com/projectdiscovery/goflags v0.1.20
 	github.com/projectdiscovery/gologger v1.1.11
 	github.com/projectdiscovery/martian/v3 v3.0.0-20230412114616-98e3a0a6994a
@@ -85,13 +85,13 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.17 // indirect
 	github.com/projectdiscovery/blackrock v0.0.1 // indirect
 	github.com/projectdiscovery/gostruct v0.0.1 // indirect
-	github.com/projectdiscovery/hmap v0.0.19 // indirect
+	github.com/projectdiscovery/hmap v0.0.20 // indirect
 	github.com/projectdiscovery/mapcidr v1.1.9 // indirect
 	github.com/projectdiscovery/networkpolicy v0.0.6 // indirect
 	github.com/projectdiscovery/retryabledns v1.0.36 // indirect
 	github.com/quic-go/quic-go v0.37.4 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
-	github.com/refraction-networking/utls v1.5.2 // indirect
+	github.com/refraction-networking/utls v1.5.3 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
