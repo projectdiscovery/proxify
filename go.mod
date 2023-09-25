@@ -85,7 +85,7 @@ require (
 	github.com/projectdiscovery/blackrock v0.0.1 // indirect
 	github.com/projectdiscovery/gostruct v0.0.1 // indirect
 	github.com/projectdiscovery/hmap v0.0.19 // indirect
-	github.com/projectdiscovery/mapcidr v1.1.2 // indirect
+	github.com/projectdiscovery/mapcidr v1.1.9 // indirect
 	github.com/projectdiscovery/networkpolicy v0.0.6 // indirect
 	github.com/projectdiscovery/retryabledns v1.0.35 // indirect
 	github.com/quic-go/quic-go v0.37.4 // indirect
