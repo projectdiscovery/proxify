@@ -120,6 +120,10 @@ func (l *Logger) AsyncWrite() {
 			}
 
 			outputdata.DataString = fmt.Sprintf(outputdata.Format, outputdata.Data)
+			if outputdata.Userdata.HasResponse {
+				outputdata.Format = "\n" + outputdata.Format
+			}
+			outputdata.RawData = []byte(fmt.Sprintf(outputdata.Format, outputdata.RawData))
 
 			if l.options.MaxSize > 0 {
 				outputdata.DataString = stringsutil.Truncate(outputdata.DataString, l.options.MaxSize)
