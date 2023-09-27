@@ -9,6 +9,7 @@ type UserData struct {
 
 type OutputData struct {
 	Userdata   UserData
+	RawData    []byte
 	Data       []byte
 	DataString string
 	Name       string
