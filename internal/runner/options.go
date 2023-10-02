@@ -28,6 +28,7 @@ var (
 // Options of the runner
 type Options struct {
 	OutputDirectory             string
+	OutputFile                  string // for storing the jsonl output
 	LoggerConfig                string
 	ConfigDir                   string
 	CertCacheSize               int
@@ -72,7 +73,8 @@ func ParseOptions() (*Options, error) {
 
 	flagSet.CreateGroup("output", "Output",
 		// Todo:	flagSet.BoolVar(&options.Dump, "dump", true, "Dump HTTP requests/response to output file"),
-		flagSet.StringVarP(&options.OutputDirectory, "output", "o", "logs", "Output Directory to store HTTP proxy logs"),
+		flagSet.DynamicVarP(&options.OutputDirectory, "store-resposne", "sr", "proxify_logs", "store raw http request / response to output directory"),
+		flagSet.DynamicVarP(&options.OutputFile, "output", "o", "proxify_logs.jsonl", "output file to store proxify logs"),
 		flagSet.BoolVar(&options.DumpRequest, "dump-req", false, "Dump only HTTP requests to output file"),
 		flagSet.BoolVar(&options.DumpResponse, "dump-resp", false, "Dump only HTTP responses to output file"),
 		flagSet.BoolVarP(&options.OutputJsonl, "jsonl", "j", false, "write output in JSONL(ines) format"),
@@ -116,7 +118,7 @@ func ParseOptions() (*Options, error) {
 		flagSet.IntVar(&options.CertCacheSize, "cert-cache-size", 256, "Number of certificates to cache"),
 		flagSet.StringSliceVarP(&options.Allow, "allow", "a", nil, "Allowed list of IP/CIDR's to be proxied", goflags.FileNormalizedStringSliceOptions),
 		flagSet.StringSliceVarP(&options.Deny, "deny", "d", nil, "Denied list of IP/CIDR's to be proxied", goflags.FileNormalizedStringSliceOptions),
-		flagSet.StringSliceVarP(&options.PassThrough, "passthrough", "pt", nil, "List of passthrough domains", goflags.NormalizedStringSliceOptions),
+		flagSet.StringSliceVarP(&options.PassThrough, "passthrough", "pt", nil, "List of passthrough domains", goflags.FileNormalizedStringSliceOptions),
 	)
 
 	silent, verbose, veryVerbose := false, false, false
@@ -177,7 +179,11 @@ func ParseOptions() (*Options, error) {
 			gologger.Info().Msgf("Current proxify version %v %v", version, updateutils.GetVersionDescription(version, latestVersion))
 		}
 	}
-
+	options.OutputJsonl = true
+	// if OutputFile is not set, set it to default
+	if options.OutputFile == "" {
+		options.OutputFile = "proxify_logs.jsonl"
+	}
 	return options, nil
 }
 

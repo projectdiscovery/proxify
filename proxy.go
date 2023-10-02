@@ -48,6 +48,7 @@ type Options struct {
 	ListenAddrHTTP              string
 	ListenAddrSocks5            string
 	OutputDirectory             string
+	OutputFile                  string
 	RequestDSL                  []string
 	ResponseDSL                 []string
 	UpstreamHTTPProxies         []string
@@ -258,11 +259,8 @@ func (p *Proxy) Run() error {
 	// http proxy
 	if p.httpProxy != nil {
 		p.httpProxy.TLSPassthroughFunc = func(req *http.Request) bool {
-			// if !stringsutil.ContainsAny(req.URL.Host, "avatars") {
-			// 	log.Printf("Skipped MITM for %v", req.URL.Host)
-			// 	return true
-			// }
-			return false
+			// Skip MITM for hosts that are in pass-through list
+			return util.MatchAnyRegex(p.options.PassThrough, req.Host)
 		}
 
 		p.httpProxy.SetRequestModifier(p)
@@ -275,31 +273,6 @@ func (p *Proxy) Run() error {
 			}
 			gologger.Fatal().Msgf("%v", p.httpProxy.Serve(l))
 		}()
-
-		// // Serve the certificate when the user makes requests to /proxify
-		// p.httpproxy.OnRequest(goproxy.DstHostIs("proxify")).DoFunc(
-		// 	func(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-		// 		if r.URL.Path != "/cacert.crt" {
-		// 			return r, goproxy.NewResponse(r, "text/plain", 404, "Invalid path given")
-		// 		}
-
-		// 		_, ca := p.certs.GetCA()
-		// 		reader := bytes.NewReader(ca)
-
-		// 		header := http.Header{}
-		// 		header.Set("Content-Type", "application/pkix-cert")
-		// 		resp := &http.Response{
-		// 			Request:          r,
-		// 			TransferEncoding: r.TransferEncoding,
-		// 			Header:           header,
-		// 			StatusCode:       200,
-		// 			Status:           http.StatusText(200),
-		// 			ContentLength:    int64(reader.Len()),
-		// 			Body:             io.NopCloser(reader),
-		// 		}
-		// 		return r, resp
-		// 	},
-		// )
 	}
 
 	// socks5 proxy
@@ -353,6 +326,7 @@ func (p *Proxy) getRoundTripper() (http.RoundTripper, error) {
 		MaxIdleConns:        0,
 		MaxConnsPerHost:     0,
 		TLSClientConfig: &tls.Config{
+			MinVersion:         tls.VersionTLS10,
 			InsecureSkipVerify: true,
 		},
 	}
@@ -401,6 +375,7 @@ func NewProxy(options *Options) (*Proxy, error) {
 
 	logger := logger.NewLogger(&logger.OptionsLogger{
 		Verbosity:    options.Verbosity,
+		OutputFile:   options.OutputFile,
 		OutputFolder: options.OutputDirectory,
 		DumpRequest:  options.DumpRequest,
 		DumpResponse: options.DumpResponse,
