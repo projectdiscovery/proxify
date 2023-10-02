@@ -6,3 +6,6 @@ cmd/replay/replay
 cmd/mitmrelay/mitmrelay
 *.exe
 dist/*
+
+.vscode
+.devcontainer
