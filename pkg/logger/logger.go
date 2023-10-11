@@ -24,7 +24,7 @@ import (
 const (
 	dataWithNewLine      = "%s\n"
 	dataWithoutNewLine   = "%s"
-	LoggerConfigFilename = "logger-config.yaml"
+	LoggerConfigFilename = "export-config.yaml"
 )
 
 type OptionsLogger struct {

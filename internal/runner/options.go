@@ -113,7 +113,7 @@ func ParseOptions() (*Options, error) {
 
 	flagSet.CreateGroup("configuration", "Configuration",
 		flagSet.StringVar(&cfgFile, "config", "", "path to the proxify configuration file"),
-		flagSet.StringVarP(&options.LoggerConfig, "logger-config", "lc", filepath.Join(homeDir, ".config", "proxify", logger.LoggerConfigFilename), "proxify logger module configuration file"),
+		flagSet.StringVarP(&options.LoggerConfig, "export-config", "ec", filepath.Join(homeDir, ".config", "proxify", logger.LoggerConfigFilename), "proxify export module configuration file"),
 		flagSet.StringVar(&options.ConfigDir, "config-directory", filepath.Join(homeDir, ".config", "proxify"), "override the default config path ($home/.config/proxify)"),
 		flagSet.IntVar(&options.CertCacheSize, "cert-cache-size", 256, "Number of certificates to cache"),
 		flagSet.StringSliceVarP(&options.Allow, "allow", "a", nil, "Allowed list of IP/CIDR's to be proxied", goflags.FileNormalizedStringSliceOptions),
@@ -244,7 +244,7 @@ func (options *Options) configureOutput() {
 	}
 }
 
-// createLoggerConfigIfNotExists creates logger-config if it doesn't exists
+// createLoggerConfigIfNotExists creates export-config if it doesn't exists
 func (options *Options) createLoggerConfigIfNotExists() error {
 	if fileutil.FileExists(options.LoggerConfig) {
 		return nil
