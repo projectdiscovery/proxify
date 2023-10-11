@@ -101,7 +101,7 @@ EXPORT:
 CONFIGURATION:
    -config string              path to the proxify configuration file
    -ec, -export-config string  proxify export module configuration file ($HOME/.config/proxify/export-config.yaml)
-   -config-directory string    override the default config path ($home/.config/proxify)
+   -config-directory string    override the default config path ($HOME/.config/proxify)
    -cert-cache-size int        Number of certificates to cache (default 256)
    -a, -allow string[]         Allowed list of IP/CIDR's to be proxied
    -d, -deny string[]          Denied list of IP/CIDR's to be proxied
