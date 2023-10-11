@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"fmt"
 	"math"
 	"os"
 	"path/filepath"
@@ -9,12 +10,15 @@ import (
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/gologger/formatter"
 	"github.com/projectdiscovery/gologger/levels"
+	"github.com/projectdiscovery/proxify/pkg/logger"
 	"github.com/projectdiscovery/proxify/pkg/logger/elastic"
 	"github.com/projectdiscovery/proxify/pkg/logger/kafka"
 	"github.com/projectdiscovery/proxify/pkg/types"
+	errorutil "github.com/projectdiscovery/utils/errors"
 	fileutil "github.com/projectdiscovery/utils/file"
 	permissionutil "github.com/projectdiscovery/utils/permission"
 	updateutils "github.com/projectdiscovery/utils/update"
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -25,6 +29,7 @@ var (
 type Options struct {
 	OutputDirectory             string
 	OutputFile                  string // for storing the jsonl output
+	LoggerConfig                string
 	ConfigDir                   string
 	CertCacheSize               int
 	Verbosity                   types.Verbosity
@@ -104,18 +109,11 @@ func ParseOptions() (*Options, error) {
 
 	flagSet.CreateGroup("export", "Export",
 		flagSet.IntVar(&options.MaxSize, "max-size", math.MaxInt, "Max export data size (request/responses will be truncated)"),
-		flagSet.StringVar(&options.Elastic.Addr, "elastic-address", "", "elasticsearch address (ip:port)"),
-		flagSet.BoolVar(&options.Elastic.SSL, "elastic-ssl", false, "enable elasticsearch ssl"),
-		flagSet.BoolVar(&options.Elastic.SSLVerification, "elastic-ssl-verification", false, "enable elasticsearch ssl verification"),
-		flagSet.StringVar(&options.Elastic.Username, "elastic-username", "", "elasticsearch username"),
-		flagSet.StringVar(&options.Elastic.Password, "elastic-password", "", "elasticsearch password"),
-		flagSet.StringVar(&options.Elastic.IndexName, "elastic-index", "proxify", "elasticsearch index name"),
-		flagSet.StringVar(&options.Kafka.Addr, "kafka-address", "", "address of kafka broker (ip:port)"),
-		flagSet.StringVar(&options.Kafka.Topic, "kafka-topic", "proxify", "kafka topic to publish messages on"),
 	)
 
 	flagSet.CreateGroup("configuration", "Configuration",
 		flagSet.StringVar(&cfgFile, "config", "", "path to the proxify configuration file"),
+		flagSet.StringVarP(&options.LoggerConfig, "export-config", "ec", filepath.Join(homeDir, ".config", "proxify", logger.LoggerConfigFilename), "proxify export module configuration file"),
 		flagSet.StringVar(&options.ConfigDir, "config-directory", filepath.Join(homeDir, ".config", "proxify"), "override the default config path ($home/.config/proxify)"),
 		flagSet.IntVar(&options.CertCacheSize, "cert-cache-size", 256, "Number of certificates to cache"),
 		flagSet.StringSliceVarP(&options.Allow, "allow", "a", nil, "Allowed list of IP/CIDR's to be proxied", goflags.FileNormalizedStringSliceOptions),
@@ -149,6 +147,14 @@ func ParseOptions() (*Options, error) {
 		if err := flagSet.MergeConfigFile(cfgFile); err != nil {
 			gologger.Fatal().Msgf("Could not read config: %s\n", err)
 		}
+	}
+
+	if err := options.createLoggerConfigIfNotExists(); err != nil {
+		return nil, err
+	}
+
+	if err := options.parseLoggerConfig(); err != nil {
+		return nil, err
 	}
 
 	// Read the inputs and configure the logging
@@ -236,4 +242,46 @@ func (options *Options) configureOutput() {
 	if options.NoColor {
 		gologger.DefaultLogger.SetFormatter(formatter.NewCLI(true))
 	}
+}
+
+// createLoggerConfigIfNotExists creates export-config if it doesn't exists
+func (options *Options) createLoggerConfigIfNotExists() error {
+	if fileutil.FileExists(options.LoggerConfig) {
+		return nil
+	}
+
+	config := &logger.Config{
+		Elastic: elastic.Options{},
+		Kafka:   kafka.Options{},
+	}
+	loggerConfigFile, err := os.Create(options.LoggerConfig)
+	if err != nil {
+		return errorutil.NewWithErr(err).Msgf("could not create config file")
+	}
+	defer loggerConfigFile.Close()
+
+	err = yaml.NewEncoder(loggerConfigFile).Encode(config)
+	return err
+}
+
+// parseLoggerConfig parses the logger configuration file
+func (options *Options) parseLoggerConfig() error {
+	var config logger.Config
+
+	data, err := os.ReadFile(options.LoggerConfig)
+	if err != nil {
+		return err
+	}
+
+	expandedData := os.ExpandEnv(string(data))
+	err = yaml.Unmarshal([]byte(expandedData), &config)
+	if err != nil {
+		return err
+	}
+	fmt.Println(expandedData)
+
+	options.Kafka = config.Kafka
+	options.Elastic = config.Elastic
+
+	return nil
 }

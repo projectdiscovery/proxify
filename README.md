@@ -96,19 +96,12 @@ PROXY:
    -c int                       Number of requests before switching to the next upstream proxy (default 1)
 
 EXPORT:
-   -max-size int              Max export data size (request/responses will be truncated) (default 9223372036854775807)
-   -elastic-address string    elasticsearch address (ip:port)
-   -elastic-ssl               enable elasticsearch ssl
-   -elastic-ssl-verification  enable elasticsearch ssl verification
-   -elastic-username string   elasticsearch username
-   -elastic-password string   elasticsearch password
-   -elastic-index string      elasticsearch index name (default "proxify")
-   -kafka-address string      address of kafka broker (ip:port)
-   -kafka-topic string        kafka topic to publish messages on (default "proxify")
+   -max-size int  Max export data size (request/responses will be truncated) (default 9223372036854775807)
 
 CONFIGURATION:
    -config string              path to the proxify configuration file
-   -config-directory string    override the default config path ($home/.config/proxify) (default "$home/.config/proxify")
+   -ec, -export-config string  proxify export module configuration file ($HOME/.config/proxify/export-config.yaml)
+   -config-directory string    override the default config path ($HOME/.config/proxify)
    -cert-cache-size int        Number of certificates to cache (default 256)
    -a, -allow string[]         Allowed list of IP/CIDR's to be proxied
    -d, -deny string[]          Denied list of IP/CIDR's to be proxied
