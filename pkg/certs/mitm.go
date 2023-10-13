@@ -43,12 +43,20 @@ func GetMitMConfig() *mitm.Config {
 }
 
 func SaveCAToFile(filename string) error {
-	buffer := &bytes.Buffer{}
-	err := pem.Encode(buffer, &pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw})
+	buffer, err := GetRawCA()
 	if err != nil {
 		return err
 	}
 	return os.WriteFile(filename, buffer.Bytes(), 0600)
+}
+
+func GetRawCA() (*bytes.Buffer, error) {
+	buffer := &bytes.Buffer{}
+	err := pem.Encode(buffer, &pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw})
+	if err != nil {
+		return nil, err
+	}
+	return buffer, nil
 }
 
 func SaveKeyToFile(filename string) error {

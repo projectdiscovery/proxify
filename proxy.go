@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 
@@ -266,11 +267,18 @@ func (p *Proxy) Run() error {
 		p.httpProxy.SetRequestModifier(p)
 		p.httpProxy.SetResponseModifier(p)
 
+		l, err := net.Listen("tcp", p.options.ListenAddrHTTP)
+		if err != nil {
+			gologger.Fatal().Msgf("failed to setup listener got %v", err)
+		}
+		// serve web page to download ca cert
 		go func() {
-			l, err := net.Listen("tcp", p.options.ListenAddrHTTP)
-			if err != nil {
-				gologger.Fatal().Msgf("failed to setup listener got %v", err)
-			}
+			//fmt.Println("web page listening on", p.options.ListenAddrHTTP+"/")
+			gologger.Fatal().Msgf("%v", serveWebPage(l))
+		}()
+
+		go func() {
+			//fmt.Println("proxy listening on", p.options.ListenAddrHTTP)
 			gologger.Fatal().Msgf("%v", p.httpProxy.Serve(l))
 		}()
 	}
@@ -465,4 +473,33 @@ func NewProxy(options *Options) (*Proxy, error) {
 
 func (p *Proxy) httpTunnelDialer(ctx context.Context, network, addr string) (net.Conn, error) {
 	return p.socks5tunnel.MakeTunnel(nil, nil, p.bufioPool, addr)
+}
+
+func serveWebPage(l net.Listener) error {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get current working directory: %v", err)
+	}
+	absStaticDirPath := strings.Join([]string{strings.Split(cwd, "cmd")[0], "static"}, "/")
+
+	mux := http.NewServeMux()
+	serveStatic := http.FileServer(http.Dir(absStaticDirPath))
+	mux.Handle("/", serveStatic)
+	// download ca cert
+	mux.HandleFunc("/cacert", func(w http.ResponseWriter, r *http.Request) {
+		buffer, err := certs.GetRawCA()
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			gologger.Error().Msgf("failed to get raw CA: %v", err)
+			return
+		}
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Disposition", "attachment; filename=\"cacert.pem\"")
+		w.Write(buffer.Bytes())
+	})
+
+	server := &http.Server{
+		Handler: mux,
+	}
+	return server.Serve(l)
 }
