@@ -495,7 +495,11 @@ func serveWebPage(l net.Listener) error {
 		}
 		w.Header().Set("Content-Type", "application/octet-stream")
 		w.Header().Set("Content-Disposition", "attachment; filename=\"cacert.pem\"")
-		w.Write(buffer.Bytes())
+		if _, err := w.Write(buffer.Bytes()); err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			gologger.Error().Msgf("failed to write raw CA: %v", err)
+			return
+		}
 	})
 
 	server := &http.Server{
