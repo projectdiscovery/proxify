@@ -18,7 +18,7 @@ require (
 	github.com/projectdiscovery/martian/v3 v3.0.0-20230412114616-98e3a0a6994a
 	github.com/projectdiscovery/roundrobin v0.0.6
 	github.com/projectdiscovery/tinydns v0.0.11
-	github.com/projectdiscovery/utils v0.0.57
+	github.com/projectdiscovery/utils v0.0.58
 	golang.org/x/net v0.17.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -88,7 +88,7 @@ require (
 	github.com/projectdiscovery/hmap v0.0.22 // indirect
 	github.com/projectdiscovery/mapcidr v1.1.12 // indirect
 	github.com/projectdiscovery/networkpolicy v0.0.6 // indirect
-	github.com/projectdiscovery/retryabledns v1.0.39 // indirect
+	github.com/projectdiscovery/retryabledns v1.0.40 // indirect
 	github.com/quic-go/quic-go v0.37.4 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/refraction-networking/utls v1.5.3 // indirect
