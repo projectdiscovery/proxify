@@ -11,7 +11,7 @@ require (
 	github.com/elazarl/goproxy v0.0.0-20221015165544-a0805db90819
 	github.com/haxii/fastproxy v0.5.37
 	github.com/pkg/errors v0.9.1
-	github.com/projectdiscovery/dsl v0.0.26
+	github.com/projectdiscovery/dsl v0.0.30
 	github.com/projectdiscovery/fastdialer v0.0.42
 	github.com/projectdiscovery/goflags v0.1.25
 	github.com/projectdiscovery/gologger v1.1.11
