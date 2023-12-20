@@ -1,7 +1,6 @@
 package runner
 
 import (
-	"fmt"
 	"math"
 	"os"
 	"path/filepath"
@@ -278,7 +277,6 @@ func (options *Options) parseLoggerConfig() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(expandedData)
 
 	options.Kafka = config.Kafka
 	options.Elastic = config.Elastic

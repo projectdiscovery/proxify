@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="icon" type="image/ico" href="pd-favicon.ico">
+    <title>Proxify</title>
+    <style>
+        body {
+            background: 
+                linear-gradient(to right, #080808 3px, transparent 3px),
+                linear-gradient(to bottom, #080808 3px, transparent 3px);
+            background-color: #000023;
+            background-size: 6px 6px;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            animation: space 5s linear infinite;
+        }
+
+        @keyframes space {
+            0% {
+                background-position: 0 0;
+            }
+            100% {
+                background-position: 6px 6px;
+            }
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .top-logo {
+            width: 130px;
+            height: auto;
+            padding: 10px;
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            box-shadow: 0 0 0px 0px #001f3f;
+            animation: fadeIn 3s;
+        }
+
+        .top-logo:hover {
+            transform: scale(1.1);
+        }
+
+        .proxify-logo {
+            width: 200px;
+            height: auto;
+            padding: 10px;
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: -1px 1px 0px 0px #001f3f;
+            animation: fadeIn 4s;
+        }
+
+        .proxify-logo:hover {
+            box-shadow: 0px 0px 200px 0px #001f3f;
+            animation: fadeIn 4s;
+        }
+
+        .version {
+            position: absolute;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            color: #007BFF;
+        }
+
+        .download-button {
+            background: #000;
+            color: white;
+            padding: 15px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            position: absolute;
+            top: 40px;
+            right: 20px;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 0 5px 2px #001f3f;
+            animation: fadeIn 5s;
+        }
+
+        .download-button:hover {
+            background: #fff;
+            color: #000;
+            transform: scale(1.1);
+            box-shadow: 0 0 5px 7px #001f3f;
+        }
+
+        .logo-link {
+            text-decoration: none;
+            color: white;
+        }
+
+        .center-text {
+            font-family: 'Roboto', sans-serif;
+            font-size: 20px;
+            color: #FFFFFF;
+            padding: 20px;
+            line-height: 1.6;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: fadeIn 6s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .code-book {
+            position: absolute;
+            bottom: 50px;
+            right: 50px;
+            animation: fadeIn 10s;
+            box-shadow: 0 0 2px 2px #001f3f;
+            border-radius: 50%;
+        }
+
+        .code-book:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 4px 4px #001f3f;
+        }
+        .code-book-img {
+            width: 55px;
+            height: 50px;
+            bottom: 20px;
+            right: 20px;
+        }
+
+        .code-book-link {
+            text-decoration: none;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="https://github.com/projectdiscovery" class="logo-link">
+            <img src="pd-logo.png" alt="Projectdiscovery Logo" class="top-logo">
+        </a>
+
+        <a href="https://github.com/projectdiscovery/proxify#readme" class="logo-link">
+            <img src="proxify-logo-white.png" alt="Proxify Logo" class="proxify-logo">
+        </a>
+
+        <a href="/cacert" class="download-button">Download Certificate</a>
+
+        <div class="center-text">
+            Swiss Army Knife Proxy for rapid deployments. <br>
+            Supports multiple operations such as request/response dump,<br>
+            filtering and manipulation via DSL language, upstream HTTP/Socks5 proxy.<br>
+            Additionally, a replay utility allows to import the dumped traffic <br>
+            (request/responses with correct domain name) into BurpSuite or <br>
+            any other proxy by simply setting the upstream proxy to proxify.
+        </div>
+
+        <div class="code-book">
+            <a href="https://github.com/projectdiscovery/proxify" class="code-book-link">
+                <img src="coding.png" alt="Code Book" class="code-book-img">
+        </div>
+    </div>
+</body>
+</html>
