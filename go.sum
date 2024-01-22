@@ -254,8 +254,8 @@ github.com/projectdiscovery/roundrobin v0.0.6 h1:zoJAFRgP9XK7B+iKSjR+djRAuDYxnc5
 github.com/projectdiscovery/roundrobin v0.0.6/go.mod h1:vTxcWqNLyMH6VE2Q/hsNNvDHFLiIzHozC1rLLT/vocQ=
 github.com/projectdiscovery/tinydns v0.0.25 h1:h1aTdWO98CD/pIAUxcpWaAyHhmKEW6SvEvEiDglVeGE=
 github.com/projectdiscovery/tinydns v0.0.25/go.mod h1:Yh4QhvYgMazW5eaneiCeTY/7qtOJhsQkEonoUG3JW6s=
-github.com/projectdiscovery/utils v0.0.73 h1:KWzxzJv9U5YKHGGOvkKHJmO7NdV5Kbzc8lPt+Frdj0o=
-github.com/projectdiscovery/utils v0.0.73/go.mod h1:SEb3ZoGy1nxdnPNXAGhMZNhRcokRkoMEjC6l9H59t1s=
+github.com/projectdiscovery/utils v0.0.74 h1:mrjRm1eF3ZLIikIpWF3Nzbar/twHHqhz9WSi9fqGQeA=
+github.com/projectdiscovery/utils v0.0.74/go.mod h1:4MBUFfZ9Mm96PiWUj2zJ99sx2AVOpZkGukC6O16+p+o=
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
 github.com/quic-go/quic-go v0.37.7 h1:AgKsQLZ1+YCwZd2GYhBUsJDYZwEkA5gENtAjb+MxONU=
 github.com/quic-go/quic-go v0.37.7/go.mod h1:YsbH1r4mSHPJcLF4k4zruUkLBqctEMBDR6VPvcYjIsU=
