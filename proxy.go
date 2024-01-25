@@ -14,6 +14,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/armon/go-socks5"
 	"github.com/haxii/fastproxy/bufiopool"
@@ -249,8 +250,12 @@ func (p *Proxy) MatchReplaceResponse(resp *http.Response) error {
 }
 
 func (p *Proxy) Run() error {
+	var wg sync.WaitGroup
+
 	if p.tinydns != nil {
+		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			if err := p.tinydns.Run(); err != nil {
 				gologger.Warning().Msgf("Could not start dns server: %s\n", err)
 			}
@@ -272,12 +277,16 @@ func (p *Proxy) Run() error {
 			gologger.Fatal().Msgf("failed to setup listener got %v", err)
 		}
 		// serve web page to download ca cert
+		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			//fmt.Println("web page listening on", p.options.ListenAddrHTTP+"/")
 			gologger.Fatal().Msgf("%v", serveWebPage(l))
 		}()
 
+		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			//fmt.Println("proxy listening on", p.options.ListenAddrHTTP)
 			gologger.Fatal().Msgf("%v", p.httpProxy.Serve(l))
 		}()
@@ -301,9 +310,14 @@ func (p *Proxy) Run() error {
 			p.bufioPool = bufiopool.New(4096, 4096)
 		}
 
-		return p.socks5proxy.ListenAndServe("tcp", p.options.ListenAddrSocks5)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			gologger.Fatal().Msgf("%v", p.socks5proxy.ListenAndServe("tcp", p.options.ListenAddrSocks5))
+		}()
 	}
 
+	wg.Wait()
 	return nil
 }
 
@@ -487,6 +501,7 @@ func serveWebPage(l net.Listener) error {
 	mux.Handle("/", serveStatic)
 	// download ca cert
 	mux.HandleFunc("/cacert", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("downloading ca cert")
 		buffer, err := certs.GetRawCA()
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
