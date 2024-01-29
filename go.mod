@@ -12,7 +12,7 @@ require (
 	github.com/haxii/fastproxy v0.5.37
 	github.com/pkg/errors v0.9.1
 	github.com/projectdiscovery/dsl v0.0.41
-	github.com/projectdiscovery/fastdialer v0.0.53
+	github.com/projectdiscovery/fastdialer v0.0.56
 	github.com/projectdiscovery/goflags v0.1.37
 	github.com/projectdiscovery/gologger v1.1.12
 	github.com/projectdiscovery/martian/v3 v3.0.0-20230412114616-98e3a0a6994a
@@ -24,6 +24,7 @@ require (
 )
 
 require (
+	github.com/docker/go-units v0.5.0 // indirect
 	github.com/klauspost/pgzip v1.2.5 // indirect
 	github.com/mholt/archiver/v3 v3.5.1 // indirect
 )
