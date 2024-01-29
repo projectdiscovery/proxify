@@ -54,6 +54,8 @@ github.com/dimchansky/utfbom v1.1.1/go.mod h1:SxdoEBH5qIqFocHMyGOXVAybYJdr71b1Q/
 github.com/dlclark/regexp2 v1.4.0/go.mod h1:2pZnwuY/m+8K6iRw6wQdMtk+rH5tNGR1i55kozfMjCc=
 github.com/dlclark/regexp2 v1.8.1 h1:6Lcdwya6GjPUNsBct8Lg/yRPwMhABj269AAzdGSiR+0=
 github.com/dlclark/regexp2 v1.8.1/go.mod h1:DHkYz0B9wPfa6wondMfaivmHpzrQ3v9q8cnmRbL6yW8=
+github.com/docker/go-units v0.5.0 h1:69rxXcBk27SvSaaxTtLh/8llcHD8vYHT7WSdRZ/jvr4=
+github.com/docker/go-units v0.5.0/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
 github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5 h1:iFaUwBSo5Svw6L7HYpRu/0lE3e0BaElwnNO1qkNQxBY=
 github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5/go.mod h1:qssHWj60/X5sZFNxpG4HBPDHVqxNm4DfnCKgrbZOT+s=
 github.com/dsnet/golib v0.0.0-20171103203638-1ea166775780/go.mod h1:Lj+Z9rebOhdfkVLjJ8T6VcRQv3SXugXy999NBtR9aFY=
@@ -232,8 +234,8 @@ github.com/projectdiscovery/blackrock v0.0.1 h1:lHQqhaaEFjgf5WkuItbpeCZv2DUIE45k
 github.com/projectdiscovery/blackrock v0.0.1/go.mod h1:ANUtjDfaVrqB453bzToU+YB4cUbvBRpLvEwoWIwlTss=
 github.com/projectdiscovery/dsl v0.0.41 h1:lAn+W/Lu6q0xvWJ3QhxUiKWg+p3LL/kALeoZJm23Wk8=
 github.com/projectdiscovery/dsl v0.0.41/go.mod h1:p1FYAyqoiC9eWYoJDQuqARETv6OCYVmZOqOD+e3RPJE=
-github.com/projectdiscovery/fastdialer v0.0.53 h1:s9BuOMpeIu8E7muTwYG0aQYpp5TEdlJYy8GBCWO6V+Q=
-github.com/projectdiscovery/fastdialer v0.0.53/go.mod h1:Fvbo4+QTc6grX5eGYcEHwJHE9Grq7iATP/nfTcatTKk=
+github.com/projectdiscovery/fastdialer v0.0.56 h1:SUw193mzYaDFtBpQOs4+EHa6r1NnBYj3xwSqK1j9Chk=
+github.com/projectdiscovery/fastdialer v0.0.56/go.mod h1:o0Oeb78Bn6mpr+dTLV4Jb7hnEFQjjA7lUeDe8Ga6zq4=
 github.com/projectdiscovery/goflags v0.1.37 h1:R/8HLSLlFgShKKn8BO/uHTdnTq7D1igqszgTzK5ro7s=
 github.com/projectdiscovery/goflags v0.1.37/go.mod h1:Cnm8ezMwXsEbMjAB+p2/DnVr9e4SQ3kVl6iEm7fqzoQ=
 github.com/projectdiscovery/gologger v1.1.12 h1:uX/QkQdip4PubJjjG0+uk5DtyAi1ANPJUvpmimXqv4A=
