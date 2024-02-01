@@ -280,14 +280,14 @@ func (p *Proxy) Run() error {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			//fmt.Println("web page listening on", p.options.ListenAddrHTTP+"/")
+
 			gologger.Fatal().Msgf("%v", serveWebPage(l))
 		}()
 
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			//fmt.Println("proxy listening on", p.options.ListenAddrHTTP)
+
 			gologger.Fatal().Msgf("%v", p.httpProxy.Serve(l))
 		}()
 	}
@@ -313,6 +313,7 @@ func (p *Proxy) Run() error {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+
 			gologger.Fatal().Msgf("%v", p.socks5proxy.ListenAndServe("tcp", p.options.ListenAddrSocks5))
 		}()
 	}
@@ -501,7 +502,6 @@ func serveWebPage(l net.Listener) error {
 	mux.Handle("/", serveStatic)
 	// download ca cert
 	mux.HandleFunc("/cacert", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("downloading ca cert")
 		buffer, err := certs.GetRawCA()
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
