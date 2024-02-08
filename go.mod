@@ -1,6 +1,7 @@
 module github.com/projectdiscovery/proxify
 
-go 1.20
+go 1.21
+
 
 require (
 	github.com/Knetic/govaluate v3.0.0+incompatible
@@ -17,7 +18,7 @@ require (
 	github.com/projectdiscovery/gologger v1.1.12
 	github.com/projectdiscovery/martian/v3 v3.0.0-20230412114616-98e3a0a6994a
 	github.com/projectdiscovery/roundrobin v0.0.6
-	github.com/projectdiscovery/tinydns v0.0.25
+	github.com/projectdiscovery/tinydns v0.0.27
 	github.com/projectdiscovery/utils v0.0.76
 	golang.org/x/net v0.17.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -89,10 +90,10 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.17 // indirect
 	github.com/projectdiscovery/blackrock v0.0.1 // indirect
 	github.com/projectdiscovery/gostruct v0.0.2 // indirect
-	github.com/projectdiscovery/hmap v0.0.36 // indirect
+	github.com/projectdiscovery/hmap v0.0.37 // indirect
 	github.com/projectdiscovery/mapcidr v1.1.16 // indirect
 	github.com/projectdiscovery/networkpolicy v0.0.7 // indirect
-	github.com/projectdiscovery/retryabledns v1.0.53 // indirect
+	github.com/projectdiscovery/retryabledns v1.0.54 // indirect
 	github.com/quic-go/quic-go v0.37.7 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/refraction-networking/utls v1.5.4 // indirect
