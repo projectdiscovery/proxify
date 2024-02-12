@@ -247,8 +247,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/projectdiscovery/blackrock v0.0.1 h1:lHQqhaaEFjgf5WkuItbpeCZv2DUIE45k0VbGJyft6LQ=
 github.com/projectdiscovery/blackrock v0.0.1/go.mod h1:ANUtjDfaVrqB453bzToU+YB4cUbvBRpLvEwoWIwlTss=
-github.com/projectdiscovery/dsl v0.0.42 h1:WKd6BLVBh4LPiTWZxavv8CWFVF1mPhih8mO+S8mjd1Q=
-github.com/projectdiscovery/dsl v0.0.42/go.mod h1:vle5UQnghHMekiq4aIGQ+hx/MNmucK2X69EXeJnG8co=
+github.com/projectdiscovery/dsl v0.0.43 h1:0LGFVnUdoGAgPnMWBlXIBlx2KTIiGllVzxaSOz0NOgw=
+github.com/projectdiscovery/dsl v0.0.43/go.mod h1:CIZuR6ciRBUZ7b0ce0d09lGXEUhyBlKlwO0aNTfOA6s=
 github.com/projectdiscovery/fastdialer v0.0.57 h1:4k/JuioxwbPOp3TKejm1lZlgTvXKu1IKlqQP3WAk65A=
 github.com/projectdiscovery/fastdialer v0.0.57/go.mod h1:Ah8GVwZr8X+0EQwMI66yMLTpS5QrDStc68tGtvPEaEw=
 github.com/projectdiscovery/goflags v0.1.37 h1:R/8HLSLlFgShKKn8BO/uHTdnTq7D1igqszgTzK5ro7s=
@@ -271,8 +271,8 @@ github.com/projectdiscovery/roundrobin v0.0.6 h1:zoJAFRgP9XK7B+iKSjR+djRAuDYxnc5
 github.com/projectdiscovery/roundrobin v0.0.6/go.mod h1:vTxcWqNLyMH6VE2Q/hsNNvDHFLiIzHozC1rLLT/vocQ=
 github.com/projectdiscovery/tinydns v0.0.27 h1:rP9bAy/u/hOFXxf3ZZVibRB5Pvi64uEXl5249PewvSI=
 github.com/projectdiscovery/tinydns v0.0.27/go.mod h1:mIkJAlJiJolITYgphZnAbSDMAoATfY++J+0nOieyc9w=
-github.com/projectdiscovery/utils v0.0.76 h1:6azn0Zju0taw5Y9qAjpGPxyqwJf2AI4VJjtIzPBcRzQ=
-github.com/projectdiscovery/utils v0.0.76/go.mod h1:ERIYcW+h5jKIYyYkfdOpNPIUtH8Ogz4q5Wq3gx/71Zw=
+github.com/projectdiscovery/utils v0.0.77 h1:HPLNY/WgVsLaHPBW1XA5XYMkTo9VRjhbOIZs+Lfww7s=
+github.com/projectdiscovery/utils v0.0.77/go.mod h1:XkHTUln/MJaWAgber2C0o1Mqacr2s9JMRhOVBjmII7w=
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
 github.com/quic-go/quic-go v0.37.7 h1:AgKsQLZ1+YCwZd2GYhBUsJDYZwEkA5gENtAjb+MxONU=
 github.com/quic-go/quic-go v0.37.7/go.mod h1:YsbH1r4mSHPJcLF4k4zruUkLBqctEMBDR6VPvcYjIsU=

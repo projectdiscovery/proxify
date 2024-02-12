@@ -2,7 +2,6 @@ module github.com/projectdiscovery/proxify
 
 go 1.21
 
-
 require (
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/Shopify/sarama v1.38.1
@@ -12,14 +11,14 @@ require (
 	github.com/elazarl/goproxy v0.0.0-20221015165544-a0805db90819
 	github.com/haxii/fastproxy v0.5.37
 	github.com/pkg/errors v0.9.1
-	github.com/projectdiscovery/dsl v0.0.42
+	github.com/projectdiscovery/dsl v0.0.43
 	github.com/projectdiscovery/fastdialer v0.0.57
 	github.com/projectdiscovery/goflags v0.1.37
 	github.com/projectdiscovery/gologger v1.1.12
 	github.com/projectdiscovery/martian/v3 v3.0.0-20230412114616-98e3a0a6994a
 	github.com/projectdiscovery/roundrobin v0.0.6
 	github.com/projectdiscovery/tinydns v0.0.27
-	github.com/projectdiscovery/utils v0.0.76
+	github.com/projectdiscovery/utils v0.0.77
 	golang.org/x/net v0.17.0
 	gopkg.in/yaml.v3 v3.0.1
 )
