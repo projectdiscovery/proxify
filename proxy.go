@@ -247,7 +247,7 @@ func (p *Proxy) ModifyResponse(resp *http.Response) error {
 		}
 	}
 	if userData == nil {
-		gologger.Error().Msgf("something went wrong got response without userData")
+		gologger.Warning().Msgf("something went wrong got response without userData")
 		// pass empty struct to avoid panic
 		userData = &types.UserData{}
 	}
@@ -538,14 +538,14 @@ func getProxifyServerMux() (*http.ServeMux, error) {
 		buffer, err := certs.GetRawCA()
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			gologger.Error().Msgf("failed to get raw CA: %v", err)
+			gologger.Warning().Msgf("failed to get raw CA: %v", err)
 			return
 		}
 		w.Header().Set("Content-Type", "application/octet-stream")
 		w.Header().Set("Content-Disposition", "attachment; filename=\"proxify.pem\"")
 		if _, err := w.Write(buffer.Bytes()); err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			gologger.Error().Msgf("failed to write raw CA: %v", err)
+			gologger.Warning().Msgf("failed to write raw CA: %v", err)
 			return
 		}
 	})
