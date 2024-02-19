@@ -9,6 +9,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"net/http/httputil"
 	"net/url"
 	"os"
@@ -33,6 +34,7 @@ import (
 	rbtransport "github.com/projectdiscovery/roundrobin/transport"
 	"github.com/projectdiscovery/tinydns"
 	errorutil "github.com/projectdiscovery/utils/errors"
+	stringsutil "github.com/projectdiscovery/utils/strings"
 	"golang.org/x/net/proxy"
 )
 
@@ -82,6 +84,116 @@ type Proxy struct {
 	tinydns      *tinydns.TinyDNS
 	rbhttp       *rbtransport.RoundTransport
 	rbsocks5     *rbtransport.RoundTransport
+	proxifyMux   *http.ServeMux // serve banner page and static files
+	listenAddr   string
+}
+
+func NewProxy(options *Options) (*Proxy, error) {
+
+	switch options.Verbosity {
+	case types.VerbositySilent:
+		martianlog.SetLevel(martianlog.Silent)
+	case types.VerbosityVerbose:
+		martianlog.SetLevel(martianlog.Info)
+	case types.VerbosityVeryVerbose:
+		martianlog.SetLevel(martianlog.Debug)
+	default:
+		martianlog.SetLevel(martianlog.Error)
+	}
+
+	logger := logger.NewLogger(&logger.OptionsLogger{
+		Verbosity:    options.Verbosity,
+		OutputFile:   options.OutputFile,
+		OutputFormat: options.OutputFormat,
+		OutputFolder: options.OutputDirectory,
+		DumpRequest:  options.DumpRequest,
+		DumpResponse: options.DumpResponse,
+		MaxSize:      options.MaxSize,
+		Elastic:      options.Elastic,
+		Kafka:        options.Kafka,
+	})
+
+	var tdns *tinydns.TinyDNS
+
+	fastdialerOptions := fastdialer.DefaultOptions
+	fastdialerOptions.EnableFallback = true
+	fastdialerOptions.Deny = options.Deny
+	fastdialerOptions.Allow = options.Allow
+	if options.ListenDNSAddr != "" {
+		dnsmapping := make(map[string]*tinydns.DnsRecord)
+		for _, record := range strings.Split(options.DNSMapping, ",") {
+			data := strings.Split(record, ":")
+			if len(data) != 2 {
+				continue
+			}
+			dnsmapping[data[0]] = &tinydns.DnsRecord{A: []string{data[1]}}
+		}
+		var err error
+		tdns, err = tinydns.New(&tinydns.Options{
+			ListenAddress:   options.ListenDNSAddr,
+			Net:             "udp",
+			UpstreamServers: []string{options.DNSFallbackResolver},
+			DnsRecords:      dnsmapping,
+		})
+		if err != nil {
+			return nil, err
+		}
+		fastdialerOptions.BaseResolvers = []string{"127.0.0.1" + options.ListenDNSAddr}
+	}
+	dialer, err := fastdialer.NewDialer(fastdialerOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	var rbhttp, rbsocks5 *rbtransport.RoundTransport
+	if len(options.UpstreamHTTPProxies) > 0 {
+		rbhttp, err = rbtransport.NewWithOptions(options.UpstreamProxyRequestsNumber, options.UpstreamHTTPProxies...)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if len(options.UpstreamSock5Proxies) > 0 {
+		rbsocks5, err = rbtransport.NewWithOptions(options.UpstreamProxyRequestsNumber, options.UpstreamSock5Proxies...)
+		if err != nil {
+			return nil, err
+		}
+	}
+	pmux, err := getProxifyServerMux()
+	if err != nil {
+		return nil, err
+	}
+
+	proxy := &Proxy{
+		logger:     logger,
+		options:    options,
+		Dialer:     dialer,
+		tinydns:    tdns,
+		rbhttp:     rbhttp,
+		rbsocks5:   rbsocks5,
+		proxifyMux: pmux,
+	}
+
+	if err := proxy.setupHTTPProxy(); err != nil {
+		return nil, err
+	}
+
+	var socks5proxy *socks5.Server
+	if options.ListenAddrSocks5 != "" {
+		socks5Config := &socks5.Config{
+			Dial: proxy.httpTunnelDialer,
+		}
+		if options.Verbosity <= types.VerbositySilent {
+			socks5Config.Logger = log.New(io.Discard, "", log.Ltime|log.Lshortfile)
+		}
+		socks5proxy, err = socks5.New(socks5Config)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	proxy.socks5proxy = socks5proxy
+
+	return proxy, nil
 }
 
 // ModifyRequest
@@ -93,6 +205,11 @@ func (p *Proxy) ModifyRequest(req *http.Request) error {
 	userData := types.UserData{
 		ID:   ctx.ID(),
 		Host: req.Host,
+	}
+
+	if stringsutil.EqualFoldAny(req.Host, "proxify", "proxify:443", "proxify:80", p.listenAddr) {
+		// hijack if this is true
+		return p.hijackNServe(req, ctx)
 	}
 
 	// If callbacks are given use them (for library use cases)
@@ -277,20 +394,10 @@ func (p *Proxy) Run() error {
 		if err != nil {
 			gologger.Fatal().Msgf("failed to setup listener got %v", err)
 		}
-
-		_ = serveWebPage
-		// // serve web page to download ca cert
-		// wg.Add(1)
-		// go func() {
-		// 	defer wg.Done()
-
-		// 	gologger.Fatal().Msgf("%v", serveWebPage(l))
-		// }()
-
+		p.listenAddr = l.Addr().String()
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-
 			gologger.Fatal().Msgf("%v", p.httpProxy.Serve(l))
 		}()
 	}
@@ -323,6 +430,10 @@ func (p *Proxy) Run() error {
 
 	wg.Wait()
 	return nil
+}
+
+func (p *Proxy) Stop() {
+	// p.httpProxy.Close()
 }
 
 // setupHTTPProxy configures proxy with settings
@@ -382,121 +493,29 @@ func (p *Proxy) getRoundTripper() (http.RoundTripper, error) {
 	return roundtrip, nil
 }
 
-func (p *Proxy) Stop() {
-	// p.httpProxy.Close()
-}
-
-func NewProxy(options *Options) (*Proxy, error) {
-
-	switch options.Verbosity {
-	case types.VerbositySilent:
-		martianlog.SetLevel(martianlog.Silent)
-	case types.VerbosityVerbose:
-		martianlog.SetLevel(martianlog.Info)
-	case types.VerbosityVeryVerbose:
-		martianlog.SetLevel(martianlog.Debug)
-	default:
-		martianlog.SetLevel(martianlog.Error)
-	}
-
-	logger := logger.NewLogger(&logger.OptionsLogger{
-		Verbosity:    options.Verbosity,
-		OutputFile:   options.OutputFile,
-		OutputFormat: options.OutputFormat,
-		OutputFolder: options.OutputDirectory,
-		DumpRequest:  options.DumpRequest,
-		DumpResponse: options.DumpResponse,
-		MaxSize:      options.MaxSize,
-		Elastic:      options.Elastic,
-		Kafka:        options.Kafka,
-	})
-
-	var tdns *tinydns.TinyDNS
-
-	fastdialerOptions := fastdialer.DefaultOptions
-	fastdialerOptions.EnableFallback = true
-	fastdialerOptions.Deny = options.Deny
-	fastdialerOptions.Allow = options.Allow
-	if options.ListenDNSAddr != "" {
-		dnsmapping := make(map[string]*tinydns.DnsRecord)
-		for _, record := range strings.Split(options.DNSMapping, ",") {
-			data := strings.Split(record, ":")
-			if len(data) != 2 {
-				continue
-			}
-			dnsmapping[data[0]] = &tinydns.DnsRecord{A: []string{data[1]}}
-		}
-		var err error
-		tdns, err = tinydns.New(&tinydns.Options{
-			ListenAddress:   options.ListenDNSAddr,
-			Net:             "udp",
-			UpstreamServers: []string{options.DNSFallbackResolver},
-			DnsRecords:      dnsmapping,
-		})
-		if err != nil {
-			return nil, err
-		}
-		fastdialerOptions.BaseResolvers = []string{"127.0.0.1" + options.ListenDNSAddr}
-	}
-	dialer, err := fastdialer.NewDialer(fastdialerOptions)
-	if err != nil {
-		return nil, err
-	}
-
-	var rbhttp, rbsocks5 *rbtransport.RoundTransport
-	if len(options.UpstreamHTTPProxies) > 0 {
-		rbhttp, err = rbtransport.NewWithOptions(options.UpstreamProxyRequestsNumber, options.UpstreamHTTPProxies...)
-		if err != nil {
-			return nil, err
-		}
-	}
-	if len(options.UpstreamSock5Proxies) > 0 {
-		rbsocks5, err = rbtransport.NewWithOptions(options.UpstreamProxyRequestsNumber, options.UpstreamSock5Proxies...)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	proxy := &Proxy{
-		logger:   logger,
-		options:  options,
-		Dialer:   dialer,
-		tinydns:  tdns,
-		rbhttp:   rbhttp,
-		rbsocks5: rbsocks5,
-	}
-
-	if err := proxy.setupHTTPProxy(); err != nil {
-		return nil, err
-	}
-
-	var socks5proxy *socks5.Server
-	if options.ListenAddrSocks5 != "" {
-		socks5Config := &socks5.Config{
-			Dial: proxy.httpTunnelDialer,
-		}
-		if options.Verbosity <= types.VerbositySilent {
-			socks5Config.Logger = log.New(io.Discard, "", log.Ltime|log.Lshortfile)
-		}
-		socks5proxy, err = socks5.New(socks5Config)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	proxy.socks5proxy = socks5proxy
-
-	return proxy, nil
-}
-
 func (p *Proxy) httpTunnelDialer(ctx context.Context, network, addr string) (net.Conn, error) {
 	return p.socks5tunnel.MakeTunnel(nil, nil, p.bufioPool, addr)
 }
 
-func serveWebPage(l net.Listener) error {
+func (p *Proxy) hijackNServe(req *http.Request, ctx *martian.Context) error {
+	conn, brw, err := ctx.Session().Hijack()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	rec := httptest.NewRecorder()
+	p.proxifyMux.ServeHTTP(rec, req)
+	resp := rec.Result()
+	resp.Close = true
+	resp.Write(brw)
+	brw.Flush()
+	return nil
+}
+
+func getProxifyServerMux() (*http.ServeMux, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("failed to get current working directory: %v", err)
+		return nil, fmt.Errorf("failed to get current working directory: %v", err)
 	}
 	absStaticDirPath := strings.Join([]string{strings.Split(cwd, "cmd")[0], "static"}, "/")
 
@@ -519,9 +538,5 @@ func serveWebPage(l net.Listener) error {
 			return
 		}
 	})
-
-	server := &http.Server{
-		Handler: mux,
-	}
-	return server.Serve(l)
+	return mux, nil
 }
