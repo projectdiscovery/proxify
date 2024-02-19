@@ -10,8 +10,8 @@ import (
 	"strings"
 )
 
-// HTTPRequesToMap Converts HTTP Request to Matcher Map
-func HTTPRequesToMap(req *http.Request) (map[string]interface{}, error) {
+// HTTPRequestToMap Converts HTTP Request to Matcher Map
+func HTTPRequestToMap(req *http.Request) (map[string]interface{}, error) {
 	m := make(map[string]interface{})
 	var headers string
 	for k, v := range req.Header {
@@ -37,6 +37,7 @@ func HTTPRequesToMap(req *http.Request) (map[string]interface{}, error) {
 	reqdumpString := string(reqdump)
 	m["raw"] = reqdumpString
 	m["request"] = reqdumpString
+	m["method"] = req.Method
 
 	return m, nil
 }
@@ -81,4 +82,18 @@ func MatchAnyRegex(regexes []string, data string) bool {
 		}
 	}
 	return false
+}
+
+// EvalBoolSlice evaluates a slice of bools using a logical AND
+func EvalBoolSlice(slice []bool) bool {
+	var x *bool
+	for _, b := range slice {
+		if x == nil {
+			x = &b
+			continue
+		} else {
+			*x = *x && b
+		}
+	}
+	return *x
 }

@@ -156,6 +156,13 @@ func (l *Logger) AsyncWrite() {
 		// first write to structured writer
 		if l.sWriter != nil {
 			func() {
+				// if matchers were given only store those that match
+				if httpData.Userdata.Match != nil {
+					if !*httpData.Userdata.Match {
+						return
+					}
+				}
+
 				sData := &types.HTTPRequestResponseLog{
 					Timestamp: time.Now().Format(time.RFC3339),
 					URL:       httpData.Request.URL.String(),
@@ -252,7 +259,7 @@ func (l *Logger) storeWriter(outputdata types.HTTPTransaction) {
 	}
 	outputdata.Name = fmt.Sprintf("%s%s-%s", outputdata.Userdata.Host, outputdata.PartSuffix, outputdata.Userdata.ID)
 	if outputdata.Userdata.HasResponse && !(l.options.DumpRequest || l.options.DumpResponse) {
-		if outputdata.Userdata.Match {
+		if outputdata.Userdata.Match != nil && *outputdata.Userdata.Match {
 			outputdata.Name = outputdata.Name + ".match"
 		}
 	}

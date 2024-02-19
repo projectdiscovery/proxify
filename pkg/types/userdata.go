@@ -13,7 +13,7 @@ import (
 // transaction and its state like match, response etc.
 type UserData struct {
 	ID          string
-	Match       bool
+	Match       *bool
 	HasResponse bool
 	Host        string
 }

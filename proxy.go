@@ -218,16 +218,21 @@ func (p *Proxy) ModifyRequest(req *http.Request) error {
 		return p.options.OnRequestCallback(req, ctx)
 	}
 
+	boolSlice := []bool{}
 	for _, expr := range p.options.RequestDSL {
-		if !userData.Match {
-			m, _ := util.HTTPRequesToMap(req)
-			v, err := dsl.EvalExpr(expr, m)
-			if err != nil {
-				gologger.Warning().Msgf("Could not evaluate request dsl: %s\n", err)
-			}
-			userData.Match = err == nil && v.(bool)
+		m, _ := util.HTTPRequestToMap(req)
+		v, err := dsl.EvalExpr(expr, m)
+		if err != nil {
+			gologger.Warning().Msgf("Could not evaluate request dsl: %s\n", err)
 		}
+		boolSlice = append(boolSlice, err == nil && v.(bool))
 	}
+	// evaluate bool array to get match status
+	if len(boolSlice) > 0 {
+		tmp := util.EvalBoolSlice(boolSlice)
+		userData.Match = &tmp
+	}
+
 	ctx.Set("user-data", userData)
 
 	// perform match and replace
@@ -264,20 +269,23 @@ func (p *Proxy) ModifyResponse(resp *http.Response) error {
 		return p.options.OnResponseCallback(resp, ctx)
 	}
 
-	// TODO: match in request seems to be seperate from response
-	// but share same `Match` value. investigate this
-	matchStatus := false
+	boolSlice := []bool{}
 	for _, expr := range p.options.ResponseDSL {
-		if !matchStatus {
-			m, _ := util.HTTPResponseToMap(resp)
-			v, err := dsl.EvalExpr(expr, m)
-			if err != nil {
-				gologger.Warning().Msgf("Could not evaluate response dsl: %s\n", err)
-			}
-			matchStatus = err == nil && v.(bool)
+		m, _ := util.HTTPResponseToMap(resp)
+		v, err := dsl.EvalExpr(expr, m)
+		if err != nil {
+			gologger.Warning().Msgf("Could not evaluate response dsl: %s\n", err)
 		}
+		boolSlice = append(boolSlice, err == nil && v.(bool))
 	}
-	userData.Match = matchStatus
+	if len(boolSlice) > 0 {
+		tmp := util.EvalBoolSlice(boolSlice)
+		// finalize
+		if userData.Match != nil {
+			tmp = *userData.Match && tmp
+		}
+		userData.Match = &tmp
+	}
 	// perform match and replace
 	if len(p.options.ResponseMatchReplaceDSL) != 0 {
 		_ = p.MatchReplaceResponse(resp)
