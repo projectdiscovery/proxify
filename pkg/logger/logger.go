@@ -1,14 +1,11 @@
 package logger
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httputil"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/asaskevich/govalidator"
@@ -16,6 +13,8 @@ import (
 	"github.com/projectdiscovery/proxify/pkg/logger/elastic"
 	"github.com/projectdiscovery/proxify/pkg/logger/file"
 	"github.com/projectdiscovery/proxify/pkg/logger/kafka"
+	"github.com/projectdiscovery/utils/conversion"
+	pdhttpUtils "github.com/projectdiscovery/utils/http"
 	stringsutil "github.com/projectdiscovery/utils/strings"
 
 	"github.com/projectdiscovery/proxify/pkg/types"
@@ -29,35 +28,32 @@ const (
 
 type OptionsLogger struct {
 	Verbosity    types.Verbosity
-	OutputFolder string
-	OutputFile   string
-	DumpRequest  bool
-	DumpResponse bool
-	OutputJsonl  bool
-	MaxSize      int
+	OutputFolder string // when output is written to multiple files
+	OutputFile   string // when output is written to single file
+	OutputFormat string // jsonl or yaml
+	DumpRequest  bool   // dump request to file
+	DumpResponse bool   // dump response to file
+	MaxSize      int    // max size of the output
 	Elastic      *elastic.Options
 	Kafka        *kafka.Options
 }
 
 type Store interface {
-	Save(data types.OutputData) error
+	Save(data types.HTTPTransaction) error
 }
 
 type Logger struct {
 	options    *OptionsLogger
-	asyncqueue chan types.OutputData
-	jsonLogMap sync.Map
+	asyncqueue chan types.HTTPTransaction
 	Store      []Store
+	sWriter    OutputFileWriter // sWriter is the structured writer
 }
 
 // NewLogger instance
 func NewLogger(options *OptionsLogger) *Logger {
 	logger := &Logger{
 		options:    options,
-		asyncqueue: make(chan types.OutputData, 1000),
-	}
-	if options.OutputJsonl {
-		logger.jsonLogMap = sync.Map{}
+		asyncqueue: make(chan types.HTTPTransaction, 1000),
 	}
 	if options.Elastic.Addr != "" {
 		store, err := elastic.New(options.Elastic)
@@ -82,8 +78,6 @@ func NewLogger(options *OptionsLogger) *Logger {
 	}
 	store, err := file.New(&file.Options{
 		OutputFolder: options.OutputFolder,
-		OutputJsonl:  options.OutputJsonl,
-		OutputFile:   options.OutputFile,
 	})
 	if err != nil {
 		gologger.Warning().Msgf("Error while creating file logger: %s", err)
@@ -91,73 +85,103 @@ func NewLogger(options *OptionsLogger) *Logger {
 		logger.Store = append(logger.Store, store)
 	}
 
-	go logger.AsyncWrite()
+	// setup structured writer
+	if options.OutputFormat != "" {
+		sWriter, err := NewOutputFileWriter(options.OutputFormat, options.OutputFile)
+		if err != nil {
+			gologger.Warning().Msgf("Error while creating structured writer: %s", err)
+		} else {
+			logger.sWriter = sWriter
+		}
+	}
 
+	go logger.AsyncWrite()
 	return logger
 }
 
 // AsyncWrite data
 func (l *Logger) AsyncWrite() {
-	for outputdata := range l.asyncqueue {
-		if len(l.Store) > 0 {
-			if !l.options.DumpRequest && !l.options.DumpResponse {
-				outputdata.PartSuffix = ""
-			} else if l.options.DumpRequest && !outputdata.Userdata.HasResponse {
-				outputdata.PartSuffix = ".request"
-			} else if l.options.DumpResponse && outputdata.Userdata.HasResponse {
-				outputdata.PartSuffix = ".response"
+	for httpData := range l.asyncqueue {
+		if httpData.Request == nil {
+			// we can't do anything without request
+			continue
+		}
+		// we have better options to handle this
+		// i.e Buffer reuse and normalizing request/response body (removing encoding etc)
+		reqDump, err := httputil.DumpRequest(httpData.Request, true)
+		if err != nil {
+			gologger.Warning().Msgf("Error while dumping request: %s", err)
+		}
+
+		// debug log request if true
+		l.debugLogRequest(reqDump, httpData.Request)
+
+		var respChain *pdhttpUtils.ResponseChain
+		if httpData.Response != nil {
+			respChainx := pdhttpUtils.NewResponseChain(httpData.Response, 4096)
+			if err := respChainx.Fill(); err == nil {
+				respChain = respChainx
 			} else {
-				continue
+				gologger.Warning().Msgf("responseChain: Error while dumping response: %s", err)
 			}
-			outputdata.Name = fmt.Sprintf("%s%s-%s", outputdata.Userdata.Host, outputdata.PartSuffix, outputdata.Userdata.ID)
-			if outputdata.Userdata.HasResponse && !(l.options.DumpRequest || l.options.DumpResponse) {
-				if outputdata.Userdata.Match {
-					outputdata.Name = outputdata.Name + ".match"
+		}
+		// debug log response if true
+		if respChain != nil {
+			if err := l.debugLogResponse(respChain); err != nil {
+				gologger.Warning().Msgf("Error while logging response: %s", err)
+			}
+		}
+
+		// first write to structured writer
+		if l.sWriter != nil {
+			func() {
+				sData := &types.HTTPRequestResponseLog{
+					Timestamp: time.Now().Format(time.RFC3339),
+					URL:       httpData.Request.URL.String(),
 				}
-			}
-			outputdata.Format = dataWithoutNewLine
-			if !strings.HasSuffix(string(outputdata.Data), "\n") {
-				outputdata.Format = dataWithNewLine
-			}
-
-			outputdata.DataString = fmt.Sprintf(outputdata.Format, outputdata.Data)
-			if outputdata.Userdata.HasResponse {
-				outputdata.Format = "\n" + outputdata.Format
-			}
-			outputdata.RawData = []byte(fmt.Sprintf(outputdata.Format, outputdata.RawData))
-
-			if l.options.MaxSize > 0 {
-				outputdata.DataString = stringsutil.Truncate(outputdata.DataString, l.options.MaxSize)
-				outputdata.RawData = []byte(stringsutil.Truncate(string(outputdata.RawData), l.options.MaxSize))
-			}
-
-			for _, store := range l.Store {
-				err := store.Save(outputdata)
+				defer func() {
+					// write to structured writer with whatever data we have
+					err := l.sWriter.Write(sData)
+					if err != nil {
+						gologger.Warning().Msgf("Error while logging: %s", err)
+					}
+				}()
+				sRequest, err := types.NewHttpRequestData(httpData.Request)
 				if err != nil {
-					gologger.Warning().Msgf("Error while logging: %s", err)
+					gologger.Warning().Msgf("Error while creating request: %s", err)
+					return
 				}
+				sData.Request = sRequest
+				if respChain != nil {
+					sResponse, err := types.NewHttpResponseData(respChain)
+					if err != nil {
+						gologger.Warning().Msgf("Error while creating response: %s", err)
+					}
+					sData.Response = sResponse
+				}
+			}()
+		}
+
+		// write to other writers
+		if len(l.Store) > 0 {
+			// write request first
+			outputData := httpData
+			outputData.Data = reqDump
+			outputData.Userdata.HasResponse = false
+			l.storeWriter(outputData)
+
+			// write response if available
+			if respChain != nil {
+				outputData.Data = respChain.FullResponse().Bytes()
+				outputData.Userdata.HasResponse = true
+				l.storeWriter(outputData)
 			}
 		}
 	}
 }
 
-// LogRequest and user data
-func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
-	reqdump, err := httputil.DumpRequest(req, true)
-	if err != nil {
-		return err
-	}
-	if l.options.OutputJsonl {
-		outputData := types.HTTPRequestResponseLog{}
-		if err := fillJsonRequestData(req, &outputData); err != nil {
-			return err
-		}
-		l.jsonLogMap.Store(userdata.ID, outputData)
-	}
-	if l.options.OutputFolder != "" {
-		l.asyncqueue <- types.OutputData{RawData: reqdump, Userdata: userdata}
-	}
-
+// debugLogRequest logs the request to the console if debugging is enabled
+func (l *Logger) debugLogRequest(reqdump []byte, req *http.Request) {
 	if l.options.Verbosity >= types.VerbosityVeryVerbose {
 		contentType := req.Header.Get("Content-Type")
 		b, _ := io.ReadAll(req.Body)
@@ -166,11 +190,69 @@ func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
 		}
 		gologger.Silent().Msgf("%s", string(reqdump))
 	}
+}
+
+// debugLogResponse logs the response to the console if debugging is enabled
+func (l *Logger) debugLogResponse(respChain *pdhttpUtils.ResponseChain) error {
+	if l.options.Verbosity >= types.VerbosityVeryVerbose {
+		contentType := respChain.Response().Header.Get("Content-Type")
+		if isASCIICheckRequired(contentType) && !govalidator.IsPrintableASCII(conversion.String(respChain.Body().Bytes())) {
+			gologger.Silent().Msgf("%s", respChain.Headers().String())
+		} else {
+			gologger.Silent().Msgf("%s", respChain.FullResponse().String())
+		}
+	}
 	return nil
 }
 
-func isASCIICheckRequired(contentType string) bool {
-	return stringsutil.ContainsAny(contentType, "application/octet-stream", "application/x-www-form-urlencoded")
+// storeWriter writes the data to the store (file, kafka, elastic)
+// this can be refactored to make it more readable and scalable
+// with improved interface and probably use of structure http data
+// instead of raw bytes
+func (l *Logger) storeWriter(outputdata types.HTTPTransaction) {
+	if !l.options.DumpRequest && !l.options.DumpResponse {
+		outputdata.PartSuffix = ""
+	} else if l.options.DumpRequest && !outputdata.Userdata.HasResponse {
+		outputdata.PartSuffix = ".request"
+	} else if l.options.DumpResponse && outputdata.Userdata.HasResponse {
+		outputdata.PartSuffix = ".response"
+	} else {
+		return
+	}
+	outputdata.Name = fmt.Sprintf("%s%s-%s", outputdata.Userdata.Host, outputdata.PartSuffix, outputdata.Userdata.ID)
+	if outputdata.Userdata.HasResponse && !(l.options.DumpRequest || l.options.DumpResponse) {
+		if outputdata.Userdata.Match {
+			outputdata.Name = outputdata.Name + ".match"
+		}
+	}
+	outputdata.Format = dataWithoutNewLine
+	if !strings.HasSuffix(string(outputdata.Data), "\n") {
+		outputdata.Format = dataWithNewLine
+	}
+
+	outputdata.DataString = fmt.Sprintf(outputdata.Format, outputdata.Data)
+	if outputdata.Userdata.HasResponse {
+		outputdata.Format = "\n" + outputdata.Format
+	}
+	outputdata.RawData = []byte(fmt.Sprintf(outputdata.Format, outputdata.RawData))
+
+	if l.options.MaxSize > 0 {
+		outputdata.DataString = stringsutil.Truncate(outputdata.DataString, l.options.MaxSize)
+		outputdata.RawData = []byte(stringsutil.Truncate(string(outputdata.RawData), l.options.MaxSize))
+	}
+	for _, store := range l.Store {
+		err := store.Save(outputdata)
+		if err != nil {
+			gologger.Warning().Msgf("Error while logging: %s", err)
+		}
+	}
+}
+
+// LogRequest and user data
+func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
+	// No-op for now , since proxify isn't intended to fail instead return 502
+	// and request can be accessed via response.Request
+	return nil
 }
 
 // LogResponse and user data
@@ -178,109 +260,23 @@ func (l *Logger) LogResponse(resp *http.Response, userdata types.UserData) error
 	if resp == nil {
 		return nil
 	}
-	respdump, err := httputil.DumpResponse(resp, true)
-	if err != nil {
-		return err
-	}
-	respdumpNoBody, err := httputil.DumpResponse(resp, false)
-	if err != nil {
-		return err
-	}
-	var data []byte
-	if l.options.OutputJsonl {
-		defer l.jsonLogMap.Delete(userdata.ID)
-		outputData := types.HTTPRequestResponseLog{}
-		filledOutputReq, ok := l.jsonLogMap.Load(userdata.ID)
-		if !ok {
-			if err := fillJsonRequestData(resp.Request, &outputData); err != nil {
-				return err
-			}
-		} else {
-			outputData = filledOutputReq.(types.HTTPRequestResponseLog)
-		}
-		if err := fillJsonResponseData(resp, &outputData); err != nil {
-			return err
-		}
-		data, err = json.Marshal(outputData)
-		if err != nil {
-			return err
-		}
-	}
-
-	l.asyncqueue <- types.OutputData{RawData: respdump, Data: data, Userdata: userdata}
-
-	if l.options.Verbosity >= types.VerbosityVeryVerbose {
-		contentType := resp.Header.Get("Content-Type")
-		bodyBytes := bytes.TrimPrefix(respdump, respdumpNoBody)
-		if isASCIICheckRequired(contentType) && !govalidator.IsPrintableASCII(string(bodyBytes)) {
-			gologger.Silent().Msgf("%s", string(respdumpNoBody))
-		} else {
-			gologger.Silent().Msgf("%s", string(respdump))
-		}
+	// send to writer channel
+	l.asyncqueue <- types.HTTPTransaction{
+		Userdata: userdata,
+		Response: resp,
+		Request:  resp.Request,
 	}
 	return nil
 }
 
 // Close logger instance
 func (l *Logger) Close() {
+	if l.sWriter != nil {
+		l.sWriter.Close()
+	}
 	close(l.asyncqueue)
 }
 
-func fillJsonRequestData(req *http.Request, outputData *types.HTTPRequestResponseLog) error {
-	outputData.Timestamp = time.Now().Format(time.RFC3339)
-	outputData.URL = req.URL.String()
-	// Extract headers from the request
-	reqHeaders := make(map[string]string)
-	// basic header info
-	reqHeaders["scheme"] = req.URL.Scheme
-	reqHeaders["method"] = req.Method
-	reqHeaders["path"] = req.URL.Path
-	reqHeaders["host"] = req.URL.Host
-	for key, values := range req.Header {
-		reqHeaders[key] = strings.Join(values, ", ")
-	}
-	outputData.Request.Header = reqHeaders
-	// Extract body from the request
-	reqBody, err := io.ReadAll(req.Body)
-	if err != nil {
-		return err
-	}
-	defer req.Body.Close()
-	req.Body = io.NopCloser(strings.NewReader(string(reqBody)))
-	if err != nil {
-		return err
-	}
-	outputData.Request.Body = string(reqBody)
-	// Extract raw request
-	reqdumpNoBody, err := httputil.DumpRequest(req, false)
-	if err != nil {
-		return err
-	}
-	outputData.Request.Raw = string(reqdumpNoBody)
-	return nil
-}
-
-func fillJsonResponseData(resp *http.Response, outputData *types.HTTPRequestResponseLog) error {
-	outputData.Timestamp = time.Now().Format(time.RFC3339)
-	// Extract headers from the response
-	respHeaders := make(map[string]string)
-	for key, values := range resp.Header {
-		respHeaders[key] = strings.Join(values, ", ")
-	}
-	outputData.Response.Header = respHeaders
-	// Extract body from the response
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	resp.Body = io.NopCloser(strings.NewReader(string(respBody)))
-	outputData.Response.Body = string(respBody)
-	// Extract raw response
-	respdumpNoBody, err := httputil.DumpResponse(resp, false)
-	if err != nil {
-		return err
-	}
-	outputData.Response.Raw = string(respdumpNoBody)
-	return nil
+func isASCIICheckRequired(contentType string) bool {
+	return stringsutil.ContainsAny(contentType, "application/octet-stream", "application/x-www-form-urlencoded")
 }

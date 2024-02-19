@@ -51,6 +51,7 @@ type Options struct {
 	ListenAddrSocks5            string
 	OutputDirectory             string
 	OutputFile                  string
+	OutputFormat                string
 	RequestDSL                  []string
 	ResponseDSL                 []string
 	UpstreamHTTPProxies         []string
@@ -244,7 +245,7 @@ func (p *Proxy) MatchReplaceResponse(resp *http.Response) error {
 	// closes old body to allow memory reuse
 	resp.Body.Close()
 	resp.Header = responseNew.Header
-	resp.Body = responseNew.Body
+	resp.Body = io.NopCloser(responseNew.Body) //
 	resp.ContentLength = responseNew.ContentLength
 	return nil
 }
@@ -276,13 +277,15 @@ func (p *Proxy) Run() error {
 		if err != nil {
 			gologger.Fatal().Msgf("failed to setup listener got %v", err)
 		}
-		// serve web page to download ca cert
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
 
-			gologger.Fatal().Msgf("%v", serveWebPage(l))
-		}()
+		_ = serveWebPage
+		// // serve web page to download ca cert
+		// wg.Add(1)
+		// go func() {
+		// 	defer wg.Done()
+
+		// 	gologger.Fatal().Msgf("%v", serveWebPage(l))
+		// }()
 
 		wg.Add(1)
 		go func() {
@@ -399,10 +402,10 @@ func NewProxy(options *Options) (*Proxy, error) {
 	logger := logger.NewLogger(&logger.OptionsLogger{
 		Verbosity:    options.Verbosity,
 		OutputFile:   options.OutputFile,
+		OutputFormat: options.OutputFormat,
 		OutputFolder: options.OutputDirectory,
 		DumpRequest:  options.DumpRequest,
 		DumpResponse: options.DumpResponse,
-		OutputJsonl:  options.OutputJsonl,
 		MaxSize:      options.MaxSize,
 		Elastic:      options.Elastic,
 		Kafka:        options.Kafka,

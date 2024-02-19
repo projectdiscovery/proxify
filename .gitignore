@@ -9,3 +9,5 @@ dist/*
 
 .vscode
 .devcontainer
+**/proxify_logs.jsonl
+/proxify
