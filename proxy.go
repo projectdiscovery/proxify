@@ -34,6 +34,7 @@ import (
 	rbtransport "github.com/projectdiscovery/roundrobin/transport"
 	"github.com/projectdiscovery/tinydns"
 	errorutil "github.com/projectdiscovery/utils/errors"
+	readerUtil "github.com/projectdiscovery/utils/reader"
 	stringsutil "github.com/projectdiscovery/utils/strings"
 	"golang.org/x/net/proxy"
 )
@@ -335,8 +336,8 @@ func (p *Proxy) MatchReplaceRequest(req *http.Request) error {
 
 // MatchReplaceRequest strings or regex
 func (p *Proxy) MatchReplaceResponse(resp *http.Response) error {
-	// Set Content-Length to zero to allow automatic calculation
-	resp.ContentLength = 0
+	// // Set Content-Length to zero to allow automatic calculation
+	// resp.ContentLength = -1
 
 	// lazy mode - dump request
 	respdump, err := httputil.DumpResponse(resp, true)
@@ -363,18 +364,18 @@ func (p *Proxy) MatchReplaceResponse(resp *http.Response) error {
 	if err != nil {
 		return err
 	}
-	if responseNew.Header.Get("Content-Length") != "" {
-		resp.ContentLength, err = strconv.ParseInt(responseNew.Header.Get("Content-Length"), 10, 64)
-		if err == nil && resp.ContentLength == 0 {
-			resp.Header.Del("Content-Length")
-		}
-	}
 
 	// closes old body to allow memory reuse
 	resp.Body.Close()
 	resp.Header = responseNew.Header
-	resp.Body = io.NopCloser(responseNew.Body) //
-	resp.ContentLength = responseNew.ContentLength
+	resp.Body, err = readerUtil.NewReusableReadCloser(responseNew.Body)
+	if err != nil {
+		return err
+	}
+	if resp.ContentLength == 0 {
+		resp.Header.Del("Content-Length")
+	}
+	// resp.ContentLength = responseNew.ContentLength
 	return nil
 }
 
