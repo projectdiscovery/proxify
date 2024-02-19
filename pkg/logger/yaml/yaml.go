@@ -3,8 +3,8 @@ package yaml
 import (
 	"os"
 
+	"github.com/goccy/go-yaml"
 	"github.com/projectdiscovery/proxify/pkg/types"
-	"gopkg.in/yaml.v3"
 )
 
 // YamlMultiDocWriter is a writer for yaml multi doc
@@ -19,7 +19,7 @@ func NewYamlMultiDocWriter(filePath string) (*YamlMultiDocWriter, error) {
 	if err != nil {
 		return nil, err
 	}
-	enc := yaml.NewEncoder(file)
+	enc := yaml.NewEncoder(file, yaml.UseLiteralStyleIfMultiline(true), yaml.UseSingleQuote(true))
 	return &YamlMultiDocWriter{f: file, enc: enc}, nil
 }
 
