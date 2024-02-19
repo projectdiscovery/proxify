@@ -38,6 +38,11 @@ func HTTPRequestToMap(req *http.Request) (map[string]interface{}, error) {
 	m["raw"] = reqdumpString
 	m["request"] = reqdumpString
 	m["method"] = req.Method
+	m["path"] = req.URL.Path
+	m["host"] = req.URL.Host
+	m["scheme"] = req.URL.Scheme
+	m["url"] = req.URL.String()
+	m["query"] = req.URL.Query().Encode()
 
 	return m, nil
 }
