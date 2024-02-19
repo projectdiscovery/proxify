@@ -432,9 +432,7 @@ func (p *Proxy) Run() error {
 	return nil
 }
 
-func (p *Proxy) Stop() {
-	// p.httpProxy.Close()
-}
+func (p *Proxy) Stop() {}
 
 // setupHTTPProxy configures proxy with settings
 func (p *Proxy) setupHTTPProxy() error {
@@ -507,7 +505,9 @@ func (p *Proxy) hijackNServe(req *http.Request, ctx *martian.Context) error {
 	p.proxifyMux.ServeHTTP(rec, req)
 	resp := rec.Result()
 	resp.Close = true
-	resp.Write(brw)
+	if err := resp.Write(brw); err != nil {
+		gologger.Warning().Msgf("failed to write response: %v", err)
+	}
 	brw.Flush()
 	return nil
 }
