@@ -1,8 +1,6 @@
 <h1 align="center">
-  <img src="static/proxify-logo.png" alt="proxify" width="200px">
-  <br>
+  <img src="static/proxify-logo.png" alt="proxify" width="200px" />
 </h1>
-
 
 <p align="center">
 <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-_red.svg"></a>
@@ -61,17 +59,20 @@ proxify -h
 
 This will display help for the tool. Here are all the switches it supports.
 
-```shell
+```console
+Swiss Army Knife Proxy for rapid deployments. Supports multiple operations such as request/response dump,filtering and manipulation via DSL language, upstream HTTP/Socks5 proxy
+
 Usage:
   ./proxify [flags]
 
 Flags:
 OUTPUT:
-   -o, -output string    Output Directory to store HTTP proxy logs (default "logs")
-   -dump-req             Dump only HTTP requests to output file
-   -dump-resp            Dump only HTTP responses to output file
-   -j, -jsonl            write output in JSONL(ines) format
-   -oca, -out-ca string  Generate and Save CA File to filename
+   -sr, -store-resposne        store raw http request / response to output directory (default proxify_logs)
+   -o, -output                 output file to store proxify logs (default proxify_logs.jsonl)
+   -of, -output-format string  output format (jsonl/yaml) (default "jsonl")
+   -dump-req                   Dump only HTTP requests to output file
+   -dump-resp                  Dump only HTTP responses to output file
+   -oca, -out-ca string        Generate and Save CA File to filename
 
 UPDATE:
    -up, -update                 update proxify to latest version
@@ -85,7 +86,7 @@ FILTER:
 
 NETWORK:
    -ha, -http-addr string    Listening HTTP IP and Port address (ip:port) (default "127.0.0.1:8888")
-   -sa, -socks-addr string   Listening SOCKS IP and Port address (ip:port) (default "127.0.0.1:10080")
+   -sa, -socks-addr          Listening SOCKS IP and Port address (ip:port) (default 127.0.0.1:10080)
    -da, -dns-addr string     Listening DNS IP and Port address (ip:port)
    -dm, -dns-mapping string  Domain to IP DNS mapping (eg domain:ip,domain:ip,..)
    -r, -resolver string      Custom DNS resolvers to use (ip:port)
@@ -100,19 +101,20 @@ EXPORT:
 
 CONFIGURATION:
    -config string              path to the proxify configuration file
-   -ec, -export-config string  proxify export module configuration file ($HOME/.config/proxify/export-config.yaml)
-   -config-directory string    override the default config path ($HOME/.config/proxify)
+   -ec, -export-config string  proxify export module configuration file (default "$CONFIG/export-config.yaml")
+   -config-directory string    override the default config path (default "$CONFIG/proxify")
    -cert-cache-size int        Number of certificates to cache (default 256)
    -a, -allow string[]         Allowed list of IP/CIDR's to be proxied
    -d, -deny string[]          Denied list of IP/CIDR's to be proxied
    -pt, -passthrough string[]  List of passthrough domains
 
 DEBUG:
-   -nc, -no-color      No Color (default true)
+   -nc, -no-color      No Color
    -version            Version
    -silent             Silent
    -v, -verbose        Verbose
    -vv, -very-verbose  Very Verbose
+
 ```
 
 ### Running Proxify
@@ -152,14 +154,57 @@ proxify -socks5-proxy 127.0.0.1:9050
 
 ### Dump all the HTTP/HTTPS traffic
 
-Dump all the traffic into separate files with request followed by the response:
+Proxify supports three output formats: **JSONL**, **YAML** and **Files**.
 
-```shell
-proxify -output logs
+**JSONL** (default):
+
+In Json Lines format each Http Request/Response pair is stored as json object in a single line. 
+
+```json
+{"timestamp":"2024-02-20T01:56:49+05:30","url":"https://scanme.sh:443","request":{"header":{"Connection":"close","User-Agent":"curl/8.1.2","host":"scanme.sh:443","method":"CONNECT","path":"","scheme":"https"},"raw":"CONNECT scanme.sh:443 HTTP/1.1\r\nHost: scanme.sh:443\r\nConnection: close\r\nUser-Agent: curl/8.1.2\r\n\r\n"},"response":{"header":{"Content-Length":"0"},"raw":"HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"}}
+{"timestamp":"2024-02-20T01:56:49+05:30","url":"https://scanme.sh/","request":{"header":{"Accept":"*/*","Connection":"close","User-Agent":"curl/8.1.2","host":"scanme.sh","method":"GET","path":"/","scheme":"https"},"raw":"GET / HTTP/1.1\r\nHost: scanme.sh\r\nAccept: */*\r\nConnection: close\r\nUser-Agent: curl/8.1.2\r\n\r\n"},"response":{"header":{"Content-Type":"text/plain; charset=utf-8","Date":"Mon, 19 Feb 2024 20:26:49 GMT"},"body":"ok","raw":"HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: text/plain; charset=utf-8\r\nDate: Mon, 19 Feb 2024 20:26:49 GMT\r\n\r\n"}}
 ```
 
-As default, proxied requests/responses are stored in the **logs** folder. Additionally, **dump-req** or **dump-resp** flag can be used for saving specific part of the request to the file.
+**Yaml MultiDoc**:
 
+In the YAML MultiDoc format, each HTTP request and response pair is encapsulated as a separate document.All Documents in output yaml file are seperated  by `---` to allow stream parsing and consumption.
+
+```console
+proxify -output-format yaml
+```
+
+```yaml
+timestamp: "2024-02-20T01:40:40+05:30"
+url: https://scanme.sh:443
+request:
+    header:
+        Connection: close
+        User-Agent: curl/8.1.2
+        host: scanme.sh:443
+        method: CONNECT
+        path: ""
+        scheme: https
+    body: ""
+    raw: "CONNECT scanme.sh:443 HTTP/1.1\r\nHost: scanme.sh:443\r\nConnection: close\r\nUser-Agent: curl/8.1.2\r\n\r\n"
+response:
+    header:
+        Content-Length: "0"
+    body: ""
+    raw: "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
+---
+timestamp: "2024-02-20T01:40:40+05:30"
+...
+```
+
+**Files**:
+
+In Files format, each HTTP request and response pair is stored in separate files. The request and response are stored in separate files with the request followed by the response. Filnames are in format of `{{Host}}-{{randstr}}.txt`. Additionally, **dump-req** or **dump-resp** flag can be used for saving specific part of the request to the file.
+
+```console
+proxify -store-response
+```
+
+>Note: When using `-store-response` both jsonl and files are generated.
 
 ### Hostname mapping with Local DNS resolver
 

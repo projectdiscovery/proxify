@@ -10,4 +10,6 @@ dist/*
 .vscode
 .devcontainer
 **/proxify_logs.jsonl
+**/proxify_logs.yaml
 /proxify
+**/proxify_logs

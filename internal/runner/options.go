@@ -124,7 +124,7 @@ func ParseOptions() (*Options, error) {
 
 	silent, verbose, veryVerbose := false, false, false
 	flagSet.CreateGroup("debug", "debug",
-		flagSet.BoolVarP(&options.NoColor, "no-color", "nc", true, "No Color"),
+		flagSet.BoolVarP(&options.NoColor, "no-color", "nc", false, "No Color"),
 		flagSet.BoolVar(&options.Version, "version", false, "Version"),
 		flagSet.BoolVar(&silent, "silent", false, "Silent"),
 		flagSet.BoolVarP(&verbose, "verbose", "v", false, "Verbose"),
