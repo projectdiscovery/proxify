@@ -198,7 +198,7 @@ timestamp: "2024-02-20T01:40:40+05:30"
 
 **Files**:
 
-In Files format, each HTTP request and response pair is stored in separate files. The request and response are stored in separate files with the request followed by the response. Filnames are in format of `{{Host}}-{{randstr}}.txt`. Additionally, **dump-req** or **dump-resp** flag can be used for saving specific part of the request to the file.
+In Files format, each HTTP request and response pair is stored in separate files with the request followed by the response. Filenames are in format of `{{Host}}-{{randstr}}.txt`. Additionally, **dump-req** or **dump-resp** flag can be used for saving specific part of the request to the file.
 
 ```console
 proxify -store-response
