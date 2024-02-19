@@ -4,6 +4,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/projectdiscovery/goflags"
 	"github.com/projectdiscovery/gologger"
@@ -184,6 +185,11 @@ func ParseOptions() (*Options, error) {
 	if options.OutputFile == "" {
 		options.OutputFile = "proxify_logs.jsonl"
 	}
+
+	if options.OutputFormat == "yaml" {
+		options.OutputFile = strings.ReplaceAll(options.OutputFile, "jsonl", "yaml")
+	}
+
 	return options, nil
 }
 

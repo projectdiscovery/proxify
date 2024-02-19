@@ -99,6 +99,27 @@ func NewLogger(options *OptionsLogger) *Logger {
 	return logger
 }
 
+// LogRequest and user data
+func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
+	// No-op for now , since proxify isn't intended to fail instead return 502
+	// and request can be accessed via response.Request
+	return nil
+}
+
+// LogResponse and user data
+func (l *Logger) LogResponse(resp *http.Response, userdata types.UserData) error {
+	if resp == nil {
+		return nil
+	}
+	// send to writer channel
+	l.asyncqueue <- types.HTTPTransaction{
+		Userdata: userdata,
+		Response: resp,
+		Request:  resp.Request,
+	}
+	return nil
+}
+
 // AsyncWrite data
 func (l *Logger) AsyncWrite() {
 	for httpData := range l.asyncqueue {
@@ -180,6 +201,14 @@ func (l *Logger) AsyncWrite() {
 	}
 }
 
+// Close logger instance
+func (l *Logger) Close() {
+	if l.sWriter != nil {
+		l.sWriter.Close()
+	}
+	close(l.asyncqueue)
+}
+
 // debugLogRequest logs the request to the console if debugging is enabled
 func (l *Logger) debugLogRequest(reqdump []byte, req *http.Request) {
 	if l.options.Verbosity >= types.VerbosityVeryVerbose {
@@ -246,35 +275,6 @@ func (l *Logger) storeWriter(outputdata types.HTTPTransaction) {
 			gologger.Warning().Msgf("Error while logging: %s", err)
 		}
 	}
-}
-
-// LogRequest and user data
-func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
-	// No-op for now , since proxify isn't intended to fail instead return 502
-	// and request can be accessed via response.Request
-	return nil
-}
-
-// LogResponse and user data
-func (l *Logger) LogResponse(resp *http.Response, userdata types.UserData) error {
-	if resp == nil {
-		return nil
-	}
-	// send to writer channel
-	l.asyncqueue <- types.HTTPTransaction{
-		Userdata: userdata,
-		Response: resp,
-		Request:  resp.Request,
-	}
-	return nil
-}
-
-// Close logger instance
-func (l *Logger) Close() {
-	if l.sWriter != nil {
-		l.sWriter.Close()
-	}
-	close(l.asyncqueue)
 }
 
 func isASCIICheckRequired(contentType string) bool {
