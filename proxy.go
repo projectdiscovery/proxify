@@ -253,6 +253,11 @@ func (p *Proxy) ModifyResponse(resp *http.Response) error {
 	}
 	userData.HasResponse = true
 
+	// if content-length is zero and remove header
+	if resp.ContentLength == 0 {
+		resp.Header.Del("Content-Length")
+	}
+
 	// If callbacks are given use them (for library use cases)
 	if p.options.OnResponseCallback != nil {
 		return p.options.OnResponseCallback(resp, ctx)
@@ -357,6 +362,12 @@ func (p *Proxy) MatchReplaceResponse(resp *http.Response) error {
 	responseNew, err := http.ReadResponse(bf, nil)
 	if err != nil {
 		return err
+	}
+	if responseNew.Header.Get("Content-Length") != "" {
+		resp.ContentLength, err = strconv.ParseInt(responseNew.Header.Get("Content-Length"), 10, 64)
+		if err == nil && resp.ContentLength == 0 {
+			resp.Header.Del("Content-Length")
+		}
 	}
 
 	// closes old body to allow memory reuse

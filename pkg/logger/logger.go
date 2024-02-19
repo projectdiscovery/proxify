@@ -187,13 +187,15 @@ func (l *Logger) AsyncWrite() {
 		if len(l.Store) > 0 {
 			// write request first
 			outputData := httpData
-			outputData.Data = reqDump
+			// outputData.Data = reqDump
+			outputData.RawData = reqDump
 			outputData.Userdata.HasResponse = false
 			l.storeWriter(outputData)
 
 			// write response if available
 			if respChain != nil {
-				outputData.Data = respChain.FullResponse().Bytes()
+				// outputData.Data = respChain.FullResponse().Bytes()
+				outputData.RawData = respChain.FullResponse().Bytes()
 				outputData.Userdata.HasResponse = true
 				l.storeWriter(outputData)
 			}
