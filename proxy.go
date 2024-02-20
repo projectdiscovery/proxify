@@ -345,7 +345,7 @@ func (p *Proxy) MatchReplaceRequest(req *http.Request) error {
 // MatchReplaceRequest strings or regex
 func (p *Proxy) MatchReplaceResponse(resp *http.Response) error {
 	// // Set Content-Length to zero to allow automatic calculation
-	// resp.ContentLength = -1
+	resp.ContentLength = -1
 
 	// lazy mode - dump request
 	respdump, err := httputil.DumpResponse(resp, true)
