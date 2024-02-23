@@ -40,7 +40,7 @@ func New(option *Options) (*Client, error) {
 }
 
 // Store passes the message to kafka
-func (c *Client) Save(data types.OutputData) error {
+func (c *Client) Save(data types.HTTPTransaction) error {
 
 	msg := &sarama.ProducerMessage{
 		Topic: c.topic,

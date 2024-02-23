@@ -4,6 +4,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/projectdiscovery/goflags"
 	"github.com/projectdiscovery/gologger"
@@ -28,6 +29,7 @@ var (
 type Options struct {
 	OutputDirectory             string
 	OutputFile                  string // for storing the jsonl output
+	OutputFormat                string
 	LoggerConfig                string
 	ConfigDir                   string
 	CertCacheSize               int
@@ -72,11 +74,11 @@ func ParseOptions() (*Options, error) {
 
 	flagSet.CreateGroup("output", "Output",
 		// Todo:	flagSet.BoolVar(&options.Dump, "dump", true, "Dump HTTP requests/response to output file"),
-		flagSet.DynamicVarP(&options.OutputDirectory, "store-resposne", "sr", "proxify_logs", "store raw http request / response to output directory"),
+		flagSet.DynamicVarP(&options.OutputDirectory, "store-response", "sr", "proxify_logs", "store raw http request / response to output directory"),
 		flagSet.DynamicVarP(&options.OutputFile, "output", "o", "proxify_logs.jsonl", "output file to store proxify logs"),
+		flagSet.StringVarP(&options.OutputFormat, "output-format", "of", "jsonl", "output format (jsonl/yaml)"),
 		flagSet.BoolVar(&options.DumpRequest, "dump-req", false, "Dump only HTTP requests to output file"),
 		flagSet.BoolVar(&options.DumpResponse, "dump-resp", false, "Dump only HTTP responses to output file"),
-		flagSet.BoolVarP(&options.OutputJsonl, "jsonl", "j", false, "write output in JSONL(ines) format"),
 		flagSet.StringVarP(&options.OutCAFile, "out-ca", "oca", "", "Generate and Save CA File to filename"),
 	)
 
@@ -122,7 +124,7 @@ func ParseOptions() (*Options, error) {
 
 	silent, verbose, veryVerbose := false, false, false
 	flagSet.CreateGroup("debug", "debug",
-		flagSet.BoolVarP(&options.NoColor, "no-color", "nc", true, "No Color"),
+		flagSet.BoolVarP(&options.NoColor, "no-color", "nc", false, "No Color"),
 		flagSet.BoolVar(&options.Version, "version", false, "Version"),
 		flagSet.BoolVar(&silent, "silent", false, "Silent"),
 		flagSet.BoolVarP(&verbose, "verbose", "v", false, "Verbose"),
@@ -183,6 +185,11 @@ func ParseOptions() (*Options, error) {
 	if options.OutputFile == "" {
 		options.OutputFile = "proxify_logs.jsonl"
 	}
+
+	if options.OutputFormat == "yaml" {
+		options.OutputFile = strings.ReplaceAll(options.OutputFile, "jsonl", "yaml")
+	}
+
 	return options, nil
 }
 

@@ -9,6 +9,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"net/http/httputil"
 	"net/url"
 	"os"
@@ -33,6 +34,8 @@ import (
 	rbtransport "github.com/projectdiscovery/roundrobin/transport"
 	"github.com/projectdiscovery/tinydns"
 	errorutil "github.com/projectdiscovery/utils/errors"
+	readerUtil "github.com/projectdiscovery/utils/reader"
+	stringsutil "github.com/projectdiscovery/utils/strings"
 	"golang.org/x/net/proxy"
 )
 
@@ -51,6 +54,7 @@ type Options struct {
 	ListenAddrSocks5            string
 	OutputDirectory             string
 	OutputFile                  string
+	OutputFormat                string
 	RequestDSL                  []string
 	ResponseDSL                 []string
 	UpstreamHTTPProxies         []string
@@ -81,6 +85,116 @@ type Proxy struct {
 	tinydns      *tinydns.TinyDNS
 	rbhttp       *rbtransport.RoundTransport
 	rbsocks5     *rbtransport.RoundTransport
+	proxifyMux   *http.ServeMux // serve banner page and static files
+	listenAddr   string
+}
+
+func NewProxy(options *Options) (*Proxy, error) {
+
+	switch options.Verbosity {
+	case types.VerbositySilent:
+		martianlog.SetLevel(martianlog.Silent)
+	case types.VerbosityVerbose:
+		martianlog.SetLevel(martianlog.Info)
+	case types.VerbosityVeryVerbose:
+		martianlog.SetLevel(martianlog.Debug)
+	default:
+		martianlog.SetLevel(martianlog.Error)
+	}
+
+	logger := logger.NewLogger(&logger.OptionsLogger{
+		Verbosity:    options.Verbosity,
+		OutputFile:   options.OutputFile,
+		OutputFormat: options.OutputFormat,
+		OutputFolder: options.OutputDirectory,
+		DumpRequest:  options.DumpRequest,
+		DumpResponse: options.DumpResponse,
+		MaxSize:      options.MaxSize,
+		Elastic:      options.Elastic,
+		Kafka:        options.Kafka,
+	})
+
+	var tdns *tinydns.TinyDNS
+
+	fastdialerOptions := fastdialer.DefaultOptions
+	fastdialerOptions.EnableFallback = true
+	fastdialerOptions.Deny = options.Deny
+	fastdialerOptions.Allow = options.Allow
+	if options.ListenDNSAddr != "" {
+		dnsmapping := make(map[string]*tinydns.DnsRecord)
+		for _, record := range strings.Split(options.DNSMapping, ",") {
+			data := strings.Split(record, ":")
+			if len(data) != 2 {
+				continue
+			}
+			dnsmapping[data[0]] = &tinydns.DnsRecord{A: []string{data[1]}}
+		}
+		var err error
+		tdns, err = tinydns.New(&tinydns.Options{
+			ListenAddress:   options.ListenDNSAddr,
+			Net:             "udp",
+			UpstreamServers: []string{options.DNSFallbackResolver},
+			DnsRecords:      dnsmapping,
+		})
+		if err != nil {
+			return nil, err
+		}
+		fastdialerOptions.BaseResolvers = []string{"127.0.0.1" + options.ListenDNSAddr}
+	}
+	dialer, err := fastdialer.NewDialer(fastdialerOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	var rbhttp, rbsocks5 *rbtransport.RoundTransport
+	if len(options.UpstreamHTTPProxies) > 0 {
+		rbhttp, err = rbtransport.NewWithOptions(options.UpstreamProxyRequestsNumber, options.UpstreamHTTPProxies...)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if len(options.UpstreamSock5Proxies) > 0 {
+		rbsocks5, err = rbtransport.NewWithOptions(options.UpstreamProxyRequestsNumber, options.UpstreamSock5Proxies...)
+		if err != nil {
+			return nil, err
+		}
+	}
+	pmux, err := getProxifyServerMux()
+	if err != nil {
+		return nil, err
+	}
+
+	proxy := &Proxy{
+		logger:     logger,
+		options:    options,
+		Dialer:     dialer,
+		tinydns:    tdns,
+		rbhttp:     rbhttp,
+		rbsocks5:   rbsocks5,
+		proxifyMux: pmux,
+	}
+
+	if err := proxy.setupHTTPProxy(); err != nil {
+		return nil, err
+	}
+
+	var socks5proxy *socks5.Server
+	if options.ListenAddrSocks5 != "" {
+		socks5Config := &socks5.Config{
+			Dial: proxy.httpTunnelDialer,
+		}
+		if options.Verbosity <= types.VerbositySilent {
+			socks5Config.Logger = log.New(io.Discard, "", log.Ltime|log.Lshortfile)
+		}
+		socks5proxy, err = socks5.New(socks5Config)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	proxy.socks5proxy = socks5proxy
+
+	return proxy, nil
 }
 
 // ModifyRequest
@@ -94,21 +208,31 @@ func (p *Proxy) ModifyRequest(req *http.Request) error {
 		Host: req.Host,
 	}
 
+	if stringsutil.EqualFoldAny(req.Host, "proxify", "proxify:443", "proxify:80", p.listenAddr) {
+		// hijack if this is true
+		return p.hijackNServe(req, ctx)
+	}
+
 	// If callbacks are given use them (for library use cases)
 	if p.options.OnRequestCallback != nil {
 		return p.options.OnRequestCallback(req, ctx)
 	}
 
+	boolSlice := []bool{}
 	for _, expr := range p.options.RequestDSL {
-		if !userData.Match {
-			m, _ := util.HTTPRequesToMap(req)
-			v, err := dsl.EvalExpr(expr, m)
-			if err != nil {
-				gologger.Warning().Msgf("Could not evaluate request dsl: %s\n", err)
-			}
-			userData.Match = err == nil && v.(bool)
+		m, _ := util.HTTPRequestToMap(req)
+		v, err := dsl.EvalExpr(expr, m)
+		if err != nil {
+			gologger.Warning().Msgf("Could not evaluate request dsl: %s\n", err)
 		}
+		boolSlice = append(boolSlice, err == nil && v.(bool))
 	}
+	// evaluate bool array to get match status
+	if len(boolSlice) > 0 {
+		tmp := util.EvalBoolSlice(boolSlice)
+		userData.Match = &tmp
+	}
+
 	ctx.Set("user-data", userData)
 
 	// perform match and replace
@@ -129,31 +253,39 @@ func (p *Proxy) ModifyResponse(resp *http.Response) error {
 		}
 	}
 	if userData == nil {
-		gologger.Error().Msgf("something went wrong got response without userData")
+		gologger.Warning().Msgf("something went wrong got response without userData")
 		// pass empty struct to avoid panic
 		userData = &types.UserData{}
 	}
 	userData.HasResponse = true
+
+	// if content-length is zero and remove header
+	if resp.ContentLength == 0 {
+		resp.Header.Del("Content-Length")
+	}
 
 	// If callbacks are given use them (for library use cases)
 	if p.options.OnResponseCallback != nil {
 		return p.options.OnResponseCallback(resp, ctx)
 	}
 
-	// TODO: match in request seems to be seperate from response
-	// but share same `Match` value. investigate this
-	matchStatus := false
+	boolSlice := []bool{}
 	for _, expr := range p.options.ResponseDSL {
-		if !matchStatus {
-			m, _ := util.HTTPResponseToMap(resp)
-			v, err := dsl.EvalExpr(expr, m)
-			if err != nil {
-				gologger.Warning().Msgf("Could not evaluate response dsl: %s\n", err)
-			}
-			matchStatus = err == nil && v.(bool)
+		m, _ := util.HTTPResponseToMap(resp)
+		v, err := dsl.EvalExpr(expr, m)
+		if err != nil {
+			gologger.Warning().Msgf("Could not evaluate response dsl: %s\n", err)
 		}
+		boolSlice = append(boolSlice, err == nil && v.(bool))
 	}
-	userData.Match = matchStatus
+	if len(boolSlice) > 0 {
+		tmp := util.EvalBoolSlice(boolSlice)
+		// finalize
+		if userData.Match != nil {
+			tmp = *userData.Match && tmp
+		}
+		userData.Match = &tmp
+	}
 	// perform match and replace
 	if len(p.options.ResponseMatchReplaceDSL) != 0 {
 		_ = p.MatchReplaceResponse(resp)
@@ -212,8 +344,8 @@ func (p *Proxy) MatchReplaceRequest(req *http.Request) error {
 
 // MatchReplaceRequest strings or regex
 func (p *Proxy) MatchReplaceResponse(resp *http.Response) error {
-	// Set Content-Length to zero to allow automatic calculation
-	resp.ContentLength = 0
+	// // Set Content-Length to zero to allow automatic calculation
+	resp.ContentLength = -1
 
 	// lazy mode - dump request
 	respdump, err := httputil.DumpResponse(resp, true)
@@ -244,8 +376,14 @@ func (p *Proxy) MatchReplaceResponse(resp *http.Response) error {
 	// closes old body to allow memory reuse
 	resp.Body.Close()
 	resp.Header = responseNew.Header
-	resp.Body = responseNew.Body
-	resp.ContentLength = responseNew.ContentLength
+	resp.Body, err = readerUtil.NewReusableReadCloser(responseNew.Body)
+	if err != nil {
+		return err
+	}
+	if resp.ContentLength == 0 {
+		resp.Header.Del("Content-Length")
+	}
+	// resp.ContentLength = responseNew.ContentLength
 	return nil
 }
 
@@ -276,18 +414,10 @@ func (p *Proxy) Run() error {
 		if err != nil {
 			gologger.Fatal().Msgf("failed to setup listener got %v", err)
 		}
-		// serve web page to download ca cert
+		p.listenAddr = l.Addr().String()
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-
-			gologger.Fatal().Msgf("%v", serveWebPage(l))
-		}()
-
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
 			gologger.Fatal().Msgf("%v", p.httpProxy.Serve(l))
 		}()
 	}
@@ -321,6 +451,8 @@ func (p *Proxy) Run() error {
 	wg.Wait()
 	return nil
 }
+
+func (p *Proxy) Stop() {}
 
 // setupHTTPProxy configures proxy with settings
 func (p *Proxy) setupHTTPProxy() error {
@@ -379,121 +511,31 @@ func (p *Proxy) getRoundTripper() (http.RoundTripper, error) {
 	return roundtrip, nil
 }
 
-func (p *Proxy) Stop() {
-	// p.httpProxy.Close()
-}
-
-func NewProxy(options *Options) (*Proxy, error) {
-
-	switch options.Verbosity {
-	case types.VerbositySilent:
-		martianlog.SetLevel(martianlog.Silent)
-	case types.VerbosityVerbose:
-		martianlog.SetLevel(martianlog.Info)
-	case types.VerbosityVeryVerbose:
-		martianlog.SetLevel(martianlog.Debug)
-	default:
-		martianlog.SetLevel(martianlog.Error)
-	}
-
-	logger := logger.NewLogger(&logger.OptionsLogger{
-		Verbosity:    options.Verbosity,
-		OutputFile:   options.OutputFile,
-		OutputFolder: options.OutputDirectory,
-		DumpRequest:  options.DumpRequest,
-		DumpResponse: options.DumpResponse,
-		OutputJsonl:  options.OutputJsonl,
-		MaxSize:      options.MaxSize,
-		Elastic:      options.Elastic,
-		Kafka:        options.Kafka,
-	})
-
-	var tdns *tinydns.TinyDNS
-
-	fastdialerOptions := fastdialer.DefaultOptions
-	fastdialerOptions.EnableFallback = true
-	fastdialerOptions.Deny = options.Deny
-	fastdialerOptions.Allow = options.Allow
-	if options.ListenDNSAddr != "" {
-		dnsmapping := make(map[string]*tinydns.DnsRecord)
-		for _, record := range strings.Split(options.DNSMapping, ",") {
-			data := strings.Split(record, ":")
-			if len(data) != 2 {
-				continue
-			}
-			dnsmapping[data[0]] = &tinydns.DnsRecord{A: []string{data[1]}}
-		}
-		var err error
-		tdns, err = tinydns.New(&tinydns.Options{
-			ListenAddress:   options.ListenDNSAddr,
-			Net:             "udp",
-			UpstreamServers: []string{options.DNSFallbackResolver},
-			DnsRecords:      dnsmapping,
-		})
-		if err != nil {
-			return nil, err
-		}
-		fastdialerOptions.BaseResolvers = []string{"127.0.0.1" + options.ListenDNSAddr}
-	}
-	dialer, err := fastdialer.NewDialer(fastdialerOptions)
-	if err != nil {
-		return nil, err
-	}
-
-	var rbhttp, rbsocks5 *rbtransport.RoundTransport
-	if len(options.UpstreamHTTPProxies) > 0 {
-		rbhttp, err = rbtransport.NewWithOptions(options.UpstreamProxyRequestsNumber, options.UpstreamHTTPProxies...)
-		if err != nil {
-			return nil, err
-		}
-	}
-	if len(options.UpstreamSock5Proxies) > 0 {
-		rbsocks5, err = rbtransport.NewWithOptions(options.UpstreamProxyRequestsNumber, options.UpstreamSock5Proxies...)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	proxy := &Proxy{
-		logger:   logger,
-		options:  options,
-		Dialer:   dialer,
-		tinydns:  tdns,
-		rbhttp:   rbhttp,
-		rbsocks5: rbsocks5,
-	}
-
-	if err := proxy.setupHTTPProxy(); err != nil {
-		return nil, err
-	}
-
-	var socks5proxy *socks5.Server
-	if options.ListenAddrSocks5 != "" {
-		socks5Config := &socks5.Config{
-			Dial: proxy.httpTunnelDialer,
-		}
-		if options.Verbosity <= types.VerbositySilent {
-			socks5Config.Logger = log.New(io.Discard, "", log.Ltime|log.Lshortfile)
-		}
-		socks5proxy, err = socks5.New(socks5Config)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	proxy.socks5proxy = socks5proxy
-
-	return proxy, nil
-}
-
 func (p *Proxy) httpTunnelDialer(ctx context.Context, network, addr string) (net.Conn, error) {
 	return p.socks5tunnel.MakeTunnel(nil, nil, p.bufioPool, addr)
 }
 
-func serveWebPage(l net.Listener) error {
+func (p *Proxy) hijackNServe(req *http.Request, ctx *martian.Context) error {
+	conn, brw, err := ctx.Session().Hijack()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	rec := httptest.NewRecorder()
+	p.proxifyMux.ServeHTTP(rec, req)
+	resp := rec.Result()
+	resp.Close = true
+	if err := resp.Write(brw); err != nil {
+		gologger.Warning().Msgf("failed to write response: %v", err)
+	}
+	brw.Flush()
+	return nil
+}
+
+func getProxifyServerMux() (*http.ServeMux, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("failed to get current working directory: %v", err)
+		return nil, fmt.Errorf("failed to get current working directory: %v", err)
 	}
 	absStaticDirPath := strings.Join([]string{strings.Split(cwd, "cmd")[0], "static"}, "/")
 
@@ -505,20 +547,16 @@ func serveWebPage(l net.Listener) error {
 		buffer, err := certs.GetRawCA()
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			gologger.Error().Msgf("failed to get raw CA: %v", err)
+			gologger.Warning().Msgf("failed to get raw CA: %v", err)
 			return
 		}
 		w.Header().Set("Content-Type", "application/octet-stream")
 		w.Header().Set("Content-Disposition", "attachment; filename=\"proxify.pem\"")
 		if _, err := w.Write(buffer.Bytes()); err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			gologger.Error().Msgf("failed to write raw CA: %v", err)
+			gologger.Warning().Msgf("failed to write raw CA: %v", err)
 			return
 		}
 	})
-
-	server := &http.Server{
-		Handler: mux,
-	}
-	return server.Serve(l)
+	return mux, nil
 }

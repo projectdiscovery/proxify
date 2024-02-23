@@ -39,6 +39,7 @@ func NewRunner(options *Options) (*Runner, error) {
 		ListenAddrHTTP:              options.ListenAddrHTTP,
 		ListenAddrSocks5:            options.ListenAddrSocks5,
 		OutputFile:                  options.OutputFile,
+		OutputFormat:                options.OutputFormat,
 		OutputDirectory:             options.OutputDirectory,
 		RequestDSL:                  options.RequestDSL,
 		ResponseDSL:                 options.ResponseDSL,

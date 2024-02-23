@@ -68,7 +68,7 @@ func New(option *Options) (*Client, error) {
 }
 
 // Store saves a passed log event in elasticsearch
-func (c *Client) Save(data types.OutputData) error {
+func (c *Client) Save(data types.HTTPTransaction) error {
 	var doc map[string]interface{}
 	if data.Userdata.HasResponse {
 		doc = map[string]interface{}{
