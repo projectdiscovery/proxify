@@ -91,14 +91,12 @@ func MatchAnyRegex(regexes []string, data string) bool {
 
 // EvalBoolSlice evaluates a slice of bools using a logical AND
 func EvalBoolSlice(slice []bool) bool {
-	var x *bool
-	for _, b := range slice {
-		if x == nil {
-			x = &b
-			continue
-		} else {
-			*x = *x && b
-		}
+	if len(slice) == 0 {
+		return false
 	}
-	return *x
+	result := slice[0]
+	for _, b := range slice {
+		result = result && b
+	}
+	return result
 }
