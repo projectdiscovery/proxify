@@ -277,8 +277,8 @@ github.com/projectdiscovery/martian/v3 v3.0.0-20240219194442-fed3b744f477 h1:VJa
 github.com/projectdiscovery/martian/v3 v3.0.0-20240219194442-fed3b744f477/go.mod h1:wPvVUl2C/XOFacugXwsUp65GN0upmKfwKMyimA/AAaM=
 github.com/projectdiscovery/networkpolicy v0.0.7 h1:AwHqBRXBqDQgnWzBMuoJtHBNEYBw+NFp/4qIK688x7o=
 github.com/projectdiscovery/networkpolicy v0.0.7/go.mod h1:CK0CnFoLF1Nou6mY7P4WODSAxhPN8g8g7XpapgEP8tI=
-github.com/projectdiscovery/retryabledns v1.0.56 h1:Rk/fvBSNjw4vzbHRSSoFz3Bkn9uaRSk0UE/IsEBl0cQ=
-github.com/projectdiscovery/retryabledns v1.0.56/go.mod h1:y6uQuDe9i2tcysDV7BTfKcTlfA3g0xyH5XITKBEw3as=
+github.com/projectdiscovery/retryabledns v1.0.57 h1:+DOL9xYSIx74FRrOIKKHVp5R9ci53xHQN3jnncWVds4=
+github.com/projectdiscovery/retryabledns v1.0.57/go.mod h1:qIigOcmO9d0Ce/z6mHzLl0Aiz2WJcNk2gUGhRcCQ1k4=
 github.com/projectdiscovery/roundrobin v0.0.6 h1:zoJAFRgP9XK7B+iKSjR+djRAuDYxnc57+Fx+qpoPvds=
 github.com/projectdiscovery/roundrobin v0.0.6/go.mod h1:vTxcWqNLyMH6VE2Q/hsNNvDHFLiIzHozC1rLLT/vocQ=
 github.com/projectdiscovery/tinydns v0.0.30 h1:jBYW2Lj3OdIqgls9tYOvwAR3K/KNJJK/fhpQg0dRF1k=
