@@ -72,7 +72,7 @@ func ParseOptions() (*Options, error) {
 
 	flagSet.CreateGroup("output", "Output",
 		// Todo:	flagSet.BoolVar(&options.Dump, "dump", true, "Dump HTTP requests/response to output file"),
-		flagSet.DynamicVarP(&options.OutputDirectory, "store-resposne", "sr", "proxify_logs", "store raw http request / response to output directory"),
+		flagSet.DynamicVarP(&options.OutputDirectory, "store-response", "sr", "proxify_logs", "store raw http request / response to output directory"),
 		flagSet.DynamicVarP(&options.OutputFile, "output", "o", "proxify_logs.jsonl", "output file to store proxify logs"),
 		flagSet.BoolVar(&options.DumpRequest, "dump-req", false, "Dump only HTTP requests to output file"),
 		flagSet.BoolVar(&options.DumpResponse, "dump-resp", false, "Dump only HTTP responses to output file"),
