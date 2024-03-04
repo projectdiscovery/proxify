@@ -19,15 +19,24 @@ require (
 	github.com/projectdiscovery/martian/v3 v3.0.0-20240219194442-fed3b744f477
 	github.com/projectdiscovery/roundrobin v0.0.6
 	github.com/projectdiscovery/tinydns v0.0.31
-	github.com/projectdiscovery/utils v0.0.80
+	github.com/projectdiscovery/utils v0.0.82
 	golang.org/x/net v0.21.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
 	github.com/docker/go-units v0.5.0 // indirect
+	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/klauspost/pgzip v1.2.6 // indirect
+	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/mholt/archiver/v3 v3.5.1 // indirect
+	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
+	github.com/projectdiscovery/machineid v0.0.0-20240226150047-2e2c51e35983 // indirect
+	github.com/shirou/gopsutil/v3 v3.23.7 // indirect
+	github.com/shoenig/go-m1cpu v0.1.6 // indirect
+	github.com/tklauser/go-sysconf v0.3.11 // indirect
+	github.com/tklauser/numcpus v0.6.0 // indirect
+	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 )
 
@@ -46,7 +55,6 @@ require (
 	github.com/cloudflare/circl v1.3.7 // indirect
 	github.com/cnf/structhash v0.0.0-20201127153200-e1b16c1ebc08 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/denisbrodbeck/machineid v1.0.1 // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/dlclark/regexp2 v1.8.1 // indirect
 	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5 // indirect
