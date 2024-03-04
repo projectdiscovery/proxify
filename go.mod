@@ -12,7 +12,7 @@ require (
 	github.com/goccy/go-yaml v1.11.3
 	github.com/haxii/fastproxy v0.5.37
 	github.com/pkg/errors v0.9.1
-	github.com/projectdiscovery/dsl v0.0.43
+	github.com/projectdiscovery/dsl v0.0.46
 	github.com/projectdiscovery/fastdialer v0.0.60
 	github.com/projectdiscovery/goflags v0.1.40
 	github.com/projectdiscovery/gologger v1.1.12
