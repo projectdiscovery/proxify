@@ -14,11 +14,11 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/projectdiscovery/dsl v0.0.46
 	github.com/projectdiscovery/fastdialer v0.0.60
-	github.com/projectdiscovery/goflags v0.1.40
+	github.com/projectdiscovery/goflags v0.1.41
 	github.com/projectdiscovery/gologger v1.1.12
 	github.com/projectdiscovery/martian/v3 v3.0.0-20240219194442-fed3b744f477
 	github.com/projectdiscovery/roundrobin v0.0.6
-	github.com/projectdiscovery/tinydns v0.0.30
+	github.com/projectdiscovery/tinydns v0.0.31
 	github.com/projectdiscovery/utils v0.0.80
 	golang.org/x/net v0.21.0
 	gopkg.in/yaml.v3 v3.0.1
