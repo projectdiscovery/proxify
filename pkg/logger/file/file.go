@@ -42,7 +42,7 @@ func New(option *Options) (*Client, error) {
 }
 
 // Store writes the log to the file
-func (c *Client) Save(data types.OutputData) error {
+func (c *Client) Save(data types.HTTPTransaction) error {
 	var err error
 	logFile := fmt.Sprintf("%s.%s", data.Name, "txt")
 	if c.options.OutputFolder != "" {
