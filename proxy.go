@@ -246,12 +246,10 @@ func (p *Proxy) ModifyRequest(req *http.Request) error {
 }
 
 func (*Proxy) removeBrEncoding(req *http.Request) {
-	encodings := strings.Split(req.Header.Get("Accept-Encoding"), ",")
-	for i, encoding := range encodings {
-		encodings[i] = strings.TrimSpace(encoding)
-	}
+	encodings := strings.Split(strings.ReplaceAll(req.Header.Get("Accept-Encoding"), " ", ""), ",")
 	encodings = sliceutil.PruneEqual(encodings, "br")
 	req.Header.Set("Accept-Encoding", strings.Join(encodings, ", "))
+
 }
 
 // ModifyResponse
