@@ -19,7 +19,7 @@ require (
 	github.com/projectdiscovery/martian/v3 v3.0.0-20240219194442-fed3b744f477
 	github.com/projectdiscovery/roundrobin v0.0.6
 	github.com/projectdiscovery/tinydns v0.0.31
-	github.com/projectdiscovery/utils v0.0.83
+	github.com/projectdiscovery/utils v0.0.84
 	golang.org/x/net v0.21.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -34,9 +34,10 @@ require (
 	github.com/projectdiscovery/machineid v0.0.0-20240226150047-2e2c51e35983 // indirect
 	github.com/shirou/gopsutil/v3 v3.23.7 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
-	github.com/tklauser/go-sysconf v0.3.11 // indirect
-	github.com/tklauser/numcpus v0.6.0 // indirect
-	github.com/yusufpapurcu/wmi v1.2.3 // indirect
+	github.com/tklauser/go-sysconf v0.3.12 // indirect
+	github.com/tklauser/numcpus v0.6.1 // indirect
+	github.com/yusufpapurcu/wmi v1.2.4 // indirect
+	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 )
 
@@ -140,7 +141,7 @@ require (
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20210624195500-8bfb893ecb84 // indirect
 	google.golang.org/grpc v1.38.0 // indirect
-	google.golang.org/protobuf v1.31.0 // indirect
+	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 )
