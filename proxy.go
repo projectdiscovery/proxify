@@ -35,6 +35,7 @@ import (
 	"github.com/projectdiscovery/tinydns"
 	errorutil "github.com/projectdiscovery/utils/errors"
 	readerUtil "github.com/projectdiscovery/utils/reader"
+	sliceutil "github.com/projectdiscovery/utils/slice"
 	stringsutil "github.com/projectdiscovery/utils/strings"
 	"golang.org/x/net/proxy"
 )
@@ -239,8 +240,16 @@ func (p *Proxy) ModifyRequest(req *http.Request) error {
 	if len(p.options.RequestMatchReplaceDSL) != 0 {
 		_ = p.MatchReplaceRequest(req)
 	}
+	p.removeBrEncoding(req)
 	_ = p.logger.LogRequest(req, userData)
 	return nil
+}
+
+func (*Proxy) removeBrEncoding(req *http.Request) {
+	encodings := strings.Split(strings.ReplaceAll(req.Header.Get("Accept-Encoding"), " ", ""), ",")
+	encodings = sliceutil.PruneEqual(encodings, "br")
+	req.Header.Set("Accept-Encoding", strings.Join(encodings, ", "))
+
 }
 
 // ModifyResponse
