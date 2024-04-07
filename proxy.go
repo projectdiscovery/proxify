@@ -452,7 +452,16 @@ func (p *Proxy) Run() error {
 	return nil
 }
 
-func (p *Proxy) Stop() {}
+func (p *Proxy) Stop() {
+	p.Dialer.Close()
+	if p.tinydns != nil {
+		p.tinydns.Close()
+	}
+	p.logger.Close()
+	if p.httpProxy != nil {
+		p.httpProxy.Close()
+	}
+}
 
 // setupHTTPProxy configures proxy with settings
 func (p *Proxy) setupHTTPProxy() error {
