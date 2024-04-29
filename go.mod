@@ -13,7 +13,7 @@ require (
 	github.com/haxii/fastproxy v0.5.37
 	github.com/pkg/errors v0.9.1
 	github.com/projectdiscovery/dsl v0.0.52
-	github.com/projectdiscovery/fastdialer v0.0.68
+	github.com/projectdiscovery/fastdialer v0.0.69
 	github.com/projectdiscovery/goflags v0.1.50
 	github.com/projectdiscovery/gologger v1.1.12
 	github.com/projectdiscovery/martian/v3 v3.0.0-20240219194442-fed3b744f477
