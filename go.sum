@@ -294,8 +294,8 @@ github.com/projectdiscovery/retryabledns v1.0.61 h1:1WSX1wMZoI5IS6qdP1tgemLYtSIA
 github.com/projectdiscovery/retryabledns v1.0.61/go.mod h1:XnGuCyuGaR3xCOsFCY/P6O9KMT/+rnN227OAkR8QQ+4=
 github.com/projectdiscovery/roundrobin v0.0.6 h1:zoJAFRgP9XK7B+iKSjR+djRAuDYxnc57+Fx+qpoPvds=
 github.com/projectdiscovery/roundrobin v0.0.6/go.mod h1:vTxcWqNLyMH6VE2Q/hsNNvDHFLiIzHozC1rLLT/vocQ=
-github.com/projectdiscovery/tinydns v0.0.38 h1:7vHrj/eRJS/DpeycuVRZJ8B/jCJG58SyyHOWEeFb9G4=
-github.com/projectdiscovery/tinydns v0.0.38/go.mod h1:JLoQ0Aqsce4K6H/sJ5bOxI2LTB9ZZgEJ3x6ZSPNdAbE=
+github.com/projectdiscovery/tinydns v0.0.39 h1:jSAspNVIsKuQBFWHeQBcHfyxB5nOx2ybSH1RFD6oS3c=
+github.com/projectdiscovery/tinydns v0.0.39/go.mod h1:xZ0ZgCsHFdcpcWcSFjMA3n2bi40RMscUuGvotl/XSM8=
 github.com/projectdiscovery/utils v0.1.1 h1:iQ/DyrClxbIbKMUCXfXLA1lFkqprrUM9Ti/nMU5dQj4=
 github.com/projectdiscovery/utils v0.1.1/go.mod h1:EPuSvVIvp61nXJD5EO65vaCv82OuhO+wfZpWAWA0q3o=
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
