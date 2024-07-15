@@ -108,7 +108,7 @@ require (
 	github.com/projectdiscovery/hmap v0.0.48 // indirect
 	github.com/projectdiscovery/mapcidr v1.1.34 // indirect
 	github.com/projectdiscovery/networkpolicy v0.0.9 // indirect
-	github.com/projectdiscovery/retryabledns v1.0.66 // indirect
+	github.com/projectdiscovery/retryabledns v1.0.67 // indirect
 	github.com/quic-go/quic-go v0.42.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/refraction-networking/utls v1.5.4 // indirect
