@@ -12,14 +12,14 @@ require (
 	github.com/goccy/go-yaml v1.11.3
 	github.com/haxii/fastproxy v0.5.37
 	github.com/pkg/errors v0.9.1
-	github.com/projectdiscovery/dsl v0.1.4
+	github.com/projectdiscovery/dsl v0.1.6
 	github.com/projectdiscovery/fastdialer v0.1.6
 	github.com/projectdiscovery/goflags v0.1.57
 	github.com/projectdiscovery/gologger v1.1.14
 	github.com/projectdiscovery/martian/v3 v3.0.0-20240219194442-fed3b744f477
 	github.com/projectdiscovery/roundrobin v0.0.6
 	github.com/projectdiscovery/tinydns v0.0.41
-	github.com/projectdiscovery/utils v0.1.6
+	github.com/projectdiscovery/utils v0.2.0
 	golang.org/x/net v0.23.0
 	gopkg.in/yaml.v3 v3.0.1
 )
