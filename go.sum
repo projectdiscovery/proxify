@@ -276,8 +276,8 @@ github.com/projectdiscovery/dsl v0.1.4 h1:tWF2xWmfwrO/UhalruDflQEBr19WBwU9My4Uke
 github.com/projectdiscovery/dsl v0.1.4/go.mod h1:jYwRd4bRhCtWAOEsG347W4pCi9c/fKfm7vtmuFhwYtA=
 github.com/projectdiscovery/fastdialer v0.1.6 h1:dtdE7WjaydpndKPcUYWms5iOhBSC0nvBAHyZd6I4pdQ=
 github.com/projectdiscovery/fastdialer v0.1.6/go.mod h1:a5XOjvaO4b+ddO/YLoM4nvK3CPPviW6HmoAd+AoszMw=
-github.com/projectdiscovery/goflags v0.1.57 h1:mIL9rGo3Cykdv2AU0LlxoWD18bQ1Iyg4qRnLbPztigY=
-github.com/projectdiscovery/goflags v0.1.57/go.mod h1:/5JI3q/mVHqMMS1MYj0CPkTAwDoAKn9R5syf7Mhw9vk=
+github.com/projectdiscovery/goflags v0.1.59 h1:rFScpC57L0Ln0dJmBtstyxHUH7K9H4UmHACXcSkdqqk=
+github.com/projectdiscovery/goflags v0.1.59/go.mod h1:dj67QGp/D81WRLtzU0HsWR20zgoGZ0cnk3Wbt9xJcuo=
 github.com/projectdiscovery/gologger v1.1.14 h1:8SS9qDCisCFffKHzWMX+GDDArxBJ9A7DhYrESEixAYo=
 github.com/projectdiscovery/gologger v1.1.14/go.mod h1:CPk1nAZ3PqgspKBuSJR+xwY2i/Rm+P/ovahpP30EJy8=
 github.com/projectdiscovery/gostruct v0.0.2 h1:s8gP8ApugGM4go1pA+sVlPDXaWqNP5BBDDSv7VEdG1M=
@@ -298,8 +298,8 @@ github.com/projectdiscovery/roundrobin v0.0.6 h1:zoJAFRgP9XK7B+iKSjR+djRAuDYxnc5
 github.com/projectdiscovery/roundrobin v0.0.6/go.mod h1:vTxcWqNLyMH6VE2Q/hsNNvDHFLiIzHozC1rLLT/vocQ=
 github.com/projectdiscovery/tinydns v0.0.41 h1:GnLMLSJpO2D9GcFit8FQqTFzDYRofeSaM25HN4Il4is=
 github.com/projectdiscovery/tinydns v0.0.41/go.mod h1:oG4KtZLkG5Jn/h5Zs340PFK7av8JrpL/PLqMkC6rCQM=
-github.com/projectdiscovery/utils v0.1.6 h1:fzdN+oCTics3hPPOEV1FWqf/Hpenav5Ml/73aEwpTZc=
-github.com/projectdiscovery/utils v0.1.6/go.mod h1:kOnMoFfuQMY8U+nh8e32odjC00iEbiLVBcDxyAZFwCc=
+github.com/projectdiscovery/utils v0.2.0 h1:GC9FOq2mVacVYZgD2s6XW7RP6jAC/XjOKclSpLYPUUQ=
+github.com/projectdiscovery/utils v0.2.0/go.mod h1:kOnMoFfuQMY8U+nh8e32odjC00iEbiLVBcDxyAZFwCc=
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
 github.com/quic-go/quic-go v0.42.0 h1:uSfdap0eveIl8KXnipv9K7nlwZ5IqLlYOpJ58u5utpM=
 github.com/quic-go/quic-go v0.42.0/go.mod h1:132kz4kL3F9vxhW3CtQJLDVwcFe5wdWeJXXijhsO57M=
