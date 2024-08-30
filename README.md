@@ -67,7 +67,7 @@ Usage:
 
 Flags:
 OUTPUT:
-   -sr, -store-resposne        store raw http request / response to output directory (default proxify_logs)
+   -sr, -store-response        store raw http request / response to output directory (default proxify_logs)
    -o, -output                 output file to store proxify logs (default proxify_logs.jsonl)
    -of, -output-format string  output format (jsonl/yaml) (default "jsonl")
    -dump-req                   Dump only HTTP requests to output file
@@ -253,7 +253,7 @@ replay -output "logs/"
 
 ### Installing SSL Certificate
 
-A certificate authority is generated for proxify which is stored in the folder `~/.config/proxify/` as default, manually can be specified by `-config` flag. The generated certificate can be imported by visiting [http://proxify/cacert.crt](http://proxify/cacert.crt) in a browser connected to proxify. 
+A certificate authority is generated for proxify which is stored in the folder `~/.config/proxify/` as default, manually can be specified by `-config` flag. The generated certificate can be imported by visiting [http://proxify/cacert](http://proxify/cacert) in a browser connected to proxify. 
 
 Installation steps for the Root Certificate is similar to other proxy tools which includes adding the cert to system trusted root store.
 
