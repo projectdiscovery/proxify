@@ -67,7 +67,7 @@ Usage:
 
 Flags:
 OUTPUT:
-   -sr, -store-resposne        store raw http request / response to output directory (default proxify_logs)
+   -sr, -store-response        store raw http request / response to output directory (default proxify_logs)
    -o, -output                 output file to store proxify logs (default proxify_logs.jsonl)
    -of, -output-format string  output format (jsonl/yaml) (default "jsonl")
    -dump-req                   Dump only HTTP requests to output file
