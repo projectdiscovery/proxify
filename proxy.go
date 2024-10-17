@@ -200,6 +200,9 @@ func NewProxy(options *Options) (*Proxy, error) {
 
 // ModifyRequest
 func (p *Proxy) ModifyRequest(req *http.Request) error {
+	// // Set Content-Length to zero to allow automatic calculation
+	req.ContentLength = -1
+
 	ctx := martian.NewContext(req)
 	// disable upgrading http connections to https by default
 	ctx.Session().MarkInsecure()
@@ -254,6 +257,9 @@ func (*Proxy) removeBrEncoding(req *http.Request) {
 
 // ModifyResponse
 func (p *Proxy) ModifyResponse(resp *http.Response) error {
+	// // Set Content-Length to zero to allow automatic calculation
+	resp.ContentLength = -1
+
 	ctx := martian.NewContext(resp.Request)
 	var userData *types.UserData
 	if w, ok := ctx.Get("user-data"); ok {
