@@ -257,9 +257,6 @@ func (*Proxy) removeBrEncoding(req *http.Request) {
 
 // ModifyResponse
 func (p *Proxy) ModifyResponse(resp *http.Response) error {
-	// // Set Content-Length to zero to allow automatic calculation
-	resp.ContentLength = -1
-
 	ctx := martian.NewContext(resp.Request)
 	var userData *types.UserData
 	if w, ok := ctx.Get("user-data"); ok {
