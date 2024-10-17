@@ -138,5 +138,5 @@ func (r *Runner) Close() {
 func printDslCompileError(err error) {
 	gologger.Error().Msgf("error compiling DSL: %s", err)
 	gologger.Info().Msgf("The available custom DSL functions are:")
-	gologger.Info().Label("").Msgf(dsl.GetPrintableDslFunctionSignatures(false))
+	gologger.Info().Label("").Msg(dsl.GetPrintableDslFunctionSignatures(false))
 }
