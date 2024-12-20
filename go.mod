@@ -5,7 +5,6 @@ go 1.21
 require (
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/Shopify/sarama v1.38.1
-	github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/elastic/go-elasticsearch/v7 v7.17.10
 	github.com/elazarl/goproxy v0.0.0-20221015165544-a0805db90819
@@ -20,6 +19,7 @@ require (
 	github.com/projectdiscovery/roundrobin v0.0.6
 	github.com/projectdiscovery/tinydns v0.0.45
 	github.com/projectdiscovery/utils v0.2.4
+	github.com/things-go/go-socks5 v0.0.5
 	golang.org/x/net v0.23.0
 	gopkg.in/yaml.v3 v3.0.1
 )
