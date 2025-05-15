@@ -470,8 +470,21 @@ func (p *Proxy) setupHTTPProxy() error {
 	}
 	hp.SetDialContext(dialContextFunc)
 	hp.SetMITM(certs.GetMitMConfig())
+	p.setUpstreamProxy(rt)
 	p.httpProxy = hp
 	return nil
+}
+
+func (p *Proxy) setUpstreamProxy(rt http.RoundTripper) {
+	ht, ok := rt.(*http.Transport)
+	if !ok {
+		return
+	}
+	if len(p.options.UpstreamHTTPProxies) > 0 {
+		ht.Proxy = func(req *http.Request) (*url.URL, error) {
+			return url.Parse(p.rbhttp.Next())
+		}
+	}
 }
 
 // getRoundTripper returns RoundTripper configured with options
