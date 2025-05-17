@@ -76,7 +76,7 @@ func NewHttpRequestData(req *http.Request) (*HTTPRequest, error) {
 	httpRequest.Body = string(reqBody)
 
 	// Extract raw request
-	reqdumpNoBody, err := httputil.DumpRequest(req, false)
+	reqdumpNoBody, err := httputil.DumpRequest(req, true)
 	if err != nil {
 		return nil, err
 	}
