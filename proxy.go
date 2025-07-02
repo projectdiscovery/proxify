@@ -482,6 +482,7 @@ func (p *Proxy) setupHTTPProxy() error {
 	}
 	hp.SetDialContext(dialContextFunc)
 	hp.SetMITM(certs.GetMitMConfig())
+	hp.SetTimeout(0)
 	p.setUpstreamProxy(rt)
 	p.httpProxy = hp
 	return nil
