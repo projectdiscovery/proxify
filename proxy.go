@@ -201,7 +201,7 @@ func NewProxy(options *Options) (*Proxy, error) {
 // ModifyRequest
 func (p *Proxy) ModifyRequest(req *http.Request) error {
 	// // Set Content-Length to zero to allow automatic calculation
-	req.ContentLength = -1
+	// req.ContentLength = -1
 
 	ctx := martian.NewContext(req)
 	// disable upgrading http connections to https by default
@@ -244,7 +244,7 @@ func (p *Proxy) ModifyRequest(req *http.Request) error {
 		_ = p.MatchReplaceRequest(req)
 	}
 	p.removeBrEncoding(req)
-	_ = p.logger.LogRequest(req, userData)
+	//	_ = p.logger.LogRequest(req, userData)
 	return nil
 }
 
@@ -302,7 +302,7 @@ func (p *Proxy) ModifyResponse(resp *http.Response) error {
 	if len(p.options.ResponseMatchReplaceDSL) != 0 {
 		_ = p.MatchReplaceResponse(resp)
 	}
-	_ = p.logger.LogResponse(resp, *userData)
+	//	_ = p.logger.LogResponse(resp, *userData)
 	if resp.StatusCode == 301 || resp.StatusCode == 302 {
 		// set connection close header
 		// close connection if redirected to different host
