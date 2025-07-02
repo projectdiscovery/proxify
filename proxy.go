@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/armon/go-socks5"
 	"github.com/haxii/fastproxy/bufiopool"
@@ -482,10 +483,13 @@ func (p *Proxy) setupHTTPProxy() error {
 	}
 	hp.SetDialContext(dialContextFunc)
 	hp.SetMITM(certs.GetMitMConfig())
-	hp.SetTimeout(0)
+	hp.SetTimeout(30 * time.Hour)
 	p.setUpstreamProxy(rt)
 	p.httpProxy = hp
 	return nil
+}
+func (p *Proxy) SetTimeout(timeout time.Duration) {
+	p.httpProxy.SetTimeout(timeout)
 }
 
 func (p *Proxy) setUpstreamProxy(rt http.RoundTripper) {
