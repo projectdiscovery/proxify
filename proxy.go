@@ -34,6 +34,7 @@ import (
 	"github.com/projectdiscovery/tinydns"
 	errorutil "github.com/projectdiscovery/utils/errors"
 	readerUtil "github.com/projectdiscovery/utils/reader"
+	sliceutil "github.com/projectdiscovery/utils/slice"
 	stringsutil "github.com/projectdiscovery/utils/strings"
 	"github.com/things-go/go-socks5"
 	"golang.org/x/net/proxy"
