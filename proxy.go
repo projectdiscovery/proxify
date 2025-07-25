@@ -44,6 +44,14 @@ import (
 type OnRequestFunc func(req *http.Request, ctx *martian.Context) error
 type OnResponseFunc func(resp *http.Response, ctx *martian.Context) error
 
+// ListenerFactory interface allows external definition of new net.Listener types
+type ListenerFactory interface {
+	// CreateListener creates a new net.Listener
+	// network: network type, such as "tcp", "udp", etc.
+	// address: listening address, such as ":8080"
+	CreateListener(network, address string) (net.Listener, error)
+}
+
 type Options struct {
 	DumpRequest                 bool
 	DumpResponse                bool
@@ -74,6 +82,7 @@ type Options struct {
 	UpstreamProxyRequestsNumber int
 	Elastic                     *elastic.Options
 	Kafka                       *kafka.Options
+	ListenerFactory             ListenerFactory // allows external definition of new net.Listener types
 }
 
 type Proxy struct {
@@ -423,7 +432,16 @@ func (p *Proxy) Run() error {
 		p.httpProxy.SetRequestModifier(p)
 		p.httpProxy.SetResponseModifier(p)
 
-		l, err := net.Listen("tcp", p.options.ListenAddrHTTP)
+		var l net.Listener
+		var err error
+
+		// Use custom ListenerFactory if provided, otherwise use default net.Listen
+		if p.options.ListenerFactory != nil {
+			l, err = p.options.ListenerFactory.CreateListener("tcp", p.options.ListenAddrHTTP)
+		} else {
+			l, err = net.Listen("tcp", p.options.ListenAddrHTTP)
+		}
+
 		if err != nil {
 			gologger.Fatal().Msgf("failed to setup listener got %v", err)
 		}
