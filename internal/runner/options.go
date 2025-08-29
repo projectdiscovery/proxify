@@ -264,7 +264,9 @@ func (options *Options) createLoggerConfigIfNotExists() error {
 	if err != nil {
 		return errorutil.NewWithErr(err).Msgf("could not create config file")
 	}
-	defer loggerConfigFile.Close()
+	defer func() {
+		_ = loggerConfigFile.Close()
+	}()
 
 	err = yaml.NewEncoder(loggerConfigFile).Encode(config)
 	return err

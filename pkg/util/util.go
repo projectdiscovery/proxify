@@ -66,7 +66,7 @@ func HTTPResponseToMap(resp *http.Response) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	resp.Body = io.NopCloser(bytes.NewBuffer(body))
 	m["body"] = string(body)
 

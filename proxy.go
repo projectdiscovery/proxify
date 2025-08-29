@@ -344,7 +344,7 @@ func (p *Proxy) MatchReplaceRequest(req *http.Request) error {
 		return err
 	}
 	// closes old body to allow memory reuse
-	req.Body.Close()
+	_ = req.Body.Close()
 
 	// override original properties
 	req.Method = requestNew.Method
@@ -386,7 +386,7 @@ func (p *Proxy) MatchReplaceResponse(resp *http.Response) error {
 	}
 
 	// closes old body to allow memory reuse
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	resp.Header = responseNew.Header
 	resp.Body, err = readerUtil.NewReusableReadCloser(responseNew.Body)
 	if err != nil {
@@ -532,7 +532,9 @@ func (p *Proxy) hijackNServe(req *http.Request, ctx *martian.Context) error {
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 	rec := httptest.NewRecorder()
 	p.proxifyMux.ServeHTTP(rec, req)
 	resp := rec.Result()
@@ -540,7 +542,9 @@ func (p *Proxy) hijackNServe(req *http.Request, ctx *martian.Context) error {
 	if err := resp.Write(brw); err != nil {
 		gologger.Warning().Msgf("failed to write response: %v", err)
 	}
-	brw.Flush()
+	if err := brw.Flush(); err != nil {
+		gologger.Warning().Msgf("failed to flush buffer: %v", err)
+	}
 	return nil
 }
 

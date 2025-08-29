@@ -71,7 +71,9 @@ func NewHttpRequestData(req *http.Request) (*HTTPRequest, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer req.Body.Close()
+	defer func() {
+		_ = req.Body.Close()
+	}()
 	req.Body = io.NopCloser(strings.NewReader(string(reqBody)))
 	httpRequest.Body = string(reqBody)
 

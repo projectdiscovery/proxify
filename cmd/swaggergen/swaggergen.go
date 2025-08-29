@@ -90,7 +90,9 @@ func (g *Generator) WriteSpec() error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 	// write the spec to the file
 	return yaml.NewEncoder(f).Encode(g.Spec)
 }
@@ -104,7 +106,9 @@ func (g *Generator) CreateSpec() error {
 		if err != nil {
 			return err
 		}
-		defer f.Close()
+		defer func() {
+			_ = f.Close()
+		}()
 		g.Spec = &swaggergen.Spec{}
 		if err := yaml.NewDecoder(f).Decode(g.Spec); err != nil {
 			return err
@@ -140,7 +144,9 @@ func (g *Generator) ReadLog() error {
 		if err != nil {
 			return err
 		}
-		defer f.Close()
+		defer func() {
+			_ = f.Close()
+		}()
 
 		// read file
 		buf := make([]byte, info.Size())
