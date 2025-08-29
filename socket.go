@@ -123,7 +123,9 @@ func (p *SocketProxy) Proxy(conn net.Conn) error {
 	socketConn.OutputHex = p.options.OutputHex
 
 	socketConn.lconn = conn
-	defer socketConn.lconn.Close()
+	defer func() {
+		_ = socketConn.lconn.Close()
+	}()
 
 	if p.options.TLSClient {
 		config := &tls.Config{
@@ -141,7 +143,9 @@ func (p *SocketProxy) Proxy(conn net.Conn) error {
 		return nil
 	}
 
-	defer socketConn.rconn.Close()
+	defer func() {
+		_ = socketConn.rconn.Close()
+	}()
 
 	if p.options.HTTPProxy != "" {
 		proxyURL, err := url.Parse(p.options.HTTPProxy)
@@ -275,7 +279,7 @@ func (p *SocketConn) pipe(src, dst io.ReadWriter) {
 				log.Println(err)
 			} else {
 				b, _ = io.ReadAll(resp.Body)
-				resp.Body.Close()
+				_ = resp.Body.Close()
 			}
 		}
 

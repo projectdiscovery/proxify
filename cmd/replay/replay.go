@@ -62,7 +62,7 @@ func main() {
 	}()
 
 	// dns server
-	var domainsToAddresses map[string]*tinydns.DnsRecord = map[string]*tinydns.DnsRecord{
+	var domainsToAddresses = map[string]*tinydns.DnsRecord{
 		"*": {A: []string{"127.0.0.1"}},
 	}
 	tinydns, _ := tinydns.New(&tinydns.Options{
@@ -137,7 +137,9 @@ func visit() filepath.WalkFunc {
 		if err != nil {
 			return err
 		}
-		defer file.Close()
+		defer func() {
+			_ = file.Close()
+		}()
 		bf := bufio.NewReader(file)
 
 		tokens := strings.Split(filename, "-")
