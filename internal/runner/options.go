@@ -1,7 +1,6 @@
 package runner
 
 import (
-	"fmt"
 	"math"
 	"os"
 	"path/filepath"
@@ -135,8 +134,6 @@ func ParseOptions() (*Options, error) {
 	if err := flagSet.Parse(); err != nil {
 		return nil, err
 	}
-
-	fmt.Printf("socks5 addr: %s\n", options.ListenAddrSocks5)
 
 	if options.ConfigDir != "" {
 		_ = os.MkdirAll(options.ConfigDir, permissionutil.ConfigFolderPermission)
