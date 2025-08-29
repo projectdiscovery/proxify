@@ -18,7 +18,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/armon/go-socks5"
 	"github.com/haxii/fastproxy/bufiopool"
 	"github.com/haxii/fastproxy/superproxy"
 	"github.com/projectdiscovery/dsl"
@@ -38,6 +37,7 @@ import (
 	readerUtil "github.com/projectdiscovery/utils/reader"
 	sliceutil "github.com/projectdiscovery/utils/slice"
 	stringsutil "github.com/projectdiscovery/utils/strings"
+	"github.com/things-go/go-socks5"
 	"golang.org/x/net/proxy"
 )
 
@@ -191,15 +191,15 @@ func NewProxy(options *Options) (*Proxy, error) {
 
 	var socks5proxy *socks5.Server
 	if options.ListenAddrSocks5 != "" {
-		socks5Config := &socks5.Config{
-			Dial: proxy.httpTunnelDialer,
-		}
 		if options.Verbosity <= types.VerbositySilent {
-			socks5Config.Logger = log.New(io.Discard, "", log.Ltime|log.Lshortfile)
-		}
-		socks5proxy, err = socks5.New(socks5Config)
-		if err != nil {
-			return nil, err
+			socks5proxy = socks5.NewServer(
+				socks5.WithLogger(socks5.NewLogger(log.New(io.Discard, "", log.Ltime|log.Lshortfile))),
+				socks5.WithDial(proxy.httpTunnelDialer),
+			)
+		} else {
+			socks5proxy = socks5.NewServer(
+				socks5.WithDial(proxy.httpTunnelDialer),
+			)
 		}
 	}
 
@@ -354,7 +354,7 @@ func (p *Proxy) MatchReplaceRequest(req *http.Request) error {
 		return err
 	}
 	// closes old body to allow memory reuse
-	req.Body.Close()
+	_ = req.Body.Close()
 
 	// override original properties
 	req.Method = requestNew.Method
@@ -396,7 +396,7 @@ func (p *Proxy) MatchReplaceResponse(resp *http.Response) error {
 	}
 
 	// closes old body to allow memory reuse
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	resp.Header = responseNew.Header
 	resp.Body, err = readerUtil.NewReusableReadCloser(responseNew.Body)
 	if err != nil {
@@ -568,7 +568,9 @@ func (p *Proxy) hijackNServe(req *http.Request, ctx *martian.Context) error {
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 	rec := httptest.NewRecorder()
 	p.proxifyMux.ServeHTTP(rec, req)
 	resp := rec.Result()
@@ -576,7 +578,9 @@ func (p *Proxy) hijackNServe(req *http.Request, ctx *martian.Context) error {
 	if err := resp.Write(brw); err != nil {
 		gologger.Warning().Msgf("failed to write response: %v", err)
 	}
-	brw.Flush()
+	if err := brw.Flush(); err != nil {
+		gologger.Warning().Msgf("failed to flush buffer: %v", err)
+	}
 	return nil
 }
 

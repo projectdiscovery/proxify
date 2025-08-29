@@ -5,22 +5,22 @@ go 1.21
 require (
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/Shopify/sarama v1.38.1
-	github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/elastic/go-elasticsearch/v7 v7.17.10
 	github.com/elazarl/goproxy v0.0.0-20221015165544-a0805db90819
 	github.com/goccy/go-yaml v1.11.3
 	github.com/haxii/fastproxy v0.5.37
 	github.com/pkg/errors v0.9.1
-	github.com/projectdiscovery/dsl v0.3.10
-	github.com/projectdiscovery/fastdialer v0.2.14
-	github.com/projectdiscovery/goflags v0.1.65
-	github.com/projectdiscovery/gologger v1.1.38
+	github.com/projectdiscovery/dsl v0.3.19
+	github.com/projectdiscovery/fastdialer v0.3.0
+	github.com/projectdiscovery/goflags v0.1.74
+	github.com/projectdiscovery/gologger v1.1.47
 	github.com/projectdiscovery/martian/v3 v3.0.0-20240219194442-fed3b744f477
 	github.com/projectdiscovery/roundrobin v0.0.6
-	github.com/projectdiscovery/tinydns v0.0.68
-	github.com/projectdiscovery/utils v0.4.4
-	golang.org/x/net v0.29.0
+	github.com/projectdiscovery/tinydns v0.0.77
+	github.com/projectdiscovery/utils v0.4.13
+	github.com/things-go/go-socks5 v0.0.5
+	golang.org/x/net v0.33.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -106,16 +106,16 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/projectdiscovery/blackrock v0.0.1 // indirect
 	github.com/projectdiscovery/gostruct v0.0.2 // indirect
-	github.com/projectdiscovery/hmap v0.0.72 // indirect
+	github.com/projectdiscovery/hmap v0.0.81 // indirect
 	github.com/projectdiscovery/mapcidr v1.1.34 // indirect
-	github.com/projectdiscovery/networkpolicy v0.0.9 // indirect
-	github.com/projectdiscovery/retryabledns v1.0.90 // indirect
+	github.com/projectdiscovery/networkpolicy v0.1.1 // indirect
+	github.com/projectdiscovery/retryabledns v1.0.94 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/refraction-networking/utls v1.6.7 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
-	github.com/sashabaranov/go-openai v1.14.2 // indirect
+	github.com/sashabaranov/go-openai v1.37.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/tidwall/btree v1.6.0 // indirect

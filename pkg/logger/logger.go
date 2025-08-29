@@ -222,7 +222,7 @@ func (l *Logger) AsyncWrite() {
 // Close logger instance
 func (l *Logger) Close() {
 	if l.sWriter != nil {
-		l.sWriter.Close()
+		_ = l.sWriter.Close()
 	}
 	close(l.asyncqueue)
 }
@@ -267,7 +267,7 @@ func (l *Logger) storeWriter(outputdata types.HTTPTransaction) {
 		return
 	}
 	outputdata.Name = fmt.Sprintf("%s%s-%s", outputdata.Userdata.Host, outputdata.PartSuffix, outputdata.Userdata.ID)
-	if outputdata.Userdata.HasResponse && !(l.options.DumpRequest || l.options.DumpResponse) {
+	if outputdata.Userdata.HasResponse && (!l.options.DumpRequest && !l.options.DumpResponse) {
 		if outputdata.Userdata.Match != nil && *outputdata.Userdata.Match {
 			outputdata.Name = outputdata.Name + ".match"
 		}

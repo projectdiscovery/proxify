@@ -36,7 +36,9 @@ func New(option *Options) (*Client, error) {
 		if err != nil {
 			return client, err
 		}
-		defer file.Close()
+		defer func() {
+			_ = file.Close()
+		}()
 	}
 	return client, nil
 }
@@ -60,6 +62,8 @@ func (c *Client) writeToFile(filepath, content string) error {
 		return err
 	}
 	// write to file
-	fmt.Fprint(f, content)
+	if _, err := fmt.Fprint(f, content); err != nil {
+		return err
+	}
 	return f.Close()
 }
