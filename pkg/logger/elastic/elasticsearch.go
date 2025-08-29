@@ -103,6 +103,6 @@ func (c *Client) Save(data types.HTTPTransaction) error {
 	}
 	// Drain response to reuse connection
 	_, er := io.Copy(io.Discard, res.Body)
-	res.Body.Close()
+	_ = res.Body.Close()
 	return er
 }

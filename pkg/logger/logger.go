@@ -101,8 +101,15 @@ func NewLogger(options *OptionsLogger) *Logger {
 
 // LogRequest and user data
 func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
-	// No-op for now , since proxify isn't intended to fail instead return 502
-	// and request can be accessed via response.Request
+	if req == nil {
+		return nil
+	}
+
+	// send to writer channel
+	l.asyncqueue <- types.HTTPTransaction{
+		Userdata: userdata,
+		Request:  req,
+	}
 	return nil
 }
 
@@ -168,10 +175,12 @@ func (l *Logger) AsyncWrite() {
 					URL:       httpData.Request.URL.String(),
 				}
 				defer func() {
-					// write to structured writer with whatever data we have
-					err := l.sWriter.Write(sData)
-					if err != nil {
-						gologger.Warning().Msgf("Error while logging: %s", err)
+					if sData.Response != nil {
+						// write to structured writer with whatever data we have
+						err := l.sWriter.Write(sData)
+						if err != nil {
+							gologger.Warning().Msgf("Error while logging: %s", err)
+						}
 					}
 				}()
 				sRequest, err := types.NewHttpRequestData(httpData.Request)
@@ -213,7 +222,7 @@ func (l *Logger) AsyncWrite() {
 // Close logger instance
 func (l *Logger) Close() {
 	if l.sWriter != nil {
-		l.sWriter.Close()
+		_ = l.sWriter.Close()
 	}
 	close(l.asyncqueue)
 }
@@ -258,7 +267,7 @@ func (l *Logger) storeWriter(outputdata types.HTTPTransaction) {
 		return
 	}
 	outputdata.Name = fmt.Sprintf("%s%s-%s", outputdata.Userdata.Host, outputdata.PartSuffix, outputdata.Userdata.ID)
-	if outputdata.Userdata.HasResponse && !(l.options.DumpRequest || l.options.DumpResponse) {
+	if outputdata.Userdata.HasResponse && (!l.options.DumpRequest && !l.options.DumpResponse) {
 		if outputdata.Userdata.Match != nil && *outputdata.Userdata.Match {
 			outputdata.Name = outputdata.Name + ".match"
 		}

@@ -71,12 +71,14 @@ func NewHttpRequestData(req *http.Request) (*HTTPRequest, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer req.Body.Close()
+	defer func() {
+		_ = req.Body.Close()
+	}()
 	req.Body = io.NopCloser(strings.NewReader(string(reqBody)))
 	httpRequest.Body = string(reqBody)
 
 	// Extract raw request
-	reqdumpNoBody, err := httputil.DumpRequest(req, false)
+	reqdumpNoBody, err := httputil.DumpRequest(req, true)
 	if err != nil {
 		return nil, err
 	}

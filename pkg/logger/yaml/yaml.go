@@ -34,7 +34,7 @@ func (y *YamlMultiDocWriter) Write(data *types.HTTPRequestResponseLog) error {
 // Close closes the file writer.
 func (y *YamlMultiDocWriter) Close() error {
 	if y.enc != nil {
-		y.enc.Close()
+		_ = y.enc.Close()
 	}
 	if y.f != nil {
 		_ = y.f.Close()
