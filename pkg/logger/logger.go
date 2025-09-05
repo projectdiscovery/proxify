@@ -8,6 +8,7 @@ import (
 	"net/http/httputil"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/asaskevich/govalidator"
@@ -52,6 +53,8 @@ type Logger struct {
 	asyncqueue chan types.HTTPTransaction
 	Store      []Store
 	sWriter    OutputFileWriter // sWriter is the structured writer
+	harFile    *os.File
+	harMutex   *sync.Mutex
 }
 
 // NewLogger instance
@@ -101,7 +104,19 @@ func NewLogger(options *OptionsLogger) *Logger {
 	}
 
 	if options.OutputHar != "" {
+		var err error
+		logger.harFile, err = os.Create(options.OutputHar)
+		if err != nil {
+			gologger.Fatal().Msgf("Could not create HAR log file: %s\n", err)
+		}
+		logger.harMutex = &sync.Mutex{}
 		options.HarLogger = har.NewLogger()
+		go func(logger *Logger) {
+			ticker := time.NewTicker(10 * time.Second) // flush every 10 seconds
+			for range ticker.C {
+				logger.flushHarLog()
+			}
+		}(logger)
 	}
 
 	go logger.AsyncWrite()
@@ -112,20 +127,28 @@ func (l *Logger) exportHar() error {
 	if l.options.HarLogger == nil || l.options.OutputHar == "" {
 		return nil
 	}
+	l.flushHarLog() // final flush
+	return l.harFile.Close()
+}
+
+func (l *Logger) flushHarLog() {
+	l.harMutex.Lock()
+	defer l.harMutex.Unlock()
 
 	harLog := l.options.HarLogger.Export()
 
-	harFile, err := os.Create(l.options.OutputHar)
-	if err != nil {
-		return err
+	if err := l.harFile.Truncate(0); err != nil {
+		gologger.Error().Msgf("Could not truncate HAR log: %s\n", err)
 	}
-	defer func() {
-		_ = harFile.Close()
-	}()
+	if _, err := l.harFile.Seek(0, 0); err != nil {
+		gologger.Error().Msgf("Could not seek HAR log: %s\n", err)
+	}
 
-	encoder := json.NewEncoder(harFile)
+	encoder := json.NewEncoder(l.harFile)
 	encoder.SetIndent("", "  ")
-	return encoder.Encode(harLog)
+	if err := encoder.Encode(harLog); err != nil {
+		gologger.Error().Msgf("Could not encode HAR log: %s\n", err)
+	}
 }
 
 // LogRequest and user data
@@ -266,7 +289,7 @@ func (l *Logger) AsyncWrite() {
 // Close logger instance
 func (l *Logger) Close() {
 	if err := l.exportHar(); err != nil {
-		gologger.Error().Msgf("Could not export HAR log: %s\\n", err)
+		gologger.Error().Msgf("Could not export HAR log: %s\n", err)
 	}
 	if l.sWriter != nil {
 		if err := l.sWriter.Close(); err != nil {
