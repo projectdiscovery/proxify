@@ -70,6 +70,7 @@ OUTPUT:
    -sr, -store-response        store raw http request / response to output directory (default proxify_logs)
    -o, -output                 output file to store proxify logs (default proxify_logs.jsonl)
    -of, -output-format string  output format (jsonl/yaml) (default "jsonl")
+   -oh, -output-har string     output file to store HAR logs (default nil)
    -dump-req                   Dump only HTTP requests to output file
    -dump-resp                  Dump only HTTP responses to output file
    -oca, -out-ca string        Generate and Save CA File to filename
