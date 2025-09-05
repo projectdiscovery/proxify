@@ -135,8 +135,29 @@ func (l *Logger) flushHarLog() {
 	l.harMutex.Lock()
 	defer l.harMutex.Unlock()
 
-	harLog := l.options.HarLogger.Export()
+	// Read existing HAR file
+	_, err := l.harFile.Seek(0, 0)
+	if err != nil {
+		gologger.Error().Msgf("Could not seek HAR log: %s\n", err)
+		return
+	}
+	decoder := json.NewDecoder(l.harFile)
+	var existingHar har.HAR
+	if err := decoder.Decode(&existingHar); err != nil && err != io.EOF {
+		gologger.Error().Msgf("Could not decode existing HAR log: %s\n", err)
+	}
 
+	// Get new entries
+	newHar := l.options.HarLogger.ExportAndReset()
+
+	// Merge entries
+	if existingHar.Log != nil {
+		existingHar.Log.Entries = append(existingHar.Log.Entries, newHar.Log.Entries...)
+	} else {
+		existingHar = *newHar
+	}
+
+	// Write merged HAR file
 	if err := l.harFile.Truncate(0); err != nil {
 		gologger.Error().Msgf("Could not truncate HAR log: %s\n", err)
 	}
@@ -146,7 +167,7 @@ func (l *Logger) flushHarLog() {
 
 	encoder := json.NewEncoder(l.harFile)
 	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(harLog); err != nil {
+	if err := encoder.Encode(existingHar); err != nil {
 		gologger.Error().Msgf("Could not encode HAR log: %s\n", err)
 	}
 }
