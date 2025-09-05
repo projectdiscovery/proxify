@@ -30,6 +30,7 @@ type Options struct {
 	OutputDirectory             string
 	OutputFile                  string // for storing the jsonl output
 	OutputFormat                string
+	OutputHar                   string
 	LoggerConfig                string
 	ConfigDir                   string
 	CertCacheSize               int
@@ -77,6 +78,7 @@ func ParseOptions() (*Options, error) {
 		flagSet.StringVarP(&options.OutputDirectory, "store-response", "sr", "proxify_logs", "store raw http request / response to output directory"),
 		flagSet.StringVarP(&options.OutputFile, "output", "o", "proxify_logs.jsonl", "output file to store proxify logs"),
 		flagSet.StringVarP(&options.OutputFormat, "output-format", "of", "jsonl", "output format (jsonl/yaml)"),
+		flagSet.StringVarP(&options.OutputHar, "output-har", "oh", "", "Save logs in HAR format"),
 		flagSet.BoolVar(&options.DumpRequest, "dump-req", false, "Dump only HTTP requests to output file"),
 		flagSet.BoolVar(&options.DumpResponse, "dump-resp", false, "Dump only HTTP responses to output file"),
 		flagSet.StringVarP(&options.OutCAFile, "out-ca", "oca", "", "Generate and Save CA File to filename"),

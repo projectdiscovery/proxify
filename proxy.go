@@ -56,6 +56,7 @@ type Options struct {
 	OutputDirectory             string
 	OutputFile                  string
 	OutputFormat                string
+	OutputHar                   string
 	RequestDSL                  []string
 	ResponseDSL                 []string
 	UpstreamHTTPProxies         []string
@@ -108,6 +109,7 @@ func NewProxy(options *Options) (*Proxy, error) {
 		OutputFile:   options.OutputFile,
 		OutputFormat: options.OutputFormat,
 		OutputFolder: options.OutputDirectory,
+		OutputHar:    options.OutputHar,
 		DumpRequest:  options.DumpRequest,
 		DumpResponse: options.DumpResponse,
 		MaxSize:      options.MaxSize,
@@ -464,7 +466,9 @@ func (p *Proxy) Run() error {
 	return nil
 }
 
-func (p *Proxy) Stop() {}
+func (p *Proxy) Stop() {
+	p.logger.Close()
+}
 
 // setupHTTPProxy configures proxy with settings
 func (p *Proxy) setupHTTPProxy() error {

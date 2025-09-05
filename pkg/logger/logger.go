@@ -1,15 +1,18 @@
 package logger
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httputil"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/projectdiscovery/gologger"
+	"github.com/projectdiscovery/martian/v3/har"
 	"github.com/projectdiscovery/proxify/pkg/logger/elastic"
 	"github.com/projectdiscovery/proxify/pkg/logger/file"
 	"github.com/projectdiscovery/proxify/pkg/logger/kafka"
@@ -28,12 +31,14 @@ const (
 
 type OptionsLogger struct {
 	Verbosity    types.Verbosity
-	OutputFolder string // when output is written to multiple files
-	OutputFile   string // when output is written to single file
-	OutputFormat string // jsonl or yaml
-	DumpRequest  bool   // dump request to file
-	DumpResponse bool   // dump response to file
-	MaxSize      int    // max size of the output
+	OutputFolder string      // when output is written to multiple files
+	OutputFile   string      // when output is written to single file
+	OutputFormat string      // jsonl or yaml
+	HarLogger    *har.Logger // martian har logger instance
+	OutputHar    string      // when output is written to a HAR file
+	DumpRequest  bool        // dump request to file
+	DumpResponse bool        // dump response to file
+	MaxSize      int         // max size of the output
 	Elastic      *elastic.Options
 	Kafka        *kafka.Options
 }
@@ -95,8 +100,32 @@ func NewLogger(options *OptionsLogger) *Logger {
 		}
 	}
 
+	if options.OutputHar != "" {
+		options.HarLogger = har.NewLogger()
+	}
+
 	go logger.AsyncWrite()
 	return logger
+}
+
+func (l *Logger) exportHar() error {
+	if l.options.HarLogger == nil || l.options.OutputHar == "" {
+		return nil
+	}
+
+	harLog := l.options.HarLogger.Export()
+
+	harFile, err := os.Create(l.options.OutputHar)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = harFile.Close()
+	}()
+
+	encoder := json.NewEncoder(harFile)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(harLog)
 }
 
 // LogRequest and user data
@@ -110,6 +139,13 @@ func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
 		Userdata: userdata,
 		Request:  req,
 	}
+
+	if l.options.HarLogger != nil {
+		if err := l.options.HarLogger.ModifyRequest(req); err != nil {
+			gologger.Error().Msgf("Could not modify HAR request: %s\n", err)
+		}
+	}
+
 	return nil
 }
 
@@ -118,12 +154,20 @@ func (l *Logger) LogResponse(resp *http.Response, userdata types.UserData) error
 	if resp == nil {
 		return nil
 	}
+
 	// send to writer channel
 	l.asyncqueue <- types.HTTPTransaction{
 		Userdata: userdata,
 		Response: resp,
 		Request:  resp.Request,
 	}
+
+	if l.options.HarLogger != nil {
+		if err := l.options.HarLogger.ModifyResponse(resp); err != nil {
+			gologger.Error().Msgf("Could not modify HAR response: %s\n", err)
+		}
+	}
+
 	return nil
 }
 
@@ -221,8 +265,13 @@ func (l *Logger) AsyncWrite() {
 
 // Close logger instance
 func (l *Logger) Close() {
+	if err := l.exportHar(); err != nil {
+		gologger.Error().Msgf("Could not export HAR log: %s\\n", err)
+	}
 	if l.sWriter != nil {
-		_ = l.sWriter.Close()
+		if err := l.sWriter.Close(); err != nil {
+			gologger.Error().Msgf("Could not close OutputFileWriter: %s", err)
+		}
 	}
 	close(l.asyncqueue)
 }

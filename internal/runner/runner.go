@@ -41,6 +41,7 @@ func NewRunner(options *Options) (*Runner, error) {
 		OutputFile:                  options.OutputFile,
 		OutputFormat:                options.OutputFormat,
 		OutputDirectory:             options.OutputDirectory,
+		OutputHar:                   options.OutputHar,
 		RequestDSL:                  options.RequestDSL,
 		ResponseDSL:                 options.ResponseDSL,
 		UpstreamHTTPProxies:         options.UpstreamHTTPProxies,
