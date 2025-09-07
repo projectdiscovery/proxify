@@ -12,7 +12,7 @@ import (
 	"github.com/projectdiscovery/martian/v3/har"
 )
 
-const flushInterval = 10 * time.Second
+const FlushInterval = 10 * time.Second
 
 type Writer struct {
 	f     *os.File
@@ -26,7 +26,7 @@ type Logger struct {
 	wg               sync.WaitGroup
 }
 
-func NewLogger(filePath string) (*Logger, error) {
+func NewLogger(filePath string, flushInterval time.Duration) (*Logger, error) {
 	martianHarLogger := har.NewLogger()
 	writer, err := newWriter(filePath)
 	if err != nil {

@@ -99,7 +99,7 @@ func NewLogger(options *OptionsLogger) *Logger {
 	}
 
 	if options.OutputHar != "" {
-		harLogger, err := har.NewLogger(options.OutputHar)
+		harLogger, err := har.NewLogger(options.OutputHar, har.FlushInterval)
 		if err != nil {
 			gologger.Error().Msgf("Could not create HAR logger: %s", err)
 		} else {
