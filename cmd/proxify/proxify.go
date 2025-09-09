@@ -8,6 +8,7 @@ import (
 
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/proxify/internal/runner"
+	"github.com/projectdiscovery/proxify/pkg/templates"
 )
 
 func main() {
@@ -17,7 +18,18 @@ func main() {
 		gologger.Fatal().Msgf("Could not parse options: %s\n", err)
 	}
 
+	if options.Template != "" {
+		templateOptions, err := templates.Parse(options.Template)
+		if err != nil {
+			gologger.Fatal().Msgf("Could not parse template: %s\n", err)
+		}
+		if templateOptions.ListenAddrHTTP != "" {
+			options.ListenAddrHTTP = templateOptions.ListenAddrHTTP
+		}
+	}
+
 	proxifyRunner, err := runner.NewRunner(options)
+
 	if err != nil {
 		gologger.Fatal().Msgf("Could not create runner: %s\n", err)
 	}

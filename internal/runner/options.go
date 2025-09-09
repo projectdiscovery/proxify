@@ -60,6 +60,7 @@ type Options struct {
 	MaxSize                     int
 	DisableUpdateCheck          bool // DisableUpdateCheck disables automatic update check
 	OutputJsonl                 bool // OutputJsonl outputs data in JSONL format
+	Template                    string // Template file to use
 }
 
 func ParseOptions() (*Options, error) {
@@ -116,6 +117,7 @@ func ParseOptions() (*Options, error) {
 
 	flagSet.CreateGroup("configuration", "Configuration",
 		flagSet.StringVar(&cfgFile, "config", "", "path to the proxify configuration file"),
+		flagSet.StringVarP(&options.Template, "template", "t", "", "path to the proxify template file"),
 		flagSet.StringVarP(&options.LoggerConfig, "export-config", "ec", filepath.Join(homeDir, ".config", "proxify", logger.LoggerConfigFilename), "proxify export module configuration file"),
 		flagSet.StringVar(&options.ConfigDir, "config-directory", filepath.Join(homeDir, ".config", "proxify"), "override the default config path ($home/.config/proxify)"),
 		flagSet.IntVar(&options.CertCacheSize, "cert-cache-size", 256, "Number of certificates to cache"),
