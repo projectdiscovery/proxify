@@ -14,7 +14,7 @@ import (
 	"github.com/projectdiscovery/proxify/pkg/logger/elastic"
 	"github.com/projectdiscovery/proxify/pkg/logger/kafka"
 	"github.com/projectdiscovery/proxify/pkg/types"
-	errorutil "github.com/projectdiscovery/utils/errors"
+	"github.com/projectdiscovery/utils/errkit"
 	fileutil "github.com/projectdiscovery/utils/file"
 	permissionutil "github.com/projectdiscovery/utils/permission"
 	updateutils "github.com/projectdiscovery/utils/update"
@@ -264,7 +264,7 @@ func (options *Options) createLoggerConfigIfNotExists() error {
 	}
 	loggerConfigFile, err := os.Create(options.LoggerConfig)
 	if err != nil {
-		return errorutil.NewWithErr(err).Msgf("could not create config file")
+		return errkit.Wrap(err, "could not create config file")
 	}
 	defer func() {
 		_ = loggerConfigFile.Close()

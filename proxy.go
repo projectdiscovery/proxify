@@ -32,7 +32,7 @@ import (
 	"github.com/projectdiscovery/proxify/pkg/util"
 	rbtransport "github.com/projectdiscovery/roundrobin/transport"
 	"github.com/projectdiscovery/tinydns"
-	errorutil "github.com/projectdiscovery/utils/errors"
+	"github.com/projectdiscovery/utils/errkit"
 	readerUtil "github.com/projectdiscovery/utils/reader"
 	sliceutil "github.com/projectdiscovery/utils/slice"
 	stringsutil "github.com/projectdiscovery/utils/strings"
@@ -478,7 +478,7 @@ func (p *Proxy) setupHTTPProxy() error {
 	hp.Miscellaneous.IgnoreWebSocketError = true
 	rt, err := p.getRoundTripper()
 	if err != nil {
-		return errorutil.NewWithErr(err).Msgf("failed to setup transport")
+		return errkit.Wrap(err, "failed to setup transport")
 	}
 	hp.SetRoundTripper(rt)
 	dialContextFunc := func(ctx context.Context, a, b string) (net.Conn, error) {
