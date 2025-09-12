@@ -37,7 +37,7 @@ type Options struct {
 	Verbosity                   types.Verbosity
 	Version                     bool
 	ListenAddrHTTP              string
-	ListenAddrSocks5            string
+	ListenAddrSOCKS5            string
 	ListenDNSAddr               string
 	DNSMapping                  string              // DNSMapping contains user provided hosts
 	DNSFallbackResolver         string              // Listen DNS Ip and port (ip:port)
@@ -47,7 +47,7 @@ type Options struct {
 	ResponseDSL                 goflags.StringSlice // Response Filter DSL
 	ResponseMatchReplaceDSL     goflags.StringSlice // Request Match-Replace DSL
 	UpstreamHTTPProxies         goflags.StringSlice // Upstream HTTP comma separated Proxies (e.g. http://proxyip:proxyport)
-	UpstreamSocks5Proxies       goflags.StringSlice // Upstream SOCKS5 comma separated Proxies (e.g. socks5://proxyip:proxyport)
+	UpstreamSOCKS5Proxies       goflags.StringSlice // Upstream SOCKS5 comma separated Proxies (e.g. socks5://proxyip:proxyport)
 	UpstreamProxyRequestsNumber int                 // Number of requests before switching upstream proxy
 	DumpRequest                 bool                // Dump requests in separate files
 	DumpResponse                bool                // Dump responses in separate files
@@ -71,7 +71,7 @@ func ParseOptions() (*Options, error) {
 	options := &Options{}
 
 	flagSet := goflags.NewFlagSet()
-	flagSet.SetDescription(`Swiss Army Knife Proxy for rapid deployments. Supports multiple operations such as request/response dump,filtering and manipulation via DSL language, upstream HTTP/Socks5 proxy`)
+	flagSet.SetDescription(`Swiss Army Knife Proxy for rapid deployments. Supports multiple operations such as request/response dump,filtering and manipulation via DSL language, upstream HTTP/SOCKS5 proxy`)
 
 	flagSet.CreateGroup("output", "Output",
 		// Todo:	flagSet.BoolVar(&options.Dump, "dump", true, "Dump HTTP requests/response to output file"),
@@ -98,7 +98,7 @@ func ParseOptions() (*Options, error) {
 
 	flagSet.CreateGroup("network", "Network",
 		flagSet.StringVarP(&options.ListenAddrHTTP, "http-addr", "ha", "127.0.0.1:8888", "Listening HTTP IP and Port address (ip:port)"),
-		flagSet.StringVarP(&options.ListenAddrSocks5, "socks-addr", "sa", "127.0.0.1:10080", "Listening SOCKS IP and Port address (ip:port)"),
+		flagSet.StringVarP(&options.ListenAddrSOCKS5, "socks-addr", "sa", "127.0.0.1:10080", "Listening SOCKS IP and Port address (ip:port)"),
 		flagSet.StringVarP(&options.ListenDNSAddr, "dns-addr", "da", "", "Listening DNS IP and Port address (ip:port)"),
 		flagSet.StringVarP(&options.DNSMapping, "dns-mapping", "dm", "", "Domain to IP DNS mapping (eg domain:ip,domain:ip,..)"),
 		flagSet.StringVarP(&options.DNSFallbackResolver, "resolver", "r", "", "Custom DNS resolvers to use (ip:port)"),
@@ -106,7 +106,7 @@ func ParseOptions() (*Options, error) {
 
 	flagSet.CreateGroup("proxy", "Proxy",
 		flagSet.StringSliceVarP(&options.UpstreamHTTPProxies, "http-proxy", "hp", nil, "Upstream HTTP Proxies (eg http://proxy-ip:proxy-port)", goflags.NormalizedStringSliceOptions),
-		flagSet.StringSliceVarP(&options.UpstreamSocks5Proxies, "socks5-proxy", "sp", nil, "Upstream SOCKS5 Proxies (eg socks5://proxy-ip:proxy-port)", goflags.NormalizedStringSliceOptions),
+		flagSet.StringSliceVarP(&options.UpstreamSOCKS5Proxies, "socks5-proxy", "sp", nil, "Upstream SOCKS5 Proxies (eg socks5://proxy-ip:proxy-port)", goflags.NormalizedStringSliceOptions),
 		flagSet.IntVar(&options.UpstreamProxyRequestsNumber, "c", 1, "Number of requests before switching to the next upstream proxy"),
 	)
 

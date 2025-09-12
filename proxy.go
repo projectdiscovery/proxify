@@ -52,7 +52,7 @@ type Options struct {
 	CertCacheSize               int
 	Directory                   string
 	ListenAddrHTTP              string
-	ListenAddrSocks5            string
+	ListenAddrSOCKS5            string
 	OutputDirectory             string
 	OutputFile                  string
 	OutputFormat                string
@@ -60,7 +60,7 @@ type Options struct {
 	RequestDSL                  []string
 	ResponseDSL                 []string
 	UpstreamHTTPProxies         []string
-	UpstreamSock5Proxies        []string
+	UpstreamSOCKS5Proxies       []string
 	ListenDNSAddr               string
 	DNSMapping                  string
 	DNSFallbackResolver         string
@@ -81,12 +81,12 @@ type Proxy struct {
 	options      *Options
 	logger       *logger.Logger
 	httpProxy    *martian.Proxy
-	socks5proxy  *socks5.Server
-	socks5tunnel *superproxy.SuperProxy
+	socks5Proxy  *socks5.Server
+	socks5Tunnel *superproxy.SuperProxy
 	bufioPool    *bufiopool.Pool
-	tinydns      *tinydns.TinyDNS
-	rbhttp       *rbtransport.RoundTransport
-	rbsocks5     *rbtransport.RoundTransport
+	tinyDNS      *tinydns.TinyDNS
+	rbHTTP       *rbtransport.RoundTransport
+	rbSOCKS5     *rbtransport.RoundTransport
 	proxifyMux   *http.ServeMux // serve banner page and static files
 	listenAddr   string
 }
@@ -117,27 +117,27 @@ func NewProxy(options *Options) (*Proxy, error) {
 		Kafka:        options.Kafka,
 	})
 
-	var tdns *tinydns.TinyDNS
+	var tDNS *tinydns.TinyDNS
 
 	fastdialerOptions := fastdialer.DefaultOptions
 	fastdialerOptions.EnableFallback = true
 	fastdialerOptions.Deny = options.Deny
 	fastdialerOptions.Allow = options.Allow
 	if options.ListenDNSAddr != "" {
-		dnsmapping := make(map[string]*tinydns.DnsRecord)
+		dnsMapping := make(map[string]*tinydns.DnsRecord)
 		for _, record := range strings.Split(options.DNSMapping, ",") {
 			data := strings.Split(record, ":")
 			if len(data) != 2 {
 				continue
 			}
-			dnsmapping[data[0]] = &tinydns.DnsRecord{A: []string{data[1]}}
+			dnsMapping[data[0]] = &tinydns.DnsRecord{A: []string{data[1]}}
 		}
 		var err error
-		tdns, err = tinydns.New(&tinydns.Options{
+		tDNS, err = tinydns.New(&tinydns.Options{
 			ListenAddress:   options.ListenDNSAddr,
 			Net:             "udp",
 			UpstreamServers: []string{options.DNSFallbackResolver},
-			DnsRecords:      dnsmapping,
+			DnsRecords:      dnsMapping,
 		})
 		if err != nil {
 			return nil, err
@@ -149,20 +149,20 @@ func NewProxy(options *Options) (*Proxy, error) {
 		return nil, err
 	}
 
-	var rbhttp, rbsocks5 *rbtransport.RoundTransport
+	var rbHTTP, rbSOCKS5 *rbtransport.RoundTransport
 	if len(options.UpstreamHTTPProxies) > 0 {
-		rbhttp, err = rbtransport.NewWithOptions(options.UpstreamProxyRequestsNumber, options.UpstreamHTTPProxies...)
+		rbHTTP, err = rbtransport.NewWithOptions(options.UpstreamProxyRequestsNumber, options.UpstreamHTTPProxies...)
 		if err != nil {
 			return nil, err
 		}
 	}
-	if len(options.UpstreamSock5Proxies) > 0 {
-		rbsocks5, err = rbtransport.NewWithOptions(options.UpstreamProxyRequestsNumber, options.UpstreamSock5Proxies...)
+	if len(options.UpstreamSOCKS5Proxies) > 0 {
+		rbSOCKS5, err = rbtransport.NewWithOptions(options.UpstreamProxyRequestsNumber, options.UpstreamSOCKS5Proxies...)
 		if err != nil {
 			return nil, err
 		}
 	}
-	pmux, err := getProxifyServerMux()
+	pMux, err := getProxifyServerMux()
 	if err != nil {
 		return nil, err
 	}
@@ -171,31 +171,31 @@ func NewProxy(options *Options) (*Proxy, error) {
 		logger:     logger,
 		options:    options,
 		Dialer:     dialer,
-		tinydns:    tdns,
-		rbhttp:     rbhttp,
-		rbsocks5:   rbsocks5,
-		proxifyMux: pmux,
+		tinyDNS:    tDNS,
+		rbHTTP:     rbHTTP,
+		rbSOCKS5:   rbSOCKS5,
+		proxifyMux: pMux,
 	}
 
 	if err := proxy.setupHTTPProxy(); err != nil {
 		return nil, err
 	}
 
-	var socks5proxy *socks5.Server
-	if options.ListenAddrSocks5 != "" {
+	var socks5Proxy *socks5.Server
+	if options.ListenAddrSOCKS5 != "" {
 		if options.Verbosity <= types.VerbositySilent {
-			socks5proxy = socks5.NewServer(
+			socks5Proxy = socks5.NewServer(
 				socks5.WithLogger(socks5.NewLogger(log.New(io.Discard, "", log.Ltime|log.Lshortfile))),
 				socks5.WithDial(proxy.httpTunnelDialer),
 			)
 		} else {
-			socks5proxy = socks5.NewServer(
+			socks5Proxy = socks5.NewServer(
 				socks5.WithDial(proxy.httpTunnelDialer),
 			)
 		}
 	}
 
-	proxy.socks5proxy = socks5proxy
+	proxy.socks5Proxy = socks5Proxy
 
 	return proxy, nil
 }
@@ -404,11 +404,11 @@ func (p *Proxy) MatchReplaceResponse(resp *http.Response) error {
 func (p *Proxy) Run() error {
 	var wg sync.WaitGroup
 
-	if p.tinydns != nil {
+	if p.tinyDNS != nil {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := p.tinydns.Run(); err != nil {
+			if err := p.tinyDNS.Run(); err != nil {
 				gologger.Warning().Msgf("Could not start dns server: %s\n", err)
 			}
 		}()
@@ -437,7 +437,7 @@ func (p *Proxy) Run() error {
 	}
 
 	// socks5 proxy
-	if p.socks5proxy != nil {
+	if p.socks5Proxy != nil {
 		if p.httpProxy != nil {
 			httpProxyIP, httpProxyPort, err := net.SplitHostPort(p.options.ListenAddrHTTP)
 			if err != nil {
@@ -447,7 +447,7 @@ func (p *Proxy) Run() error {
 			if err != nil {
 				return err
 			}
-			p.socks5tunnel, err = superproxy.NewSuperProxy(httpProxyIP, uint16(httpProxyPortUint), superproxy.ProxyTypeHTTP, "", "", "")
+			p.socks5Tunnel, err = superproxy.NewSuperProxy(httpProxyIP, uint16(httpProxyPortUint), superproxy.ProxyTypeHTTP, "", "", "")
 			if err != nil {
 				return err
 			}
@@ -458,7 +458,7 @@ func (p *Proxy) Run() error {
 		go func() {
 			defer wg.Done()
 
-			gologger.Fatal().Msgf("%v", p.socks5proxy.ListenAndServe("tcp", p.options.ListenAddrSocks5))
+			gologger.Fatal().Msgf("%v", p.socks5Proxy.ListenAndServe("tcp", p.options.ListenAddrSOCKS5))
 		}()
 	}
 
@@ -504,21 +504,21 @@ func (p *Proxy) getRoundTripper() (http.RoundTripper, error) {
 
 	if len(p.options.UpstreamHTTPProxies) > 0 {
 		roundtrip = &http.Transport{Proxy: func(req *http.Request) (*url.URL, error) {
-			return url.Parse(p.rbhttp.Next())
+			return url.Parse(p.rbHTTP.Next())
 		}, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-	} else if len(p.options.UpstreamSock5Proxies) > 0 {
+	} else if len(p.options.UpstreamSOCKS5Proxies) > 0 {
 		// for each socks5 proxy create a dialer
 		socks5Dialers := make(map[string]proxy.Dialer)
-		for _, socks5proxy := range p.options.UpstreamSock5Proxies {
-			dialer, err := proxy.SOCKS5("tcp", socks5proxy, nil, proxy.Direct)
+		for _, socks5Proxy := range p.options.UpstreamSOCKS5Proxies {
+			dialer, err := proxy.SOCKS5("tcp", socks5Proxy, nil, proxy.Direct)
 			if err != nil {
 				return nil, err
 			}
-			socks5Dialers[socks5proxy] = dialer
+			socks5Dialers[socks5Proxy] = dialer
 		}
 		roundtrip = &http.Transport{Dial: func(network, addr string) (net.Conn, error) {
 			// lookup next dialer
-			socks5Proxy := p.rbsocks5.Next()
+			socks5Proxy := p.rbSOCKS5.Next()
 			socks5Dialer := socks5Dialers[socks5Proxy]
 			// use it to perform the request
 			return socks5Dialer.Dial(network, addr)
@@ -528,7 +528,7 @@ func (p *Proxy) getRoundTripper() (http.RoundTripper, error) {
 }
 
 func (p *Proxy) httpTunnelDialer(ctx context.Context, network, addr string) (net.Conn, error) {
-	return p.socks5tunnel.MakeTunnel(nil, nil, p.bufioPool, addr)
+	return p.socks5Tunnel.MakeTunnel(nil, nil, p.bufioPool, addr)
 }
 
 func (p *Proxy) hijackNServe(req *http.Request, ctx *martian.Context) error {
