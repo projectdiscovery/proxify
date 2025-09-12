@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"log"
@@ -91,6 +92,96 @@ type Proxy struct {
 	listenAddr   string
 }
 
+type httpProxyDialer struct {
+	proxyURL *url.URL
+	forward  proxy.Dialer
+}
+
+// Dial connects to the address using the HTTP proxy.
+func (d *httpProxyDialer) Dial(_, addr string) (net.Conn, error) {
+	conn, err := d.forward.Dial("tcp", d.proxyURL.Host)
+	if err != nil {
+		return nil, err
+	}
+
+	connectReq := &http.Request{
+		Method: "CONNECT",
+		URL:    &url.URL{Opaque: addr},
+		Host:   addr,
+		Header: make(http.Header),
+	}
+	if d.proxyURL.User != nil {
+		encodedUserinfo := base64.StdEncoding.EncodeToString([]byte(d.proxyURL.User.String()))
+		connectReq.Header.Set("Proxy-Authorization", "Basic "+encodedUserinfo)
+	}
+
+	if err := connectReq.Write(conn); err != nil {
+		_ = conn.Close()
+		return nil, err
+	}
+
+	br := bufio.NewReader(conn)
+	resp, err := http.ReadResponse(br, connectReq)
+	if err != nil {
+		_ = conn.Close()
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		_ = conn.Close()
+		return nil, fmt.Errorf("unexpected response from proxy: %s", resp.Status)
+	}
+
+	return conn, nil
+}
+
+type httpProxyRoundRobinDialer struct {
+	proxyDialers map[string]httpProxyDialer
+	transport    *rbtransport.RoundTransport
+}
+
+// Dial connects to the address on the named network via one of the HTTP proxies using round-robin scheduling.
+func (d *httpProxyRoundRobinDialer) Dial(network, addr string) (net.Conn, error) {
+	nextProxyURL := d.transport.Next()
+	dialer, ok := d.proxyDialers[nextProxyURL]
+	if !ok {
+		return nil, fmt.Errorf("no matching proxy dialer found")
+	}
+	return dialer.Dial(network, addr)
+}
+
+func newHTTPProxyRoundRobinDialer(upstreamProxies []string) (proxy.Dialer, error) {
+	if len(upstreamProxies) == 0 {
+		return nil, fmt.Errorf("proxy URLs cannot be empty")
+	}
+
+	proxyURLs := make([]*url.URL, 0, len(upstreamProxies))
+	dialers := make(map[string]httpProxyDialer)
+	for _, proxyAddr := range upstreamProxies {
+		proxyURL, err := url.Parse(proxyAddr)
+		if err != nil {
+			return nil, err
+		}
+		proxyURLs = append(proxyURLs, proxyURL)
+		dialer := httpProxyDialer{proxyURL: proxyURL, forward: proxy.Direct}
+		dialers[proxyURL.String()] = dialer
+	}
+
+	robin, err := rbtransport.NewWithOptions(1, toStringSlice(proxyURLs)...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &httpProxyRoundRobinDialer{proxyDialers: dialers, transport: robin}, nil
+}
+
+func toStringSlice(urls []*url.URL) []string {
+	s := make([]string, len(urls))
+	for i, u := range urls {
+		s[i] = u.String()
+	}
+	return s
+}
+
 func NewProxy(options *Options) (*Proxy, error) {
 
 	switch options.Verbosity {
@@ -143,6 +234,14 @@ func NewProxy(options *Options) (*Proxy, error) {
 			return nil, err
 		}
 		fastdialerOptions.BaseResolvers = []string{"127.0.0.1" + options.ListenDNSAddr}
+	}
+
+	if len(options.UpstreamHTTPProxies) > 0 {
+		proxyDialer, err := newHTTPProxyRoundRobinDialer(options.UpstreamHTTPProxies)
+		if err != nil {
+			return nil, err
+		}
+		fastdialerOptions.ProxyDialer = &proxyDialer
 	}
 	dialer, err := fastdialer.NewDialer(fastdialerOptions)
 	if err != nil {
@@ -500,29 +599,6 @@ func (p *Proxy) getRoundTripper() (http.RoundTripper, error) {
 			MinVersion:         tls.VersionTLS10,
 			InsecureSkipVerify: true,
 		},
-	}
-
-	if len(p.options.UpstreamHTTPProxies) > 0 {
-		roundtrip = &http.Transport{Proxy: func(req *http.Request) (*url.URL, error) {
-			return url.Parse(p.rbhttp.Next())
-		}, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-	} else if len(p.options.UpstreamSock5Proxies) > 0 {
-		// for each socks5 proxy create a dialer
-		socks5Dialers := make(map[string]proxy.Dialer)
-		for _, socks5proxy := range p.options.UpstreamSock5Proxies {
-			dialer, err := proxy.SOCKS5("tcp", socks5proxy, nil, proxy.Direct)
-			if err != nil {
-				return nil, err
-			}
-			socks5Dialers[socks5proxy] = dialer
-		}
-		roundtrip = &http.Transport{Dial: func(network, addr string) (net.Conn, error) {
-			// lookup next dialer
-			socks5Proxy := p.rbsocks5.Next()
-			socks5Dialer := socks5Dialers[socks5Proxy]
-			// use it to perform the request
-			return socks5Dialer.Dial(network, addr)
-		}, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
 	}
 	return roundtrip, nil
 }
