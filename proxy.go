@@ -182,6 +182,57 @@ func toStringSlice(urls []*url.URL) []string {
 	return s
 }
 
+type socks5ProxyRoundRobinDialer struct {
+	proxyDialers map[string]proxy.Dialer
+	robin        *rbtransport.RoundTransport
+}
+
+// Dial connects to the address on the named network via one of the SOCKS5 proxies using round-robin scheduling.
+func (d *socks5ProxyRoundRobinDialer) Dial(network, addr string) (net.Conn, error) {
+	nextProxyURL := d.robin.Next()
+	dialer, ok := d.proxyDialers[nextProxyURL]
+	if !ok {
+		return nil, fmt.Errorf("no matching proxy dialer found")
+	}
+	return dialer.Dial(network, addr)
+}
+
+func newSOCKS5ProxyRoundRobinDialer(upstreamProxies []string) (proxy.Dialer, error) {
+	if len(upstreamProxies) == 0 {
+		return nil, fmt.Errorf("proxy addresses cannot be empty")
+	}
+
+	proxyURLs := make([]*url.URL, 0, len(upstreamProxies))
+	dialers := make(map[string]proxy.Dialer)
+	for _, proxyAddr := range upstreamProxies {
+		proxyURL, err := url.Parse(proxyAddr)
+		if err != nil {
+			return nil, err
+		}
+		proxyURLs = append(proxyURLs, proxyURL)
+		var auth *proxy.Auth
+		if proxyURL.User != nil {
+			password, _ := proxyURL.User.Password()
+			auth = &proxy.Auth{
+				User:     proxyURL.User.Username(),
+				Password: password,
+			}
+		}
+		dialer, err := proxy.SOCKS5("tcp", proxyURL.Host, auth, proxy.Direct)
+		if err != nil {
+			return nil, err
+		}
+		dialers[proxyAddr] = dialer
+	}
+
+	robin, err := rbtransport.NewWithOptions(1, toStringSlice(proxyURLs)...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &socks5ProxyRoundRobinDialer{proxyDialers: dialers, robin: robin}, nil
+}
+
 func NewProxy(options *Options) (*Proxy, error) {
 
 	switch options.Verbosity {
@@ -243,6 +294,15 @@ func NewProxy(options *Options) (*Proxy, error) {
 		}
 		fastdialerOptions.ProxyDialer = &proxyDialer
 	}
+
+	if len(options.UpstreamSock5Proxies) > 0 {
+		dialer, err := newSOCKS5ProxyRoundRobinDialer(options.UpstreamSock5Proxies)
+		if err != nil {
+			return nil, err
+		}
+		fastdialerOptions.ProxyDialer = &dialer
+	}
+
 	dialer, err := fastdialer.NewDialer(fastdialerOptions)
 	if err != nil {
 		return nil, err
