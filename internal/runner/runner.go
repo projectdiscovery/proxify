@@ -112,7 +112,8 @@ func (r *Runner) Run() error {
 
 	if len(r.options.UpstreamHTTPProxies) > 0 {
 		gologger.Info().Msgf("Using upstream HTTP proxies: %s\n", r.options.UpstreamHTTPProxies)
-	} else if len(r.options.UpstreamSOCKS5Proxies) > 0 {
+	}
+	if len(r.options.UpstreamSOCKS5Proxies) > 0 {
 		gologger.Info().Msgf("Using upstream SOCKS5 proxies: %s\n", r.options.UpstreamSOCKS5Proxies)
 	}
 

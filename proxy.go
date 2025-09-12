@@ -523,7 +523,8 @@ func (p *Proxy) getRoundTripper() (http.RoundTripper, error) {
 		roundtrip = &http.Transport{Proxy: func(req *http.Request) (*url.URL, error) {
 			return url.Parse(p.rbHTTP.Next())
 		}, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-	} else if len(p.options.UpstreamSOCKS5Proxies) > 0 {
+	}
+	if len(p.options.UpstreamSOCKS5Proxies) > 0 {
 		// for each socks5 proxy create a dialer
 		socks5Dialers := make(map[string]proxy.Dialer)
 		for _, socks5Proxy := range p.options.UpstreamSOCKS5Proxies {
