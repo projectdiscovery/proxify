@@ -144,6 +144,23 @@ func NewProxy(options *Options) (*Proxy, error) {
 		}
 		fastdialerOptions.BaseResolvers = []string{"127.0.0.1" + options.ListenDNSAddr}
 	}
+
+	if len(options.UpstreamHTTPProxies) > 0 {
+		proxyDialer, err := newHTTPProxyRoundRobinDialer(options.UpstreamHTTPProxies)
+		if err != nil {
+			return nil, err
+		}
+		fastdialerOptions.ProxyDialer = &proxyDialer
+	}
+
+	if len(options.UpstreamSOCKS5Proxies) > 0 {
+		dialer, err := newSOCKS5ProxyRoundRobinDialer(options.UpstreamSOCKS5Proxies)
+		if err != nil {
+			return nil, err
+		}
+		fastdialerOptions.ProxyDialer = &dialer
+	}
+
 	dialer, err := fastdialer.NewDialer(fastdialerOptions)
 	if err != nil {
 		return nil, err
