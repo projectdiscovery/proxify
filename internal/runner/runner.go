@@ -37,7 +37,7 @@ func NewRunner(options *Options) (*Runner, error) {
 		CertCacheSize:               options.CertCacheSize,
 		Verbosity:                   options.Verbosity,
 		ListenAddrHTTP:              options.ListenAddrHTTP,
-		ListenAddrSocks5:            options.ListenAddrSocks5,
+		ListenAddrSOCKS5:            options.ListenAddrSOCKS5,
 		OutputFile:                  options.OutputFile,
 		OutputFormat:                options.OutputFormat,
 		OutputDirectory:             options.OutputDirectory,
@@ -45,7 +45,7 @@ func NewRunner(options *Options) (*Runner, error) {
 		RequestDSL:                  options.RequestDSL,
 		ResponseDSL:                 options.ResponseDSL,
 		UpstreamHTTPProxies:         options.UpstreamHTTPProxies,
-		UpstreamSock5Proxies:        options.UpstreamSocks5Proxies,
+		UpstreamSOCKS5Proxies:       options.UpstreamSOCKS5Proxies,
 		ListenDNSAddr:               options.ListenDNSAddr,
 		DNSMapping:                  options.DNSMapping,
 		DNSFallbackResolver:         options.DNSFallbackResolver,
@@ -91,8 +91,8 @@ func (r *Runner) Run() error {
 	if r.options.ListenAddrHTTP != "" {
 		gologger.Info().Msgf("HTTP Proxy Listening on %s\n", r.options.ListenAddrHTTP)
 	}
-	if r.options.ListenAddrSocks5 != "" {
-		gologger.Info().Msgf("Socks5 Proxy Listening on %s\n", r.options.ListenAddrSocks5)
+	if r.options.ListenAddrSOCKS5 != "" {
+		gologger.Info().Msgf("SOCKS5 Proxy Listening on %s\n", r.options.ListenAddrSOCKS5)
 	}
 
 	if r.options.OutputFile != "" {
@@ -112,8 +112,8 @@ func (r *Runner) Run() error {
 
 	if len(r.options.UpstreamHTTPProxies) > 0 {
 		gologger.Info().Msgf("Using upstream HTTP proxies: %s\n", r.options.UpstreamHTTPProxies)
-	} else if len(r.options.UpstreamSocks5Proxies) > 0 {
-		gologger.Info().Msgf("Using upstream SOCKS5 proxies: %s\n", r.options.UpstreamSocks5Proxies)
+	} else if len(r.options.UpstreamSOCKS5Proxies) > 0 {
+		gologger.Info().Msgf("Using upstream SOCKS5 proxies: %s\n", r.options.UpstreamSOCKS5Proxies)
 	}
 
 	if r.options.DNSMapping != "" {

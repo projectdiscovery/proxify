@@ -22,7 +22,7 @@
   <a href="https://discord.gg/projectdiscovery">Join Discord</a>
 </p>
 
-Swiss Army Knife Proxy for rapid deployments. Supports multiple operations such as request/response dump, filtering and manipulation via DSL language, upstream HTTP/Socks5 proxy.
+Swiss Army Knife Proxy for rapid deployments. Supports multiple operations such as request/response dump, filtering and manipulation via DSL language, upstream HTTP/SOCKS5 proxy.
 Additionally, a replay utility allows to import the dumped traffic (request/responses with correct domain name) into BurpSuite or any other proxy by simply setting the upstream proxy to proxify.
 
 # Features
@@ -60,7 +60,7 @@ proxify -h
 This will display help for the tool. Here are all the switches it supports.
 
 ```console
-Swiss Army Knife Proxy for rapid deployments. Supports multiple operations such as request/response dump,filtering and manipulation via DSL language, upstream HTTP/Socks5 proxy
+Swiss Army Knife Proxy for rapid deployments. Supports multiple operations such as request/response dump,filtering and manipulation via DSL language, upstream HTTP/SOCKS5 proxy
 
 Usage:
   ./proxify [flags]
