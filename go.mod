@@ -11,15 +11,15 @@ require (
 	github.com/goccy/go-yaml v1.11.3
 	github.com/haxii/fastproxy v0.5.37
 	github.com/pkg/errors v0.9.1
-	github.com/projectdiscovery/dsl v0.7.0
-	github.com/projectdiscovery/fastdialer v0.4.6
+	github.com/projectdiscovery/dsl v0.7.1
+	github.com/projectdiscovery/fastdialer v0.4.11
 	github.com/projectdiscovery/goflags v0.1.74
-	github.com/projectdiscovery/gologger v1.1.54
+	github.com/projectdiscovery/gologger v1.1.55
 	github.com/projectdiscovery/martian/v3 v3.0.0-20240219194442-fed3b744f477
 	github.com/projectdiscovery/roundrobin v0.0.6
-	github.com/projectdiscovery/tinydns v0.0.92
-	github.com/projectdiscovery/utils v0.5.0
-	github.com/stretchr/testify v1.10.0
+	github.com/projectdiscovery/tinydns v0.0.94
+	github.com/projectdiscovery/utils v0.6.0
+	github.com/stretchr/testify v1.11.1
 	github.com/things-go/go-socks5 v0.0.5
 	golang.org/x/net v0.39.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -34,7 +34,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.13.0 // indirect
 	github.com/charmbracelet/x/ansi v0.3.2 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
-	github.com/gaissmai/bart v0.23.1 // indirect
+	github.com/gaissmai/bart v0.25.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/uuid v1.3.1 // indirect
@@ -117,8 +117,8 @@ require (
 	github.com/projectdiscovery/blackrock v0.0.1 // indirect
 	github.com/projectdiscovery/gostruct v0.0.2 // indirect
 	github.com/projectdiscovery/hmap v0.0.94 // indirect
-	github.com/projectdiscovery/mapcidr v1.1.34 // indirect
-	github.com/projectdiscovery/networkpolicy v0.1.20 // indirect
+	github.com/projectdiscovery/mapcidr v1.1.95 // indirect
+	github.com/projectdiscovery/networkpolicy v0.1.25 // indirect
 	github.com/projectdiscovery/retryabledns v1.0.107 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/refraction-networking/utls v1.7.1 // indirect
