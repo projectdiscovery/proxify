@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"errors"
 	"math"
 	"os"
 	"path/filepath"
@@ -140,6 +141,10 @@ func ParseOptions() (*Options, error) {
 	if options.ConfigDir != "" {
 		_ = os.MkdirAll(options.ConfigDir, permissionutil.ConfigFolderPermission)
 		readFlagsConfig(flagSet, options.ConfigDir)
+	}
+
+	if len(options.UpstreamHTTPProxies) > 0 && len(options.UpstreamSOCKS5Proxies) > 0 {
+		return nil, errors.New("can't use upstream HTTP proxies and upstream SOCKS5 proxies at the same time")
 	}
 
 	if cfgFile != "" {
