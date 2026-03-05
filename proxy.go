@@ -2,6 +2,7 @@ package proxify
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -200,8 +201,26 @@ func NewProxy(options *Options) (*Proxy, error) {
 
 // ModifyRequest
 func (p *Proxy) ModifyRequest(req *http.Request) error {
-	// // Set Content-Length to zero to allow automatic calculation
-	req.ContentLength = -1
+	// Buffer the request body so that:
+	//   1. The logger (which runs asynchronously) and the transport both get
+	//      the full body — they share the same *http.Request pointer.
+	//   2. The forwarded request carries the correct Content-Length header
+	//      instead of being sent with Transfer-Encoding: chunked, which was
+	//      causing upstream servers to receive an empty body (issue #749).
+	//
+	// Previously this code set req.ContentLength = -1 ("unknown"), which
+	// forced Go's HTTP/1.1 transport into chunked mode.  In chunked mode the
+	// transport reads req.Body in a separate goroutine; if the async logger
+	// had already consumed req.Body before the transport got to it, the
+	// upstream received a zero-length chunked body.
+	if req.Body != nil && req.Body != http.NoBody {
+		bodyBytes, err := io.ReadAll(req.Body)
+		_ = req.Body.Close()
+		if err == nil {
+			req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+			req.ContentLength = int64(len(bodyBytes))
+		}
+	}
 
 	ctx := martian.NewContext(req)
 	// disable upgrading http connections to https by default
