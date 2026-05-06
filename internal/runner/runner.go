@@ -4,7 +4,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Knetic/govaluate"
+	"github.com/projectdiscovery/govaluate"
 	"github.com/projectdiscovery/dsl"
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/proxify"
