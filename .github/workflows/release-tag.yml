@@ -11,36 +11,28 @@ on:
         required: false
         default: main
         type: string
-      dry-run:
-        description: Compute the next version without creating a tag
-        required: false
-        default: true
-        type: boolean
-      always-bump:
-        description: Increment the patch version when commits do not imply a bump
-        required: false
-        default: false
-        type: boolean
-      prerelease:
-        description: Optional prerelease label, for example rc.1
+      run-mode:
+        description: auto creates and pushes the tag; dry-run only previews it
+        required: true
+        default: auto
+        type: choice
+        options:
+          - auto
+          - dry-run
+      version-bump:
+        description: Strategy for manual runs
+        required: true
+        default: patch
+        type: choice
+        options:
+          - auto
+          - patch
+          - exact
+      exact-version:
+        description: Exact version for manual runs when version-bump=exact (for example v2.1.2)
         required: false
         default: ''
         type: string
-      metadata:
-        description: Optional build metadata suffix
-        required: false
-        default: ''
-        type: string
-      tag-prefix:
-        description: Tag prefix to generate
-        required: false
-        default: v
-        type: string
-      v0:
-        description: Prevent major version bumps while the project is still v0
-        required: false
-        default: true
-        type: boolean
 
 permissions:
   contents: write
@@ -66,40 +58,111 @@ jobs:
           v0: 'true'
           set-failed: 'false'
 
-      - name: Run manual tag flow
+      - name: Compute next tag preview
         if: github.event_name == 'workflow_dispatch'
-        id: manual-tag
+        id: manual-preview
         uses: projectdiscovery/actions/svu-next@v1.29.4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          dry-run: ${{ inputs.dry-run && 'true' || 'false' }}
-          always: ${{ inputs.always-bump && 'true' || 'false' }}
-          prerelease: ${{ inputs.prerelease }}
-          metadata: ${{ inputs.metadata }}
-          tag-prefix: ${{ inputs.tag-prefix }}
-          v0: ${{ inputs.v0 && 'true' || 'false' }}
+          dry-run: 'true'
+          tag-prefix: v
+          v0: 'true'
           set-failed: 'false'
+
+      - name: Resolve manual tag
+        if: github.event_name == 'workflow_dispatch'
+        id: manual-resolve
+        env:
+          VERSION_BUMP: ${{ inputs.version-bump }}
+          EXACT_VERSION: ${{ inputs.exact-version }}
+          PREVIEW_TAG: ${{ steps.manual-preview.outputs.next-tag }}
+        run: |
+          current_tag="$(git describe --tags --abbrev=0 2>/dev/null || true)"
+          if [ -z "$current_tag" ]; then
+            current_tag="v0.0.0"
+          fi
+
+          case "$VERSION_BUMP" in
+            auto)
+              target_tag="$PREVIEW_TAG"
+              if [ -z "$target_tag" ]; then
+                target_tag="$current_tag"
+              fi
+              ;;
+            patch)
+              version="${current_tag#v}"
+              version="${version%%-*}"
+              IFS='.' read -r major minor patch <<< "$version"
+              if [ -z "$major" ] || [ -z "$minor" ] || [ -z "$patch" ]; then
+                echo "::error::Unable to parse current tag: $current_tag"
+                exit 1
+              fi
+              target_tag="v${major}.${minor}.$((patch + 1))"
+              ;;
+            exact)
+              if [ -z "$EXACT_VERSION" ]; then
+                echo "::error::exact-version is required when version-bump=exact"
+                exit 1
+              fi
+              case "$EXACT_VERSION" in
+                v*) target_tag="$EXACT_VERSION" ;;
+                *)
+                  echo "::error::exact-version must start with 'v' (got: $EXACT_VERSION)"
+                  exit 1
+                  ;;
+              esac
+              ;;
+            *)
+              echo "::error::Unsupported version-bump: $VERSION_BUMP"
+              exit 1
+              ;;
+          esac
+
+          echo "current_tag=$current_tag" >> "$GITHUB_OUTPUT"
+          echo "target_tag=$target_tag" >> "$GITHUB_OUTPUT"
+
+      - name: Create manual tag
+        if: github.event_name == 'workflow_dispatch' && inputs.run-mode == 'auto'
+        env:
+          TARGET_TAG: ${{ steps.manual-resolve.outputs.target_tag }}
+        run: |
+          if [ -z "$TARGET_TAG" ]; then
+            echo "::error::No target tag was resolved."
+            exit 1
+          fi
+          if git rev-parse "$TARGET_TAG" >/dev/null 2>&1; then
+            echo "::error::Tag already exists: $TARGET_TAG"
+            exit 1
+          fi
+          git tag "$TARGET_TAG"
+          git push origin "$TARGET_TAG"
 
       - name: Summarize tag result
         env:
           EVENT_NAME: ${{ github.event_name }}
-          CREATED_TAG: ${{ steps.auto-tag.outputs.tag || steps.manual-tag.outputs.tag }}
-          NEXT_TAG: ${{ steps.auto-tag.outputs.next-tag || steps.manual-tag.outputs.next-tag }}
-          MANUAL_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry-run && 'true' || 'false' }}
+          AUTO_TAG: ${{ steps.auto-tag.outputs.tag }}
+          AUTO_NEXT_TAG: ${{ steps.auto-tag.outputs.next-tag }}
+          MANUAL_MODE: ${{ inputs.run-mode }}
+          MANUAL_BUMP: ${{ inputs.version-bump }}
+          MANUAL_TAG: ${{ steps.manual-resolve.outputs.target_tag }}
+          MANUAL_CURRENT: ${{ steps.manual-resolve.outputs.current_tag }}
         run: |
           {
             echo "### 🔖 Release tag result"
             echo ""
-            if [ -n "$CREATED_TAG" ]; then
-              echo "- Created tag: \`$CREATED_TAG\`"
-            elif [ -n "$NEXT_TAG" ]; then
-              echo "- Computed next tag: \`$NEXT_TAG\`"
-            else
-              echo "- No new tag was created."
-            fi
-            if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
-              echo "- Manual dry-run: \`$MANUAL_DRY_RUN\`"
-            else
+            if [ "$EVENT_NAME" = "push" ]; then
+              if [ -n "$AUTO_TAG" ]; then
+                echo "- Created tag: \`$AUTO_TAG\`"
+              elif [ -n "$AUTO_NEXT_TAG" ]; then
+                echo "- Computed next tag: \`$AUTO_NEXT_TAG\`"
+              else
+                echo "- No new tag was created."
+              fi
               echo "- Trigger: automatic on push to \`main\`"
+            else
+              echo "- Current tag: \`$MANUAL_CURRENT\`"
+              echo "- Resolved tag: \`$MANUAL_TAG\`"
+              echo "- Run mode: \`$MANUAL_MODE\`"
+              echo "- Version bump: \`$MANUAL_BUMP\`"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
