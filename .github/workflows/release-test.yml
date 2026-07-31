@@ -1,73 +1,29 @@
 name: 🔨 Release Test
 
-# PR-only release automation POC.
-# Validates the full goreleaser pipeline (build, archive, checksum) on every
-# qualifying PR without pushing tags or publishing artifacts.
-# Uses reusable building blocks from projectdiscovery/actions.
-
 on:
   pull_request:
     paths:
       - '**.go'
       - '**.mod'
-      - '.goreleaser.yml'
-      - '.github/workflows/release-test.yml'
   workflow_dispatch:
 
 jobs:
   release-test:
-    name: Release dry-run (snapshot)
     runs-on: ubuntu-latest-16-cores
-    permissions:
-      contents: read      # read repo + tags; no write so no accidental tag push
-      pull-requests: write # post step summary as PR check annotation
     steps:
-      - name: Check out code
+      - name: "Check out code"
         uses: actions/checkout@v5
-        with:
-          fetch-depth: 0   # full history so svu can walk commits
+        with: 
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: 1.21.x
-
-      # Compute the next semantic version from conventional commits.
-      # svu is read-only here: it only prints the next version string.
-      # No tag is created or pushed — that is left to the real release workflow.
-      - name: Compute next version (dry-run)
-        id: next-version
-        run: |
-          go install github.com/caarlos0/svu/v3@v3.2.3
-          NEXT=$(svu next --tag.mode=all 2>/dev/null || svu current)
-          echo "version=${NEXT}" >> "$GITHUB_OUTPUT"
-          echo "### 🔖 Next release version (preview): \`${NEXT}\`" >> "$GITHUB_STEP_SUMMARY"
-
-      # Run the full goreleaser release pipeline in snapshot mode via the
-      # reusable projectdiscovery/actions/goreleaser action.
-      # release: 'true'  → uses 'release --skip=validate --clean'
-      # args: '--snapshot' → appended, so nothing is published or tagged.
-      - name: Goreleaser snapshot release
-        uses: projectdiscovery/actions/goreleaser@v1.29.4
+      
+      - name: release test
+        uses: goreleaser/goreleaser-action@v6
         with:
-          release: 'true'
-          args: '--snapshot'
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          # Tell goreleaser which version this snapshot represents so the
-          # artifact names match what the real release would produce.
-          GORELEASER_CURRENT_TAG: "${{ steps.next-version.outputs.version }}"
-
-      - name: Summarise artifacts
-        if: success()
-        run: |
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "#### Snapshot artifacts built for \`${{ steps.next-version.outputs.version }}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          if [ -d dist ]; then
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-            ls dist/*.zip dist/*.tar.gz dist/checksums.txt 2>/dev/null | xargs -I{} basename {} >> "$GITHUB_STEP_SUMMARY" || ls dist/ >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-          fi
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "> ✅ No tags were pushed. No artifacts were published. This is a dry-run only." >> "$GITHUB_STEP_SUMMARY"
+          args: "release --clean --snapshot"
+          version: latest
+          workdir: .

@@ -1,0 +1,105 @@
+name: 🔖 Create Release Tag
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref to evaluate for the next release tag
+        required: false
+        default: main
+        type: string
+      dry-run:
+        description: Compute the next version without creating a tag
+        required: false
+        default: true
+        type: boolean
+      always-bump:
+        description: Increment the patch version when commits do not imply a bump
+        required: false
+        default: false
+        type: boolean
+      prerelease:
+        description: Optional prerelease label, for example rc.1
+        required: false
+        default: ''
+        type: string
+      metadata:
+        description: Optional build metadata suffix
+        required: false
+        default: ''
+        type: string
+      tag-prefix:
+        description: Tag prefix to generate
+        required: false
+        default: v
+        type: string
+      v0:
+        description: Prevent major version bumps while the project is still v0
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  create-tag:
+    name: Compute and create release tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.sha }}
+
+      - name: Create next tag from main
+        if: github.event_name == 'push'
+        id: auto-tag
+        uses: projectdiscovery/actions/svu-next@v1.29.4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag-prefix: v
+          v0: 'true'
+          set-failed: 'false'
+
+      - name: Run manual tag flow
+        if: github.event_name == 'workflow_dispatch'
+        id: manual-tag
+        uses: projectdiscovery/actions/svu-next@v1.29.4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          dry-run: ${{ inputs.dry-run && 'true' || 'false' }}
+          always: ${{ inputs.always-bump && 'true' || 'false' }}
+          prerelease: ${{ inputs.prerelease }}
+          metadata: ${{ inputs.metadata }}
+          tag-prefix: ${{ inputs.tag-prefix }}
+          v0: ${{ inputs.v0 && 'true' || 'false' }}
+          set-failed: 'false'
+
+      - name: Summarize tag result
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          CREATED_TAG: ${{ steps.auto-tag.outputs.tag || steps.manual-tag.outputs.tag }}
+          NEXT_TAG: ${{ steps.auto-tag.outputs.next-tag || steps.manual-tag.outputs.next-tag }}
+          MANUAL_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry-run && 'true' || 'false' }}
+        run: |
+          {
+            echo "### 🔖 Release tag result"
+            echo ""
+            if [ -n "$CREATED_TAG" ]; then
+              echo "- Created tag: \`$CREATED_TAG\`"
+            elif [ -n "$NEXT_TAG" ]; then
+              echo "- Computed next tag: \`$NEXT_TAG\`"
+            else
+              echo "- No new tag was created."
+            fi
+            if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+              echo "- Manual dry-run: \`$MANUAL_DRY_RUN\`"
+            else
+              echo "- Trigger: automatic on push to \`main\`"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
