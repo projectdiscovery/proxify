@@ -1,9 +1,6 @@
 name: 🔖 Create Release Tag
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       ref:
@@ -46,20 +43,9 @@ jobs:
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.sha }}
-
-      - name: Create next tag from main
-        if: github.event_name == 'push'
-        id: auto-tag
-        uses: projectdiscovery/actions/svu-next@v1.29.4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          tag-prefix: v
-          v0: 'true'
-          set-failed: 'false'
+          ref: ${{ inputs.ref }}
 
       - name: Compute next tag preview
-        if: github.event_name == 'workflow_dispatch'
         id: manual-preview
         uses: projectdiscovery/actions/svu-next@v1.29.4
         with:
@@ -70,7 +56,6 @@ jobs:
           set-failed: 'false'
 
       - name: Resolve manual tag
-        if: github.event_name == 'workflow_dispatch'
         id: manual-resolve
         env:
           VERSION_BUMP: ${{ inputs.version-bump }}
@@ -122,7 +107,7 @@ jobs:
           echo "target_tag=$target_tag" >> "$GITHUB_OUTPUT"
 
       - name: Create manual tag
-        if: github.event_name == 'workflow_dispatch' && inputs.run-mode == 'auto'
+        if: inputs.run-mode == 'auto'
         env:
           TARGET_TAG: ${{ steps.manual-resolve.outputs.target_tag }}
         run: |
@@ -139,9 +124,6 @@ jobs:
 
       - name: Summarize tag result
         env:
-          EVENT_NAME: ${{ github.event_name }}
-          AUTO_TAG: ${{ steps.auto-tag.outputs.tag }}
-          AUTO_NEXT_TAG: ${{ steps.auto-tag.outputs.next-tag }}
           MANUAL_MODE: ${{ inputs.run-mode }}
           MANUAL_BUMP: ${{ inputs.version-bump }}
           MANUAL_TAG: ${{ steps.manual-resolve.outputs.target_tag }}
@@ -150,19 +132,9 @@ jobs:
           {
             echo "### 🔖 Release tag result"
             echo ""
-            if [ "$EVENT_NAME" = "push" ]; then
-              if [ -n "$AUTO_TAG" ]; then
-                echo "- Created tag: \`$AUTO_TAG\`"
-              elif [ -n "$AUTO_NEXT_TAG" ]; then
-                echo "- Computed next tag: \`$AUTO_NEXT_TAG\`"
-              else
-                echo "- No new tag was created."
-              fi
-              echo "- Trigger: automatic on push to \`main\`"
-            else
-              echo "- Current tag: \`$MANUAL_CURRENT\`"
-              echo "- Resolved tag: \`$MANUAL_TAG\`"
-              echo "- Run mode: \`$MANUAL_MODE\`"
-              echo "- Version bump: \`$MANUAL_BUMP\`"
-            fi
+            echo "- Trigger: manual workflow_dispatch"
+            echo "- Current tag: \`$MANUAL_CURRENT\`"
+            echo "- Resolved tag: \`$MANUAL_TAG\`"
+            echo "- Run mode: \`$MANUAL_MODE\`"
+            echo "- Version bump: \`$MANUAL_BUMP\`"
           } >> "$GITHUB_STEP_SUMMARY"
