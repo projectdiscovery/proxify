@@ -41,6 +41,9 @@ jobs:
         run: go build -race .
         working-directory: cmd/proxify/
 
-      
+  release-preview:
+    name: Release preview
+    uses: projectdiscovery/actions/.github/workflows/release-preview.yaml@master
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
 
-      
