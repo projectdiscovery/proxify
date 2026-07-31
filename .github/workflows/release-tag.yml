@@ -27,9 +27,9 @@ on:
         options:
           - auto
           - patch
-          - exact
-      exact-version:
-        description: Exact version for manual runs when version-bump=exact (for example v2.1.2)
+          - custom
+      custom-version:
+        description: Custom version for manual runs when version-bump=custom (for example v2.1.2)
         required: false
         default: ''
         type: string
@@ -74,7 +74,7 @@ jobs:
         id: manual-resolve
         env:
           VERSION_BUMP: ${{ inputs.version-bump }}
-          EXACT_VERSION: ${{ inputs.exact-version }}
+          CUSTOM_VERSION: ${{ inputs.custom-version }}
           PREVIEW_TAG: ${{ steps.manual-preview.outputs.next-tag }}
         run: |
           current_tag="$(git describe --tags --abbrev=0 2>/dev/null || true)"
@@ -99,15 +99,15 @@ jobs:
               fi
               target_tag="v${major}.${minor}.$((patch + 1))"
               ;;
-            exact)
-              if [ -z "$EXACT_VERSION" ]; then
-                echo "::error::exact-version is required when version-bump=exact"
+            custom)
+              if [ -z "$CUSTOM_VERSION" ]; then
+                echo "::error::custom-version is required when version-bump=custom"
                 exit 1
               fi
-              case "$EXACT_VERSION" in
-                v*) target_tag="$EXACT_VERSION" ;;
+              case "$CUSTOM_VERSION" in
+                v*) target_tag="$CUSTOM_VERSION" ;;
                 *)
-                  echo "::error::exact-version must start with 'v' (got: $EXACT_VERSION)"
+                  echo "::error::custom-version must start with 'v' (got: $CUSTOM_VERSION)"
                   exit 1
                   ;;
               esac
