@@ -2,8 +2,6 @@ module github.com/projectdiscovery/proxify
 
 go 1.25.0
 
-toolchain go1.25.0
-
 require (
 	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/Shopify/sarama v1.38.1
