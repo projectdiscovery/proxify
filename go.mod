@@ -3,7 +3,6 @@ module github.com/projectdiscovery/proxify
 go 1.25.0
 
 require (
-	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/Shopify/sarama v1.38.1
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/elastic/go-elasticsearch/v7 v7.17.10
@@ -15,6 +14,7 @@ require (
 	github.com/projectdiscovery/fastdialer v0.5.7
 	github.com/projectdiscovery/goflags v0.1.75
 	github.com/projectdiscovery/gologger v1.1.71
+	github.com/projectdiscovery/govaluate v0.0.0-20260729205521-4c61bf19382e
 	github.com/projectdiscovery/martian/v3 v3.0.0-20240219194442-fed3b744f477
 	github.com/projectdiscovery/roundrobin v0.0.6
 	github.com/projectdiscovery/tinydns v0.0.108
@@ -44,7 +44,6 @@ require (
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
-	github.com/projectdiscovery/govaluate v0.0.0-20260504230327-80320480bb6e // indirect
 	github.com/projectdiscovery/machineid v0.0.0-20250715113114-c77eb3567582 // indirect
 	github.com/projectdiscovery/wappalyzergo v0.2.91 // indirect
 	github.com/shirou/gopsutil/v4 v4.26.3 // indirect
