@@ -219,9 +219,6 @@ func NewProxy(options *Options) (*Proxy, error) {
 
 // ModifyRequest
 func (p *Proxy) ModifyRequest(req *http.Request) error {
-	// // Set Content-Length to zero to allow automatic calculation
-	req.ContentLength = -1
-
 	ctx := martian.NewContext(req)
 	// disable upgrading http connections to https by default
 	ctx.Session().MarkInsecure()
@@ -369,7 +366,12 @@ func (p *Proxy) MatchReplaceRequest(req *http.Request) error {
 	req.Method = requestNew.Method
 	req.Header = requestNew.Header
 	req.Body = requestNew.Body
+	req.ContentLength = requestNew.ContentLength
+	req.TransferEncoding = requestNew.TransferEncoding
+	req.Trailer = requestNew.Trailer
+	req.GetBody = nil
 	req.URL = requestNew.URL
+
 	return nil
 }
 
