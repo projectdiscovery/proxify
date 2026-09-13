@@ -377,9 +377,6 @@ func (p *Proxy) MatchReplaceRequest(req *http.Request) error {
 
 // MatchReplaceRequest strings or regex
 func (p *Proxy) MatchReplaceResponse(resp *http.Response) error {
-	// // Set Content-Length to zero to allow automatic calculation
-	resp.ContentLength = -1
-
 	// lazy mode - dump request
 	respdump, err := httputil.DumpResponse(resp, true)
 	if err != nil {
@@ -413,10 +410,12 @@ func (p *Proxy) MatchReplaceResponse(resp *http.Response) error {
 	if err != nil {
 		return err
 	}
+	resp.ContentLength = responseNew.ContentLength
+	resp.TransferEncoding = responseNew.TransferEncoding
+	resp.Trailer = responseNew.Trailer
 	if resp.ContentLength == 0 {
 		resp.Header.Del("Content-Length")
 	}
-	// resp.ContentLength = responseNew.ContentLength
 	return nil
 }
 

@@ -21,6 +21,13 @@ import (
 	"github.com/projectdiscovery/proxify/pkg/types"
 )
 
+func closeErr(t *testing.T, c io.Closer) {
+	t.Helper()
+	if err := c.Close(); err != nil {
+		t.Errorf("Close: %v", err)
+	}
+}
+
 func TestLogRequestPreservesForwardedBody(t *testing.T) {
 	for _, chunked := range []bool{false, true} {
 		t.Run(fmt.Sprintf("chunked=%t", chunked), func(t *testing.T) {
@@ -44,7 +51,7 @@ func TestLogRequestPreservesForwardedBody(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer req.Body.Close()
+			defer closeErr(t, req.Body)
 			l := &Logger{options: &OptionsLogger{Verbosity: types.VerbosityVeryVerbose}, asyncqueue: make(chan logTransaction, 1)}
 			if err := l.LogRequest(req, types.UserData{}); err != nil {
 				t.Fatal(err)
@@ -53,14 +60,14 @@ func TestLogRequestPreservesForwardedBody(t *testing.T) {
 			close(l.asyncqueue)
 			done := make(chan struct{})
 			go func() { defer close(done); l.AsyncWrite() }()
-			defer func() { req.Body.Close(); <-done }()
+			defer func() { closeErr(t, req.Body); <-done }()
 			req.RequestURI = ""
 			client := &http.Client{Timeout: 3 * time.Second}
 			resp, err := client.Do(req)
 			if err != nil {
 				t.Fatal(err)
 			}
-			resp.Body.Close()
+			closeErr(t, resp.Body)
 		})
 	}
 }
@@ -76,7 +83,7 @@ func TestLogResponseUsesCapturedRequest(t *testing.T) {
 	if _, err := io.Copy(io.Discard, req.Body); err != nil {
 		t.Fatal(err)
 	}
-	req.Body.Close()
+	closeErr(t, req.Body)
 	resp := &http.Response{Request: req, Body: io.NopCloser(strings.NewReader("response payload")), Header: make(http.Header)}
 	if err := l.LogResponse(resp, types.UserData{}); err != nil {
 		t.Fatal(err)
@@ -96,7 +103,7 @@ func TestLogResponseUsesCapturedRequest(t *testing.T) {
 	if err != nil || string(got) != "response payload" {
 		t.Fatalf("live response = %q, %v", got, err)
 	}
-	resp.Body.Close()
+	closeErr(t, resp.Body)
 	loggedBody, _, err := responseLog.responseBody.snapshot()
 	if err != nil {
 		t.Fatal(err)
@@ -138,7 +145,7 @@ func TestLogRequestReadErrorPreservesFailure(t *testing.T) {
 	if string(got) != "partial" || !errors.Is(err, io.ErrUnexpectedEOF) {
 		t.Fatalf("forwarded body = %q, %v", got, err)
 	}
-	req.Body.Close()
+	closeErr(t, req.Body)
 	if !body.closed {
 		t.Fatal("original body was not closed")
 	}
@@ -170,7 +177,7 @@ func TestLogResponsePreservesBodyBeyondLogLimit(t *testing.T) {
 	}
 	logged := <-l.asyncqueue
 	got, err := io.ReadAll(resp.Body)
-	resp.Body.Close()
+	closeErr(t, resp.Body)
 	if err != nil || string(got) != payload {
 		t.Fatalf("live body length = %d, error = %v", len(got), err)
 	}
@@ -222,7 +229,7 @@ func TestHARLoggingPreservesMartianContext(t *testing.T) {
 		t.Fatal(err)
 	}
 	got, err := io.ReadAll(req.Body)
-	req.Body.Close()
+	closeErr(t, req.Body)
 	if err != nil || string(got) != "request payload" {
 		t.Fatalf("forwarded request = %q, %v", got, err)
 	}
@@ -232,10 +239,12 @@ func TestHARLoggingPreservesMartianContext(t *testing.T) {
 		t.Fatal(err)
 	}
 	got, err = io.ReadAll(resp.Body)
-	resp.Body.Close()
+	closeErr(t, resp.Body)
 	if err != nil || string(got) != "response payload" {
 		t.Fatalf("forwarded response = %q, %v", got, err)
 	}
+	close(l.asyncqueue)
+	l.AsyncWrite()
 	if err := harLogger.Close(); err != nil {
 		t.Fatal(err)
 	}
@@ -250,7 +259,7 @@ func TestHARLoggingPreservesMartianContext(t *testing.T) {
 
 func TestBodyCaptureCloseUnblocksRead(t *testing.T) {
 	reader, writer := io.Pipe()
-	defer writer.Close()
+	defer closeErr(t, writer)
 	body := captureBody(reader, nil, 0)
 	done := make(chan struct{})
 	go func() { defer close(done); _, _ = io.Copy(io.Discard, body) }()
@@ -267,9 +276,9 @@ func TestBodyCaptureCloseUnblocksRead(t *testing.T) {
 
 func TestBodyCaptureStreamsBeforeEOF(t *testing.T) {
 	reader, writer := io.Pipe()
-	defer writer.Close()
+	defer closeErr(t, writer)
 	body := captureBody(reader, nil, 0)
-	defer body.Close()
+	defer closeErr(t, body)
 	wrote := make(chan error, 1)
 	go func() { _, err := io.WriteString(writer, "prefix"); wrote <- err }()
 	got := make([]byte, len("prefix"))
@@ -287,7 +296,7 @@ func TestBodyCaptureStreamsBeforeEOF(t *testing.T) {
 		t.Fatal("capture completed before EOF")
 	default:
 	}
-	writer.Close()
+	closeErr(t, writer)
 	if _, err := io.Copy(io.Discard, body); err != nil {
 		t.Fatal(err)
 	}
@@ -313,7 +322,7 @@ func TestHARLoggingErrorDoesNotStopRequestLogging(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer harLogger.Close()
+	defer closeErr(t, harLogger)
 	l := &Logger{harLogger: harLogger, asyncqueue: make(chan logTransaction, 2)}
 	if err := l.LogRequest(req, types.UserData{}); err != nil {
 		t.Fatal(err)
@@ -323,7 +332,7 @@ func TestHARLoggingErrorDoesNotStopRequestLogging(t *testing.T) {
 		t.Fatalf("HAR error escaped logger: %v", err)
 	}
 	got, err := io.ReadAll(req.Body)
-	req.Body.Close()
+	closeErr(t, req.Body)
 	if err != nil || string(got) != "payload" {
 		t.Fatalf("forwarded body = %q, %v", got, err)
 	}
@@ -368,12 +377,83 @@ func TestLogEarlyResponseDuringRequestTrailers(t *testing.T) {
 	if err := <-readDone; err != nil {
 		t.Fatal(err)
 	}
-	req.Body.Close()
+	closeErr(t, req.Body)
 	for i := 0; i < 101; i++ {
 		transaction := <-l.asyncqueue
 		_, trailer, err := transaction.requestBody.snapshot()
 		if err != nil || trailer.Get("X-Trailer-999") != "value" {
 			t.Fatalf("captured trailer missing, error = %v", err)
 		}
+	}
+}
+
+func TestLogRequestCapsLoggedBody(t *testing.T) {
+	payload := strings.Repeat("request", 2048)
+	req := httptest.NewRequest(http.MethodPost, "http://example.test/", strings.NewReader(payload))
+	l := &Logger{asyncqueue: make(chan logTransaction, 1)}
+	if err := l.LogRequest(req, types.UserData{}); err != nil {
+		t.Fatal(err)
+	}
+	logged := <-l.asyncqueue
+	got, err := io.ReadAll(req.Body)
+	closeErr(t, req.Body)
+	if err != nil || string(got) != payload {
+		t.Fatalf("live body length = %d, error = %v", len(got), err)
+	}
+	body, _, err := logged.requestBody.snapshot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err = io.ReadAll(body)
+	if err != nil || len(got) != maxLoggedRequestBody {
+		t.Fatalf("logged body length = %d, error = %v", len(got), err)
+	}
+}
+
+func TestBodyCaptureSnapshotTimesOut(t *testing.T) {
+	original := bodyCaptureWait
+	bodyCaptureWait = 50 * time.Millisecond
+	t.Cleanup(func() { bodyCaptureWait = original })
+
+	reader, writer := io.Pipe()
+	defer func() { _ = writer.Close() }()
+	body := captureBody(reader, nil, 0)
+	defer closeErr(t, body)
+
+	started := time.Now()
+	snapshot, _, err := body.snapshot()
+	if !errors.Is(err, errCaptureTimeout) {
+		t.Fatalf("snapshot error = %v", err)
+	}
+	if time.Since(started) > time.Second {
+		t.Fatal("snapshot blocked on unread body")
+	}
+	got, err := io.ReadAll(snapshot)
+	if err != nil || len(got) != 0 {
+		t.Fatalf("timed out snapshot = %q, %v", got, err)
+	}
+}
+
+func TestHARLoggingDoesNotReadLiveBody(t *testing.T) {
+	body := &failingBody{}
+	req := httptest.NewRequest(http.MethodPost, "http://example.test/", nil)
+	req.Body = body
+	req.Header.Set("Content-Type", "text/plain")
+	_, remove, err := martian.TestContext(req, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer remove()
+	harLogger, err := har.NewLogger(filepath.Join(t.TempDir(), "traffic.har"), time.Hour)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer closeErr(t, harLogger)
+	l := &Logger{harLogger: harLogger, asyncqueue: make(chan logTransaction, 1)}
+	if err := l.LogRequest(req, types.UserData{}); err != nil {
+		t.Fatal(err)
+	}
+	if body.read || body.closed {
+		t.Fatal("HAR logging consumed the live request body")
 	}
 }

@@ -2,9 +2,16 @@ package logger
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"net/http"
 	"sync"
+	"time"
+)
+
+var (
+	errCaptureTimeout = errors.New("body capture timed out")
+	bodyCaptureWait   = 30 * time.Second
 )
 
 // bodyCapture observes forwarding reads. The logger only accesses data after done
@@ -94,7 +101,22 @@ func (c *bodyCapture) finish(err error) {
 }
 
 func (c *bodyCapture) snapshot() (io.ReadCloser, http.Header, error) {
-	<-c.done
+	timer := time.NewTimer(bodyCaptureWait)
+	defer timer.Stop()
 
-	return io.NopCloser(bytes.NewReader(c.data)), c.capturedTrailer.Clone(), c.err
+	select {
+	case <-c.done:
+	case <-timer.C:
+		c.mu.Lock()
+		c.finish(errCaptureTimeout)
+		c.mu.Unlock()
+	}
+
+	c.mu.Lock()
+	data := append([]byte(nil), c.data...)
+	trailer := c.capturedTrailer.Clone()
+	err := c.err
+	c.mu.Unlock()
+
+	return io.NopCloser(bytes.NewReader(data)), trailer, err
 }

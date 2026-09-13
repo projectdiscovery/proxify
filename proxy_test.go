@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -68,7 +70,13 @@ func TestProxyForwardsPOSTBody(t *testing.T) {
 			}
 			done := make(chan struct{})
 			go func() { defer close(done); _ = hp.Serve(listener) }()
-			defer func() { listener.Close(); hp.Close(); <-done }()
+			defer func() {
+				if err := listener.Close(); err != nil {
+					t.Errorf("Close: %v", err)
+				}
+				hp.Close()
+				<-done
+			}()
 			proxyURL, err := url.Parse("http://" + listener.Addr().String())
 			if err != nil {
 				t.Fatal(err)
@@ -113,7 +121,9 @@ func TestProxyForwardsPOSTBody(t *testing.T) {
 					t.Fatal(err)
 				}
 				body, err := io.ReadAll(resp.Body)
-				resp.Body.Close()
+				if err := resp.Body.Close(); err != nil {
+					t.Errorf("Close: %v", err)
+				}
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -136,8 +146,108 @@ func TestMatchReplaceRequestUpdatesFraming(t *testing.T) {
 		t.Fatalf("ContentLength = %d, want 6", req.ContentLength)
 	}
 	body, err := io.ReadAll(req.Body)
-	req.Body.Close()
+	if err := req.Body.Close(); err != nil {
+		t.Errorf("Close: %v", err)
+	}
 	if err != nil || string(body) != "longer" {
 		t.Fatalf("body = %q, %v", body, err)
+	}
+}
+
+func TestMatchReplaceResponseUpdatesFraming(t *testing.T) {
+	resp := &http.Response{
+		Status:        "200 OK",
+		StatusCode:    http.StatusOK,
+		Proto:         "HTTP/1.1",
+		ProtoMajor:    1,
+		ProtoMinor:    1,
+		Header:        make(http.Header),
+		Body:          io.NopCloser(strings.NewReader("old")),
+		ContentLength: 3,
+	}
+	resp.Header.Set("Content-Length", "3")
+	p := &Proxy{options: &Options{ResponseMatchReplaceDSL: []string{`replace(replace(response, 'old', 'longer'), 'Content-Length: 3', 'Content-Length: 6')`}}}
+	if err := p.MatchReplaceResponse(resp); err != nil {
+		t.Fatal(err)
+	}
+	if resp.ContentLength != 6 {
+		t.Fatalf("ContentLength = %d, want 6", resp.ContentLength)
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err := resp.Body.Close(); err != nil {
+		t.Errorf("Close: %v", err)
+	}
+	if err != nil || string(body) != "longer" {
+		t.Fatalf("body = %q, %v", body, err)
+	}
+}
+
+func TestProxyForwardsPOSTBodyWithHAR(t *testing.T) {
+	payload := strings.Repeat("HAR payload", 1024)
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Errorf("read upstream body: %v", err)
+		}
+		if string(got) != payload {
+			t.Errorf("upstream body length = %d, want %d", len(got), len(payload))
+		}
+		_, _ = w.Write([]byte("complete response"))
+	}))
+	defer upstream.Close()
+	harPath := filepath.Join(t.TempDir(), "traffic.har")
+	l := logger.NewLogger(&logger.OptionsLogger{Elastic: &elastic.Options{}, Kafka: &kafka.Options{}, Verbosity: types.VerbositySilent, OutputHar: harPath})
+	p := &Proxy{options: &Options{}, logger: l}
+	hp := martian.NewProxy()
+	transport := &http.Transport{}
+	defer transport.CloseIdleConnections()
+	hp.SetRoundTripper(transport)
+	hp.SetRequestModifier(p)
+	hp.SetResponseModifier(p)
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	done := make(chan struct{})
+	go func() { defer close(done); _ = hp.Serve(listener) }()
+	defer func() {
+		if err := listener.Close(); err != nil {
+			t.Errorf("Close: %v", err)
+		}
+		hp.Close()
+		<-done
+	}()
+	proxyURL, err := url.Parse("http://" + listener.Addr().String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	clientTransport := &http.Transport{Proxy: http.ProxyURL(proxyURL)}
+	defer clientTransport.CloseIdleConnections()
+	client := &http.Client{Transport: clientTransport, Timeout: 5 * time.Second}
+	req, err := http.NewRequest(http.MethodPost, upstream.URL, strings.NewReader(payload))
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, err := io.ReadAll(resp.Body)
+	if closeErr := resp.Body.Close(); closeErr != nil {
+		t.Errorf("Close: %v", closeErr)
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(body) != "complete response" {
+		t.Fatalf("response body = %q", body)
+	}
+	l.Close()
+	data, err := os.ReadFile(harPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(data), payload[:32]) {
+		t.Fatalf("HAR missing request body: %s", data)
 	}
 }

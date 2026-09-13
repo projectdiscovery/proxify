@@ -12,6 +12,7 @@ import (
 
 	"github.com/asaskevich/govalidator"
 	"github.com/projectdiscovery/gologger"
+	"github.com/projectdiscovery/martian/v3"
 	"github.com/projectdiscovery/proxify/pkg/logger/elastic"
 	"github.com/projectdiscovery/proxify/pkg/logger/file"
 	"github.com/projectdiscovery/proxify/pkg/logger/har"
@@ -27,6 +28,7 @@ const (
 	dataWithNewLine       = "%s\n"
 	dataWithoutNewLine    = "%s"
 	LoggerConfigFilename  = "export-config.yaml"
+	maxLoggedRequestBody  = 4096
 	maxLoggedResponseBody = 4096
 )
 
@@ -53,6 +55,7 @@ type Logger struct {
 	Store      []Store
 	sWriter    OutputFileWriter // sWriter is the structured writer
 	harLogger  *har.Logger
+	writeDone  chan struct{}
 }
 
 // NewLogger instance
@@ -110,7 +113,11 @@ func NewLogger(options *OptionsLogger) *Logger {
 		}
 	}
 
-	go logger.AsyncWrite()
+	logger.writeDone = make(chan struct{})
+	go func() {
+		defer close(logger.writeDone)
+		logger.AsyncWrite()
+	}()
 	return logger
 }
 
@@ -118,9 +125,21 @@ func NewLogger(options *OptionsLogger) *Logger {
 type logTransaction struct {
 	types.HTTPTransaction
 	requestBody, responseBody *bodyCapture
+	martianID                 string
 }
 
 type requestBodyKey struct{}
+
+func requestMartianID(req *http.Request) string {
+	if req == nil {
+		return ""
+	}
+	ctx := martian.NewContext(req)
+	if ctx == nil {
+		return ""
+	}
+	return ctx.ID()
+}
 
 // LogRequest and user data
 func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
@@ -128,14 +147,7 @@ func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
 		return nil
 	}
 
-	// HAR requires the original request pointer for Martian context lookup.
-	if l.harLogger != nil {
-		if err := l.harLogger.ModifyRequest(req); err != nil {
-			gologger.Error().Msgf("Could not modify HAR request: %s\n", err)
-		}
-	}
-
-	body := captureBody(req.Body, req.Trailer, 0)
+	body := captureBody(req.Body, req.Trailer, maxLoggedRequestBody)
 	if req.Body != nil && req.Body != http.NoBody {
 		req.Body = body
 	}
@@ -146,6 +158,7 @@ func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
 	l.asyncqueue <- logTransaction{
 		HTTPTransaction: types.HTTPTransaction{Userdata: userdata, Request: loggedReq},
 		requestBody:     body,
+		martianID:       requestMartianID(req),
 	}
 
 	return nil
@@ -157,12 +170,6 @@ func (l *Logger) LogResponse(resp *http.Response, userdata types.UserData) error
 		return nil
 	}
 
-	if l.harLogger != nil {
-		if err := l.harLogger.ModifyResponse(resp); err != nil {
-			gologger.Error().Msgf("Could not modify HAR response: %s\n", err)
-		}
-	}
-
 	loggedResp := new(http.Response)
 	*loggedResp = *resp
 	loggedResp.Header = resp.Header.Clone()
@@ -170,10 +177,12 @@ func (l *Logger) LogResponse(resp *http.Response, userdata types.UserData) error
 	loggedResp.Body = http.NoBody
 
 	var requestBody, responseBody *bodyCapture
+	var martianID string
 
 	if resp.Request != nil {
 		// An early response can arrive while the upload is still filling trailers.
 		// The worker uses the capture's final trailer copy instead.
+		martianID = requestMartianID(resp.Request)
 		request := *resp.Request
 		request.Trailer = nil
 		request.Body = http.NoBody
@@ -193,9 +202,31 @@ func (l *Logger) LogResponse(resp *http.Response, userdata types.UserData) error
 		HTTPTransaction: types.HTTPTransaction{Userdata: userdata, Response: loggedResp, Request: loggedResp.Request},
 		requestBody:     requestBody,
 		responseBody:    responseBody,
+		martianID:       martianID,
 	}
 
 	return nil
+}
+
+func (l *Logger) writeHAR(transaction logTransaction, httpData types.HTTPTransaction) {
+	if l.harLogger == nil || transaction.martianID == "" {
+		return
+	}
+
+	// Request logs own the HAR request entry so a later response cannot duplicate the ID.
+	if httpData.Response == nil {
+		if httpData.Request == nil {
+			return
+		}
+		if err := l.harLogger.RecordRequest(transaction.martianID, httpData.Request); err != nil {
+			gologger.Error().Msgf("Could not modify HAR request: %s\n", err)
+		}
+		return
+	}
+
+	if err := l.harLogger.RecordResponse(transaction.martianID, httpData.Response); err != nil {
+		gologger.Error().Msgf("Could not modify HAR response: %s\n", err)
+	}
 }
 
 // AsyncWrite data
@@ -207,9 +238,10 @@ func (l *Logger) AsyncWrite() {
 			if err != nil {
 				gologger.Warning().Msgf("Error capturing request body: %s", err)
 			}
-
-			httpData.Request.Body = body
-			httpData.Request.Trailer = trailer
+			if httpData.Request != nil {
+				httpData.Request.Body = body
+				httpData.Request.Trailer = trailer
+			}
 		}
 
 		if transaction.responseBody != nil {
@@ -217,10 +249,13 @@ func (l *Logger) AsyncWrite() {
 			if err != nil {
 				gologger.Warning().Msgf("Error capturing response body: %s", err)
 			}
-
-			httpData.Response.Body = body
-			httpData.Response.Trailer = trailer
+			if httpData.Response != nil {
+				httpData.Response.Body = body
+				httpData.Response.Trailer = trailer
+			}
 		}
+
+		l.writeHAR(transaction, httpData)
 
 		if httpData.Request == nil {
 			// we can't do anything without request
@@ -319,6 +354,11 @@ func (l *Logger) AsyncWrite() {
 
 // Close logger instance
 func (l *Logger) Close() {
+	close(l.asyncqueue)
+	if l.writeDone != nil {
+		<-l.writeDone
+	}
+
 	if l.harLogger != nil {
 		if err := l.harLogger.Close(); err != nil {
 			gologger.Error().Msgf("Could not close HAR logger: %s\n", err)
@@ -330,34 +370,36 @@ func (l *Logger) Close() {
 			gologger.Error().Msgf("Could not close OutputFileWriter: %s", err)
 		}
 	}
-
-	close(l.asyncqueue)
 }
 
 // debugLogRequest logs the request to the console if debugging is enabled
 func (l *Logger) debugLogRequest(reqdump []byte, req *http.Request) {
-	if l.options.Verbosity >= types.VerbosityVeryVerbose {
-		contentType := req.Header.Get("Content-Type")
-		b, _ := io.ReadAll(req.Body)
-		req.Body = io.NopCloser(bytes.NewReader(b))
-
-		if isASCIICheckRequired(contentType) && !govalidator.IsPrintableASCII(string(b)) {
-			reqdump, _ = httputil.DumpRequest(req, false)
-		}
-
-		gologger.Silent().Msgf("%s", string(reqdump))
+	if l.options == nil || l.options.Verbosity < types.VerbosityVeryVerbose {
+		return
 	}
+
+	contentType := req.Header.Get("Content-Type")
+	b, _ := io.ReadAll(req.Body)
+	req.Body = io.NopCloser(bytes.NewReader(b))
+
+	if isASCIICheckRequired(contentType) && !govalidator.IsPrintableASCII(string(b)) {
+		reqdump, _ = httputil.DumpRequest(req, false)
+	}
+
+	gologger.Silent().Msgf("%s", string(reqdump))
 }
 
 // debugLogResponse logs the response to the console if debugging is enabled
 func (l *Logger) debugLogResponse(respChain *pdhttpUtils.ResponseChain) error {
-	if l.options.Verbosity >= types.VerbosityVeryVerbose {
-		contentType := respChain.Response().Header.Get("Content-Type")
-		if isASCIICheckRequired(contentType) && !govalidator.IsPrintableASCII(conversion.String(respChain.Body().Bytes())) {
-			gologger.Silent().Msgf("%s", respChain.Headers().String())
-		} else {
-			gologger.Silent().Msgf("%s", respChain.FullResponse().String())
-		}
+	if l.options == nil || l.options.Verbosity < types.VerbosityVeryVerbose {
+		return nil
+	}
+
+	contentType := respChain.Response().Header.Get("Content-Type")
+	if isASCIICheckRequired(contentType) && !govalidator.IsPrintableASCII(conversion.String(respChain.Body().Bytes())) {
+		gologger.Silent().Msgf("%s", respChain.Headers().String())
+	} else {
+		gologger.Silent().Msgf("%s", respChain.FullResponse().String())
 	}
 
 	return nil
