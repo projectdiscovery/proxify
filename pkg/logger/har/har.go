@@ -75,6 +75,14 @@ func (l *Logger) ModifyResponse(resp *http.Response) error {
 	return l.martianHarLogger.ModifyResponse(resp)
 }
 
+func (l *Logger) RecordRequest(id string, req *http.Request) error {
+	return l.martianHarLogger.RecordRequest(id, req)
+}
+
+func (l *Logger) RecordResponse(id string, resp *http.Response) error {
+	return l.martianHarLogger.RecordResponse(id, resp)
+}
+
 func (l *Logger) Flush() error {
 	return l.writer.append(l.martianHarLogger.ExportAndReset())
 }

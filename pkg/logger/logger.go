@@ -1,6 +1,8 @@
 package logger
 
 import (
+	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,6 +12,7 @@ import (
 
 	"github.com/asaskevich/govalidator"
 	"github.com/projectdiscovery/gologger"
+	"github.com/projectdiscovery/martian/v3"
 	"github.com/projectdiscovery/proxify/pkg/logger/elastic"
 	"github.com/projectdiscovery/proxify/pkg/logger/file"
 	"github.com/projectdiscovery/proxify/pkg/logger/har"
@@ -22,9 +25,11 @@ import (
 )
 
 const (
-	dataWithNewLine      = "%s\n"
-	dataWithoutNewLine   = "%s"
-	LoggerConfigFilename = "export-config.yaml"
+	dataWithNewLine       = "%s\n"
+	dataWithoutNewLine    = "%s"
+	LoggerConfigFilename  = "export-config.yaml"
+	maxLoggedRequestBody  = 4096
+	maxLoggedResponseBody = 4096
 )
 
 type OptionsLogger struct {
@@ -46,17 +51,18 @@ type Store interface {
 
 type Logger struct {
 	options    *OptionsLogger
-	asyncqueue chan types.HTTPTransaction
+	asyncqueue chan logTransaction
 	Store      []Store
 	sWriter    OutputFileWriter // sWriter is the structured writer
 	harLogger  *har.Logger
+	writeDone  chan struct{}
 }
 
 // NewLogger instance
 func NewLogger(options *OptionsLogger) *Logger {
 	logger := &Logger{
 		options:    options,
-		asyncqueue: make(chan types.HTTPTransaction, 1000),
+		asyncqueue: make(chan logTransaction, 1000),
 	}
 	if options.Elastic.Addr != "" {
 		store, err := elastic.New(options.Elastic)
@@ -107,8 +113,32 @@ func NewLogger(options *OptionsLogger) *Logger {
 		}
 	}
 
-	go logger.AsyncWrite()
+	logger.writeDone = make(chan struct{})
+	go func() {
+		defer close(logger.writeDone)
+		logger.AsyncWrite()
+	}()
 	return logger
+}
+
+// logTransaction contains metadata snapshots and bodies captured by forwarding.
+type logTransaction struct {
+	types.HTTPTransaction
+	requestBody, responseBody *bodyCapture
+	martianID                 string
+}
+
+type requestBodyKey struct{}
+
+func requestMartianID(req *http.Request) string {
+	if req == nil {
+		return ""
+	}
+	ctx := martian.NewContext(req)
+	if ctx == nil {
+		return ""
+	}
+	return ctx.ID()
 }
 
 // LogRequest and user data
@@ -117,16 +147,18 @@ func (l *Logger) LogRequest(req *http.Request, userdata types.UserData) error {
 		return nil
 	}
 
-	// send to writer channel
-	l.asyncqueue <- types.HTTPTransaction{
-		Userdata: userdata,
-		Request:  req,
+	body := captureBody(req.Body, req.Trailer, maxLoggedRequestBody)
+	if req.Body != nil && req.Body != http.NoBody {
+		req.Body = body
 	}
 
-	if l.harLogger != nil {
-		if err := l.harLogger.ModifyRequest(req); err != nil {
-			gologger.Error().Msgf("Could not modify HAR request: %s\n", err)
-		}
+	*req = *req.WithContext(context.WithValue(req.Context(), requestBodyKey{}, body))
+	loggedReq := req.Clone(req.Context())
+	loggedReq.Body = http.NoBody
+	l.asyncqueue <- logTransaction{
+		HTTPTransaction: types.HTTPTransaction{Userdata: userdata, Request: loggedReq},
+		requestBody:     body,
+		martianID:       requestMartianID(req),
 	}
 
 	return nil
@@ -138,29 +170,98 @@ func (l *Logger) LogResponse(resp *http.Response, userdata types.UserData) error
 		return nil
 	}
 
-	// send to writer channel
-	l.asyncqueue <- types.HTTPTransaction{
-		Userdata: userdata,
-		Response: resp,
-		Request:  resp.Request,
+	loggedResp := new(http.Response)
+	*loggedResp = *resp
+	loggedResp.Header = resp.Header.Clone()
+	loggedResp.Trailer = resp.Trailer.Clone()
+	loggedResp.Body = http.NoBody
+
+	var requestBody, responseBody *bodyCapture
+	var martianID string
+
+	if resp.Request != nil {
+		// An early response can arrive while the upload is still filling trailers.
+		// The worker uses the capture's final trailer copy instead.
+		martianID = requestMartianID(resp.Request)
+		request := *resp.Request
+		request.Trailer = nil
+		request.Body = http.NoBody
+		loggedResp.Request = request.Clone(request.Context())
+		requestBody, _ = resp.Request.Context().Value(requestBodyKey{}).(*bodyCapture)
 	}
 
-	if l.harLogger != nil {
-		if err := l.harLogger.ModifyResponse(resp); err != nil {
-			gologger.Error().Msgf("Could not modify HAR response: %s\n", err)
+	// An upgraded body is a live connection, not an HTTP message body.
+	if resp.StatusCode != http.StatusSwitchingProtocols {
+		responseBody = captureBody(resp.Body, resp.Trailer, maxLoggedResponseBody)
+		if resp.Body != nil && resp.Body != http.NoBody {
+			resp.Body = responseBody
 		}
+	}
+
+	l.asyncqueue <- logTransaction{
+		HTTPTransaction: types.HTTPTransaction{Userdata: userdata, Response: loggedResp, Request: loggedResp.Request},
+		requestBody:     requestBody,
+		responseBody:    responseBody,
+		martianID:       martianID,
 	}
 
 	return nil
 }
 
+func (l *Logger) writeHAR(transaction logTransaction, httpData types.HTTPTransaction) {
+	if l.harLogger == nil || transaction.martianID == "" {
+		return
+	}
+
+	// Request logs own the HAR request entry so a later response cannot duplicate the ID.
+	if httpData.Response == nil {
+		if httpData.Request == nil {
+			return
+		}
+		if err := l.harLogger.RecordRequest(transaction.martianID, httpData.Request); err != nil {
+			gologger.Error().Msgf("Could not modify HAR request: %s\n", err)
+		}
+		return
+	}
+
+	if err := l.harLogger.RecordResponse(transaction.martianID, httpData.Response); err != nil {
+		gologger.Error().Msgf("Could not modify HAR response: %s\n", err)
+	}
+}
+
 // AsyncWrite data
 func (l *Logger) AsyncWrite() {
-	for httpData := range l.asyncqueue {
+	for transaction := range l.asyncqueue {
+		httpData := transaction.HTTPTransaction
+		if transaction.requestBody != nil {
+			body, trailer, err := transaction.requestBody.snapshot()
+			if err != nil {
+				gologger.Warning().Msgf("Error capturing request body: %s", err)
+			}
+			if httpData.Request != nil {
+				httpData.Request.Body = body
+				httpData.Request.Trailer = trailer
+			}
+		}
+
+		if transaction.responseBody != nil {
+			body, trailer, err := transaction.responseBody.snapshot()
+			if err != nil {
+				gologger.Warning().Msgf("Error capturing response body: %s", err)
+			}
+			if httpData.Response != nil {
+				httpData.Response.Body = body
+				httpData.Response.Trailer = trailer
+			}
+		}
+
+		l.writeHAR(transaction, httpData)
+
 		if httpData.Request == nil {
 			// we can't do anything without request
 			continue
 		}
+
 		// we have better options to handle this
 		// i.e Buffer reuse and normalizing request/response body (removing encoding etc)
 		reqDump, err := httputil.DumpRequest(httpData.Request, true)
@@ -173,13 +274,14 @@ func (l *Logger) AsyncWrite() {
 
 		var respChain *pdhttpUtils.ResponseChain
 		if httpData.Response != nil {
-			respChainx := pdhttpUtils.NewResponseChain(httpData.Response, 4096)
+			respChainx := pdhttpUtils.NewResponseChain(httpData.Response, maxLoggedResponseBody)
 			if err := respChainx.Fill(); err == nil {
 				respChain = respChainx
 			} else {
 				gologger.Warning().Msgf("responseChain: Error while dumping response: %s", err)
 			}
 		}
+
 		// debug log response if true
 		if respChain != nil {
 			if err := l.debugLogResponse(respChain); err != nil {
@@ -201,6 +303,7 @@ func (l *Logger) AsyncWrite() {
 					Timestamp: time.Now().Format(time.RFC3339),
 					URL:       httpData.Request.URL.String(),
 				}
+
 				defer func() {
 					if sData.Response != nil {
 						// write to structured writer with whatever data we have
@@ -210,17 +313,20 @@ func (l *Logger) AsyncWrite() {
 						}
 					}
 				}()
+
 				sRequest, err := types.NewHttpRequestData(httpData.Request)
 				if err != nil {
 					gologger.Warning().Msgf("Error while creating request: %s", err)
 					return
 				}
+
 				sData.Request = sRequest
 				if respChain != nil {
 					sResponse, err := types.NewHttpResponseData(respChain)
 					if err != nil {
 						gologger.Warning().Msgf("Error while creating response: %s", err)
 					}
+
 					sData.Response = sResponse
 				}
 			}()
@@ -248,41 +354,54 @@ func (l *Logger) AsyncWrite() {
 
 // Close logger instance
 func (l *Logger) Close() {
+	close(l.asyncqueue)
+	if l.writeDone != nil {
+		<-l.writeDone
+	}
+
 	if l.harLogger != nil {
 		if err := l.harLogger.Close(); err != nil {
 			gologger.Error().Msgf("Could not close HAR logger: %s\n", err)
 		}
 	}
+
 	if l.sWriter != nil {
 		if err := l.sWriter.Close(); err != nil {
 			gologger.Error().Msgf("Could not close OutputFileWriter: %s", err)
 		}
 	}
-	close(l.asyncqueue)
 }
 
 // debugLogRequest logs the request to the console if debugging is enabled
 func (l *Logger) debugLogRequest(reqdump []byte, req *http.Request) {
-	if l.options.Verbosity >= types.VerbosityVeryVerbose {
-		contentType := req.Header.Get("Content-Type")
-		b, _ := io.ReadAll(req.Body)
-		if isASCIICheckRequired(contentType) && !govalidator.IsPrintableASCII(string(b)) {
-			reqdump, _ = httputil.DumpRequest(req, false)
-		}
-		gologger.Silent().Msgf("%s", string(reqdump))
+	if l.options == nil || l.options.Verbosity < types.VerbosityVeryVerbose {
+		return
 	}
+
+	contentType := req.Header.Get("Content-Type")
+	b, _ := io.ReadAll(req.Body)
+	req.Body = io.NopCloser(bytes.NewReader(b))
+
+	if isASCIICheckRequired(contentType) && !govalidator.IsPrintableASCII(string(b)) {
+		reqdump, _ = httputil.DumpRequest(req, false)
+	}
+
+	gologger.Silent().Msgf("%s", string(reqdump))
 }
 
 // debugLogResponse logs the response to the console if debugging is enabled
 func (l *Logger) debugLogResponse(respChain *pdhttpUtils.ResponseChain) error {
-	if l.options.Verbosity >= types.VerbosityVeryVerbose {
-		contentType := respChain.Response().Header.Get("Content-Type")
-		if isASCIICheckRequired(contentType) && !govalidator.IsPrintableASCII(conversion.String(respChain.Body().Bytes())) {
-			gologger.Silent().Msgf("%s", respChain.Headers().String())
-		} else {
-			gologger.Silent().Msgf("%s", respChain.FullResponse().String())
-		}
+	if l.options == nil || l.options.Verbosity < types.VerbosityVeryVerbose {
+		return nil
 	}
+
+	contentType := respChain.Response().Header.Get("Content-Type")
+	if isASCIICheckRequired(contentType) && !govalidator.IsPrintableASCII(conversion.String(respChain.Body().Bytes())) {
+		gologger.Silent().Msgf("%s", respChain.Headers().String())
+	} else {
+		gologger.Silent().Msgf("%s", respChain.FullResponse().String())
+	}
+
 	return nil
 }
 
@@ -300,12 +419,14 @@ func (l *Logger) storeWriter(outputdata types.HTTPTransaction) {
 	} else {
 		return
 	}
+
 	outputdata.Name = fmt.Sprintf("%s%s-%s", outputdata.Userdata.Host, outputdata.PartSuffix, outputdata.Userdata.ID)
 	if outputdata.Userdata.HasResponse && (!l.options.DumpRequest && !l.options.DumpResponse) {
 		if outputdata.Userdata.Match != nil && *outputdata.Userdata.Match {
 			outputdata.Name = outputdata.Name + ".match"
 		}
 	}
+
 	outputdata.Format = dataWithoutNewLine
 	if !strings.HasSuffix(string(outputdata.Data), "\n") {
 		outputdata.Format = dataWithNewLine
@@ -321,6 +442,7 @@ func (l *Logger) storeWriter(outputdata types.HTTPTransaction) {
 		outputdata.DataString = stringsutil.Truncate(outputdata.DataString, l.options.MaxSize)
 		outputdata.RawData = []byte(stringsutil.Truncate(string(outputdata.RawData), l.options.MaxSize))
 	}
+
 	for _, store := range l.Store {
 		err := store.Save(outputdata)
 		if err != nil {
