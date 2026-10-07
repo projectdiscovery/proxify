@@ -1,15 +1,15 @@
-# Base
-FROM golang:1.24.0-alpine AS builder
-
-RUN apk add --no-cache git build-base
-WORKDIR /app
-COPY . /app
-RUN go mod download
-RUN go build ./cmd/proxify
-
 FROM alpine:3.18.2
+
+LABEL org.opencontainers.image.authors="ProjectDiscovery"
+LABEL org.opencontainers.image.description="Swiss Army Knife Proxy for rapid deployments. Supports multiple operations such as request/response dump, filtering and manipulation via DSL language, upstream HTTP/SOCKS5 proxy."
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.title="proxify"
+LABEL org.opencontainers.image.url="https://github.com/projectdiscovery/proxify"
+
 RUN apk -U upgrade --no-cache \
     && apk add --no-cache bind-tools ca-certificates
-COPY --from=builder /app/proxify /usr/local/bin/
+
+ARG TARGETPLATFORM
+COPY $TARGETPLATFORM/proxify /usr/local/bin/
 
 ENTRYPOINT ["proxify"]
