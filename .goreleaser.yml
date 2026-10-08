@@ -1,3 +1,5 @@
+version: 2
+
 before:
   hooks:
     - go mod tidy
@@ -5,6 +7,8 @@ before:
 builds:
     - binary: proxify
       main: cmd/proxify/proxify.go
+      env:
+        - CGO_ENABLED=0
       goos:
         - linux
         - windows
@@ -23,6 +27,8 @@ builds:
 
     - binary: replay
       main: cmd/replay/replay.go
+      env:
+        - CGO_ENABLED=0
       goos:
         - linux
         - windows
@@ -41,6 +47,8 @@ builds:
 
     - binary: mitmrelay
       main: cmd/mitmrelay/mitmrelay.go
+      env:
+        - CGO_ENABLED=0
       goos:
         - linux
         - windows
@@ -58,12 +66,35 @@ builds:
       id: mitmrelay
 
 archives:
-- format: zip
+- formats: [zip]
   name_template: '{{ .ProjectName }}_{{ .Version }}_{{ if eq .Os "darwin" }}macOS{{ else }}{{ .Os }}{{ end }}_{{ .Arch }}'
 
 
 checksum:
   algorithm: sha256
+
+dockers_v2:
+  - images:
+      - projectdiscovery/proxify
+    ids:
+      - proxify
+    tags:
+      - "{{ .Tag }}"
+      - "v{{ .Major }}.{{ .Minor }}"
+      - "v{{ .Major }}"
+      - latest
+    labels:
+      org.opencontainers.image.created: "{{ .Date }}"
+      org.opencontainers.image.ref.name: "{{ .Tag }}"
+      org.opencontainers.image.revision: "{{ .FullCommit }}"
+      org.opencontainers.image.version: "{{ .Version }}"
+    platforms:
+      - linux/amd64
+      - linux/arm64
+      - linux/arm/v6
+    # NOTE: release-test runs a snapshot on runners without QEMU; only build images
+    # in CI on real releases.
+    disable: '{{ and .IsSnapshot (isEnvSet "CI") }}'
 
 announce:
   slack:
