@@ -206,7 +206,7 @@ func (p *Proxy) ModifyRequest(req *http.Request) error {
 	ctx := martian.NewContext(req)
 	// disable upgrading http connections to https by default
 	ctx.Session().MarkInsecure()
-	// setup passthrought and hijack here
+	// setup passthrough and hijack here
 	userData := types.UserData{
 		ID:   ctx.ID(),
 		Host: req.Host,
@@ -504,20 +504,20 @@ func (p *Proxy) getRoundTripper() (http.RoundTripper, error) {
 		}, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
 	} else if len(p.options.UpstreamSock5Proxies) > 0 {
 		// for each socks5 proxy create a dialer
-		socks5Dialers := make(map[string]proxy.Dialer)
+		socks5Dialers := make(map[string]proxy.ContextDialer)
 		for _, socks5proxy := range p.options.UpstreamSock5Proxies {
 			dialer, err := proxy.SOCKS5("tcp", socks5proxy, nil, proxy.Direct)
 			if err != nil {
 				return nil, err
 			}
-			socks5Dialers[socks5proxy] = dialer
+			socks5Dialers[socks5proxy] = dialer.(proxy.ContextDialer)
 		}
-		roundtrip = &http.Transport{Dial: func(network, addr string) (net.Conn, error) {
+		roundtrip = &http.Transport{DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 			// lookup next dialer
 			socks5Proxy := p.rbsocks5.Next()
 			socks5Dialer := socks5Dialers[socks5Proxy]
 			// use it to perform the request
-			return socks5Dialer.Dial(network, addr)
+			return socks5Dialer.DialContext(ctx, network, addr)
 		}, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
 	}
 	return roundtrip, nil
