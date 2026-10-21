@@ -1,6 +1,6 @@
 module github.com/projectdiscovery/proxify
 
-go 1.25.0
+go 1.26.10
 
 require (
 	github.com/Shopify/sarama v1.38.1
