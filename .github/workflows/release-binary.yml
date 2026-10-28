@@ -5,29 +5,103 @@ on:
     tags:
       - v*
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to publish, for example v0.0.16
+        required: true
+        type: string
+      ref:
+        description: Optional git ref to check out; defaults to the selected tag
+        required: false
+        default: ''
+        type: string
+      announce:
+        description: Send Slack and Discord release announcements
+        required: false
+        default: true
+        type: boolean
+      goreleaser-args:
+        description: Extra arguments forwarded to goreleaser release
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: write
 
 jobs:
   release:
     runs-on: ubuntu-latest-16-cores
     steps:
-      - name: "Check out code"
+      - name: Check out code
         uses: actions/checkout@v5
-        with: 
+        with:
           fetch-depth: 0
-      
-      - name: "Set up Go"
+          ref: ${{ github.event_name == 'workflow_dispatch' && (inputs.ref || inputs.tag) || github.ref }}
+
+      - name: Set up Go
         uses: actions/setup-go@v5
-        with: 
+        with:
           go-version: 1.21.x
 
-      - name: "Create release on GitHub"
-        uses: goreleaser/goreleaser-action@v6
-        with: 
-          args: "release --clean"
-          version: latest
-          workdir: .
+      - name: Resolve release settings
+        id: release
         env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          SLACK_WEBHOOK: "${{ secrets.RELEASE_SLACK_WEBHOOK }}"
-          DISCORD_WEBHOOK_ID: "${{ secrets.DISCORD_WEBHOOK_ID }}"
-          DISCORD_WEBHOOK_TOKEN: "${{ secrets.DISCORD_WEBHOOK_TOKEN }}"
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          INPUT_ANNOUNCE: ${{ github.event_name == 'workflow_dispatch' && inputs.announce && 'true' || 'false' }}
+          INPUT_EXTRA_ARGS: ${{ github.event_name == 'workflow_dispatch' && inputs.goreleaser-args || '' }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            TAG="$INPUT_TAG"
+            ANNOUNCE="$INPUT_ANNOUNCE"
+          else
+            TAG="$GITHUB_REF_NAME"
+            ANNOUNCE="true"
+          fi
+
+          if [ -z "$TAG" ]; then
+            echo "::error::A release tag is required for manual release runs."
+            exit 1
+          fi
+
+          case "$TAG" in
+            v*) ;;
+            *)
+              echo "::error::Release tag must start with 'v' (got: $TAG)."
+              exit 1
+              ;;
+          esac
+
+          EXTRA_ARGS="$INPUT_EXTRA_ARGS"
+          if [ "$ANNOUNCE" != "true" ]; then
+            EXTRA_ARGS="--skip=announce $EXTRA_ARGS"
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "announce=$ANNOUNCE" >> "$GITHUB_OUTPUT"
+          echo "args=$EXTRA_ARGS" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### 🎉 Release publish"
+            echo ""
+            echo "- Tag: \`$TAG\`"
+            if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+              echo "- Trigger: manual"
+            else
+              echo "- Trigger: tag push"
+            fi
+            echo "- Announcements: \`$ANNOUNCE\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create release on GitHub
+        uses: projectdiscovery/actions/goreleaser@v1.29.4
+        with:
+          release: 'true'
+          args: ${{ steps.release.outputs.args }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: ${{ steps.release.outputs.tag }}
+          SLACK_WEBHOOK: ${{ steps.release.outputs.announce == 'true' && secrets.RELEASE_SLACK_WEBHOOK || '' }}
+          DISCORD_WEBHOOK_ID: ${{ steps.release.outputs.announce == 'true' && secrets.DISCORD_WEBHOOK_ID || '' }}
+          DISCORD_WEBHOOK_TOKEN: ${{ steps.release.outputs.announce == 'true' && secrets.DISCORD_WEBHOOK_TOKEN || '' }}

@@ -1,0 +1,192 @@
+name: 🔖 Create Release Tag
+
+on:
+  schedule:
+    # Runs every Monday at 09:00 UTC — creates a tag only if there are
+    # new commits since the last release tag.
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref to evaluate for the next release tag
+        required: false
+        default: main
+        type: string
+      run-mode:
+        description: auto creates and pushes the tag; dry-run only previews it
+        required: true
+        default: dry-run
+        type: choice
+        options:
+          - auto
+          - dry-run
+      version-bump:
+        description: Strategy for the next version
+        required: true
+        default: auto
+        type: choice
+        options:
+          - auto
+          - patch
+          - custom
+      custom-version:
+        description: Custom version when version-bump=custom (for example v2.1.2)
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  create-tag:
+    name: Compute and create release tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || 'main' }}
+
+      - name: Check for new commits since last tag (scheduled only)
+        if: github.event_name == 'schedule'
+        id: check-commits
+        run: |
+          last_tag="$(git describe --tags --abbrev=0 2>/dev/null || true)"
+          if [ -z "$last_tag" ]; then
+            echo "no previous tag found, proceeding with first release"
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          else
+            commit_count="$(git rev-list "${last_tag}..HEAD" --count)"
+            echo "commits since ${last_tag}: ${commit_count}"
+            if [ "$commit_count" -gt 0 ]; then
+              echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "has_changes=false" >> "$GITHUB_OUTPUT"
+              echo "No new commits since ${last_tag} — skipping release." >> "$GITHUB_STEP_SUMMARY"
+            fi
+          fi
+
+      - name: Create scheduled tag
+        if: github.event_name == 'schedule' && steps.check-commits.outputs.has_changes == 'true'
+        id: scheduled-tag
+        uses: projectdiscovery/actions/svu-next@v1.29.4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag-prefix: v
+          v0: 'true'
+          set-failed: 'true'
+
+      - name: Compute next tag preview (manual)
+        if: github.event_name == 'workflow_dispatch'
+        id: manual-preview
+        uses: projectdiscovery/actions/svu-next@v1.29.4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          dry-run: 'true'
+          tag-prefix: v
+          v0: 'true'
+          set-failed: 'false'
+
+      - name: Resolve manual tag
+        if: github.event_name == 'workflow_dispatch'
+        id: manual-resolve
+        env:
+          VERSION_BUMP: ${{ inputs.version-bump }}
+          CUSTOM_VERSION: ${{ inputs.custom-version }}
+          PREVIEW_TAG: ${{ steps.manual-preview.outputs.next-tag }}
+        run: |
+          current_tag="$(git describe --tags --abbrev=0 2>/dev/null || true)"
+          if [ -z "$current_tag" ]; then
+            current_tag="v0.0.0"
+          fi
+
+          case "$VERSION_BUMP" in
+            auto)
+              target_tag="$PREVIEW_TAG"
+              if [ -z "$target_tag" ]; then
+                target_tag="$current_tag"
+              fi
+              ;;
+            patch)
+              version="${current_tag#v}"
+              version="${version%%-*}"
+              IFS='.' read -r major minor patch <<< "$version"
+              if [ -z "$major" ] || [ -z "$minor" ] || [ -z "$patch" ]; then
+                echo "::error::Unable to parse current tag: $current_tag"
+                exit 1
+              fi
+              target_tag="v${major}.${minor}.$((patch + 1))"
+              ;;
+            custom)
+              if [ -z "$CUSTOM_VERSION" ]; then
+                echo "::error::custom-version is required when version-bump=custom"
+                exit 1
+              fi
+              case "$CUSTOM_VERSION" in
+                v*) target_tag="$CUSTOM_VERSION" ;;
+                *)
+                  echo "::error::custom-version must start with 'v' (got: $CUSTOM_VERSION)"
+                  exit 1
+                  ;;
+              esac
+              ;;
+            *)
+              echo "::error::Unsupported version-bump: $VERSION_BUMP"
+              exit 1
+              ;;
+          esac
+
+          echo "current_tag=$current_tag" >> "$GITHUB_OUTPUT"
+          echo "target_tag=$target_tag" >> "$GITHUB_OUTPUT"
+
+      - name: Create manual tag
+        if: github.event_name == 'workflow_dispatch' && inputs.run-mode == 'auto'
+        env:
+          TARGET_TAG: ${{ steps.manual-resolve.outputs.target_tag }}
+        run: |
+          if [ -z "$TARGET_TAG" ]; then
+            echo "::error::No target tag was resolved."
+            exit 1
+          fi
+          if git rev-parse "$TARGET_TAG" >/dev/null 2>&1; then
+            echo "::error::Tag already exists: $TARGET_TAG"
+            exit 1
+          fi
+          git tag "$TARGET_TAG"
+          git push origin "$TARGET_TAG"
+
+      - name: Summarize tag result
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SCHEDULED_TAG: ${{ steps.scheduled-tag.outputs.tag }}
+          SCHEDULED_NEXT: ${{ steps.scheduled-tag.outputs.next-tag }}
+          HAS_CHANGES: ${{ steps.check-commits.outputs.has_changes }}
+          MANUAL_MODE: ${{ inputs.run-mode }}
+          MANUAL_BUMP: ${{ inputs.version-bump }}
+          MANUAL_TAG: ${{ steps.manual-resolve.outputs.target_tag }}
+          MANUAL_CURRENT: ${{ steps.manual-resolve.outputs.current_tag }}
+        run: |
+          {
+            echo "### 🔖 Release tag result"
+            echo ""
+            if [ "$EVENT_NAME" = "schedule" ]; then
+              echo "- Trigger: scheduled (weekly)"
+              if [ "$HAS_CHANGES" = "true" ]; then
+                if [ -n "$SCHEDULED_TAG" ]; then
+                  echo "- Created tag: \`$SCHEDULED_TAG\`"
+                elif [ -n "$SCHEDULED_NEXT" ]; then
+                  echo "- Computed next tag: \`$SCHEDULED_NEXT\`"
+                fi
+              else
+                echo "- No new commits since last tag — skipped."
+              fi
+            else
+              echo "- Trigger: manual"
+              echo "- Current tag: \`$MANUAL_CURRENT\`"
+              echo "- Resolved tag: \`$MANUAL_TAG\`"
+              echo "- Run mode: \`$MANUAL_MODE\`"
+              echo "- Version bump: \`$MANUAL_BUMP\`"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
