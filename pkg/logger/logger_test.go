@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/projectdiscovery/martian/v3"
+	"github.com/projectdiscovery/proxify/pkg/logger/file"
 	"github.com/projectdiscovery/proxify/pkg/logger/har"
 	"github.com/projectdiscovery/proxify/pkg/types"
 )
@@ -455,5 +456,34 @@ func TestHARLoggingDoesNotReadLiveBody(t *testing.T) {
 	}
 	if body.read || body.closed {
 		t.Fatal("HAR logging consumed the live request body")
+	}
+}
+
+func TestStoreWriterKeepsFilesInLogFolder(t *testing.T) {
+	root := t.TempDir()
+	logs := filepath.Join(root, "cwd", "proxify_logs")
+	if err := os.MkdirAll(filepath.Join(root, "outside"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	store, err := file.New(&file.Options{OutputFolder: logs})
+	if err != nil {
+		t.Fatal(err)
+	}
+	l := &Logger{options: &OptionsLogger{OutputFolder: logs}, Store: []Store{store}}
+	for _, host := range []string{"../../outside/file", `..\..\outside\file`, "/etc/x", "a/../../b"} {
+		l.storeWriter(types.HTTPTransaction{Userdata: types.UserData{Host: host, ID: "1fde6388dae4f50d"}, RawData: []byte("GET / HTTP/1.1\r\n")})
+	}
+	if entries, _ := os.ReadDir(filepath.Join(root, "outside")); len(entries) > 0 {
+		t.Fatalf("file written outside the log folder: %s", entries[0].Name())
+	}
+	entries, err := os.ReadDir(logs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) == 0 {
+		t.Fatalf("no log file in %s", logs)
+	}
+	if got, want := safeFileName("[::1]:8080"), "_::1_:8080"; got != want {
+		t.Fatalf("safeFileName = %q, want %q", got, want)
 	}
 }
