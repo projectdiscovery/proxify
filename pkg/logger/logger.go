@@ -420,7 +420,7 @@ func (l *Logger) storeWriter(outputdata types.HTTPTransaction) {
 		return
 	}
 
-	outputdata.Name = fmt.Sprintf("%s%s-%s", outputdata.Userdata.Host, outputdata.PartSuffix, outputdata.Userdata.ID)
+	outputdata.Name = fmt.Sprintf("%s%s-%s", safeFileName(outputdata.Userdata.Host), outputdata.PartSuffix, outputdata.Userdata.ID)
 	if outputdata.Userdata.HasResponse && (!l.options.DumpRequest && !l.options.DumpResponse) {
 		if outputdata.Userdata.Match != nil && *outputdata.Userdata.Match {
 			outputdata.Name = outputdata.Name + ".match"
@@ -449,6 +449,20 @@ func (l *Logger) storeWriter(outputdata types.HTTPTransaction) {
 			gologger.Warning().Msgf("Error while logging: %s", err)
 		}
 	}
+}
+
+// safeFileName makes a Host header value safe to use in a file name. The
+// value comes from the client, so every byte outside [A-Za-z0-9._:-]
+// (path separators included) becomes '_'.
+func safeFileName(host string) string {
+	return strings.Map(func(r rune) rune {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '.', r == '_', r == ':', r == '-':
+			return r
+		default:
+			return '_'
+		}
+	}, host)
 }
 
 func isASCIICheckRequired(contentType string) bool {

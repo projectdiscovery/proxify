@@ -48,7 +48,12 @@ func (c *Client) Save(data types.HTTPTransaction) error {
 	var err error
 	logFile := fmt.Sprintf("%s.%s", data.Name, "txt")
 	if c.options.OutputFolder != "" {
-		err = c.writeToFile(filepath.Join(c.options.OutputFolder, logFile), string(data.RawData))
+		logPath := filepath.Join(c.options.OutputFolder, logFile)
+		// the name holds client data: never write outside the folder
+		if filepath.Dir(logPath) != filepath.Clean(c.options.OutputFolder) {
+			return fmt.Errorf("invalid log file name %q", logFile)
+		}
+		err = c.writeToFile(logPath, string(data.RawData))
 	}
 	if c.options.OutputFile != "" && len(data.Data) > 0 {
 		err = c.writeToFile(c.options.OutputFile, data.DataString)
