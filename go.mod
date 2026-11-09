@@ -6,7 +6,7 @@ require (
 	github.com/Shopify/sarama v1.38.1
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/elastic/go-elasticsearch/v7 v7.17.10
-	github.com/elazarl/goproxy v0.0.0-20221015165544-a0805db90819
+	github.com/elazarl/goproxy v0.0.0-20230731152917-f99041a5c027
 	github.com/goccy/go-yaml v1.11.3
 	github.com/haxii/fastproxy v0.5.37
 	github.com/pkg/errors v0.9.1
@@ -21,7 +21,7 @@ require (
 	github.com/projectdiscovery/utils v0.11.10
 	github.com/stretchr/testify v1.12.1
 	github.com/things-go/go-socks5 v0.0.5
-	golang.org/x/net v0.59.0
+	golang.org/x/net v0.60.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -67,7 +67,7 @@ require (
 	github.com/Mzack9999/gcache v0.0.0-20230410081825-519e28eab057 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/akrylysov/pogreb v0.10.1 // indirect
-	github.com/andybalholm/brotli v1.2.0 // indirect
+	github.com/andybalholm/brotli v1.2.7 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/glamour v0.8.0 // indirect
@@ -96,7 +96,7 @@ require (
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kataras/jwt v0.1.8 // indirect
-	github.com/klauspost/compress v1.18.2 // indirect
+	github.com/klauspost/compress v1.20.2 // indirect
 	github.com/logrusorgru/aurora v2.0.3+incompatible // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -132,7 +132,7 @@ require (
 	github.com/tidwall/rtred v0.1.2 // indirect
 	github.com/tidwall/tinyqueue v0.1.1 // indirect
 	github.com/weppos/publicsuffix-go v0.50.4-0.20260918082853-3c3d7dc4a0cb // indirect
-	github.com/yuin/goldmark v1.7.4 // indirect
+	github.com/yuin/goldmark v1.7.17 // indirect
 	github.com/yuin/goldmark-emoji v1.0.3 // indirect
 	github.com/zmap/zcrypto v0.0.0-20261015050653-aa1de3126e87 // indirect
 	go.etcd.io/bbolt v1.3.7 // indirect
