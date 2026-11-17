@@ -10,15 +10,15 @@ require (
 	github.com/goccy/go-yaml v1.11.3
 	github.com/haxii/fastproxy v0.5.37
 	github.com/pkg/errors v0.9.1
-	github.com/projectdiscovery/dsl v0.9.2
-	github.com/projectdiscovery/fastdialer v0.6.2
+	github.com/projectdiscovery/dsl v0.9.3
+	github.com/projectdiscovery/fastdialer v0.6.3
 	github.com/projectdiscovery/goflags v0.2.1
-	github.com/projectdiscovery/gologger v1.1.75
+	github.com/projectdiscovery/gologger v1.1.76
 	github.com/projectdiscovery/govaluate v0.0.0-20260729205521-4c61bf19382e
 	github.com/projectdiscovery/martian/v3 v3.0.0-20240219194442-fed3b744f477
 	github.com/projectdiscovery/roundrobin v0.0.7
-	github.com/projectdiscovery/tinydns v0.0.110
-	github.com/projectdiscovery/utils v0.11.12
+	github.com/projectdiscovery/tinydns v0.0.111
+	github.com/projectdiscovery/utils v0.11.13
 	github.com/stretchr/testify v1.12.1
 	github.com/things-go/go-socks5 v0.0.5
 	golang.org/x/net v0.61.0
@@ -46,7 +46,7 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/projectdiscovery/jarm-go v0.0.0-20260910160638-430e2bae86f6 // indirect
 	github.com/projectdiscovery/machineid v0.0.0-20250715113114-c77eb3567582 // indirect
-	github.com/projectdiscovery/wappalyzergo v0.3.8 // indirect
+	github.com/projectdiscovery/wappalyzergo v0.3.9 // indirect
 	github.com/shirou/gopsutil/v4 v4.26.3 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.16 // indirect
@@ -112,10 +112,10 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.23 // indirect
 	github.com/projectdiscovery/blackrock v0.0.2 // indirect
 	github.com/projectdiscovery/gostruct v0.0.2 // indirect
-	github.com/projectdiscovery/hmap v0.0.104 // indirect
+	github.com/projectdiscovery/hmap v0.0.105 // indirect
 	github.com/projectdiscovery/mapcidr v1.1.97 // indirect
-	github.com/projectdiscovery/networkpolicy v0.1.57 // indirect
-	github.com/projectdiscovery/retryabledns v1.0.118 // indirect
+	github.com/projectdiscovery/networkpolicy v0.1.58 // indirect
+	github.com/projectdiscovery/retryabledns v1.0.119 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/refraction-networking/utls v1.8.2 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
