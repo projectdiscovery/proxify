@@ -512,11 +512,14 @@ func (p *Proxy) getRoundTripper() (http.RoundTripper, error) {
 			}
 			socks5Dialers[socks5proxy] = dialer
 		}
-		roundtrip = &http.Transport{Dial: func(network, addr string) (net.Conn, error) {
+		roundtrip = &http.Transport{DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 			// lookup next dialer
 			socks5Proxy := p.rbsocks5.Next()
 			socks5Dialer := socks5Dialers[socks5Proxy]
-			// use it to perform the request
+			// use it to perform the request, honouring ctx when the dialer supports it
+			if cd, ok := socks5Dialer.(proxy.ContextDialer); ok {
+				return cd.DialContext(ctx, network, addr)
+			}
 			return socks5Dialer.Dial(network, addr)
 		}, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
 	}
