@@ -18,10 +18,10 @@ require (
 	github.com/projectdiscovery/martian/v3 v3.0.0-20240219194442-fed3b744f477
 	github.com/projectdiscovery/roundrobin v0.0.7
 	github.com/projectdiscovery/tinydns v0.0.111
-	github.com/projectdiscovery/utils v0.11.13
+	github.com/projectdiscovery/utils v0.11.15
 	github.com/stretchr/testify v1.12.1
 	github.com/things-go/go-socks5 v0.0.5
-	golang.org/x/net v0.61.0
+	golang.org/x/net v0.62.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -46,7 +46,7 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/projectdiscovery/jarm-go v0.0.0-20260910160638-430e2bae86f6 // indirect
 	github.com/projectdiscovery/machineid v0.0.0-20250715113114-c77eb3567582 // indirect
-	github.com/projectdiscovery/wappalyzergo v0.3.9 // indirect
+	github.com/projectdiscovery/wappalyzergo v0.3.10 // indirect
 	github.com/shirou/gopsutil/v4 v4.26.3 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.16 // indirect
@@ -110,11 +110,11 @@ require (
 	github.com/muesli/reflow v0.3.0 // indirect
 	github.com/muesli/termenv v0.15.3-0.20240618155329-98d742f6907a // indirect
 	github.com/pierrec/lz4/v4 v4.1.23 // indirect
-	github.com/projectdiscovery/blackrock v0.0.2 // indirect
+	github.com/projectdiscovery/blackrock v0.0.4 // indirect
 	github.com/projectdiscovery/gostruct v0.0.2 // indirect
 	github.com/projectdiscovery/hmap v0.0.105 // indirect
 	github.com/projectdiscovery/mapcidr v1.1.97 // indirect
-	github.com/projectdiscovery/networkpolicy v0.1.58 // indirect
+	github.com/projectdiscovery/networkpolicy v0.1.59 // indirect
 	github.com/projectdiscovery/retryabledns v1.0.119 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/refraction-networking/utls v1.8.2 // indirect
