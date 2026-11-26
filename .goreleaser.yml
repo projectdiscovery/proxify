@@ -5,6 +5,8 @@ before:
 builds:
     - binary: proxify
       main: cmd/proxify/proxify.go
+      ldflags:
+        - -X github.com/projectdiscovery/proxify/internal/runner.version=v{{.Version}}
       goos:
         - linux
         - windows
